@@ -1,0 +1,150 @@
+﻿html, body {
+	height: 100%;
+	overflow: auto;
+	position:relative;
+}
+.r1{
+	height:80px;
+	/*background:url('../images/top.png') 0 -80px repeat-x;*/
+	background:var(--mainColor);
+	position:relative;
+	overflow:hidden;
+}
+.r1 .language {
+	position: absolute;
+	right: 20px;
+	top: 10px;
+	width: 84px;
+}
+.r1 .name {
+	position: absolute;
+	right: 130px;
+	top: 8px;
+	color: #EBEBEB;
+	font-size: 20px;
+	background:url(../images/top.png) 0 -214px no-repeat;
+	padding-left: 30px;
+	margin-right: 12px;
+}
+
+.r1 .top-icon {
+	position: absolute;
+	right: 8px;
+	top: 30px;
+	width: 348px;
+	font-size: 20px;
+	color: #aaa9a9;
+}
+
+.r1 .top-icon a:link {
+	color: #aaa9a9;
+}
+.r1 .top-icon a:visited {
+	color: #aaa9a9;
+}
+.r1 .top-icon a:hover {
+	color: #EBEBEB;
+	text-decoration:none;
+}
+.r1 .logout {
+	margin-left:4px;
+	float: right;
+	margin-right: 12px;
+}
+.r1 .top-icon .passd {
+	background:url(../images/top.png) 0 -164px no-repeat;
+	padding-left: 30px;
+	float: left;
+	margin-right: 12px;
+}
+.r1 .top-icon .system {
+	background:url(../images/top.png) 0 -186px no-repeat;
+	padding-left: 30px;
+	float: left;
+	margin-right: 20px;
+}
+.r1 .page-tab {
+	position: absolute;
+	top: 49px;
+	z-index: 2;
+	left: 230px;
+}
+.r1 .page-tab li {
+	background:url(../images/top-tab.gif) 0 -62px no-repeat;
+	height: 31px;
+	padding-left: 16px; 
+	float: left;
+	margin-right: 12px;
+}
+.r1 .page-tab li a {
+	height: 31px;
+	padding-right: 16px; 
+	color: #c3c2c2;
+	display: inline-block;
+	line-height: 31px;
+	background:url(../images/top-tab.gif) right -93px no-repeat;
+}
+.r1 .page-tab li.on {
+	background:url(../images/top-tab.gif) no-repeat;
+	height: 31px;
+	padding-left: 16px; 
+	float: left;
+}
+.r1 .page-tab li.on a {
+	height: 31px;
+	color: #565656;
+	padding-right: 16px; 
+	display: inline-block;
+	line-height: 31px;
+	background:url(../images/top-tab.gif) right -31px no-repeat;
+}
+
+.r1 .rightArea p img{
+	margin-right:3px;
+}
+.r3{
+	height:100%;
+	overflow:hidden;
+	position:relative;
+}
+.r3 .c1{
+	height:100%;
+	float:left;
+	width:196px;
+	overflow:hidden;
+	z-index:1;
+	top:0;
+	left:0;
+}
+
+.r3 .c2{
+	overflow:hidden;
+	height:100%;
+}
+.togglePrev{
+	height:100%;
+	float:left;
+	width:12px;
+	background: url('../images/togglePrevOver.gif') no-repeat scroll left center;
+	cursor:pointer;
+}
+.togglePrevOver{
+	background: url('../images/togglePrevOver.gif') no-repeat scroll left center;
+}
+.togglePrevEnd{
+	background: url('../images/togglePrevEnd.gif') no-repeat scroll left center;
+}
+.logo{
+	height:80px;
+	width:280px;
+	position:absolute;
+	z-index:1;
+	background: url('../images/top.png') no-repeat  left 0;
+}
+
+.logo .text{
+	line-height:70px;
+	font-size:16px;
+	color:#2F73C8;
+	padding-left:10px;
+}

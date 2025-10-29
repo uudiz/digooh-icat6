@@ -1,0 +1,134 @@
+ul {
+  list-style-position: outside;
+  list-style-type: none;
+  list-style-image: none;
+}
+
+li {
+  list-style-position: outside;
+  list-style-type: none;
+  list-style-image: none;
+}
+
+#tabs {
+  height: 600px;
+}
+
+#dialog {
+  overflow: hidden;
+}
+
+.screen .title a {
+  float: right;
+}
+
+.icon-list {
+  height: 42px;
+  margin: 10px;
+  border-bottom: 1px solid #ccc;
+}
+
+.icon-list ul li {
+  float: left;
+  width: 48px;
+  text-align: center;
+}
+
+#area_movie {
+  background-color: #336b96;
+}
+
+#area_logo {
+  background-color: #7ec0eec8;
+}
+
+#area_pic1 {
+  background-color: #95b555;
+}
+
+#area_mask {
+  background-color: #ffcc00;
+  opacity: 0.5;
+}
+
+#area_pic2 {
+  background-color: #5a974b;
+}
+
+#area_pic3 {
+  background-color: #378c6d;
+}
+
+#area_pic4 {
+  background-color: #528b8b;
+}
+
+#area_date {
+  background-color: #5f698cf8;
+}
+
+#area_time {
+  background-color: #4876fff8;
+}
+
+#area_text {
+  background-color: #4d7ea3f8;
+}
+
+#area_5 {
+  background-color: #679fcaf8;
+}
+
+#area_webpage {
+  background-color: #679fcaf8;
+}
+
+#area_weather {
+  background-color: #0072e3f8;
+}
+
+.btnGroup {
+  background-color: #ebebebf8;
+}
+
+.bton {
+  background-color: #74afe4;
+}
+
+#area_staticText {
+  background-color: #7171c6;
+}
+
+.gray-area {
+  padding: 0px;
+  background: #313c52;
+  border: 0px solid #ccc;
+}
+
+.close {
+  position: absolute;
+  top: 1px;
+  right: 1px;
+  float: right;
+  color: #990000;
+  font-size: 9px;
+  opacity: 0.6;
+}
+
+.close:hover {
+  opacity: 1;
+}
+
+.common-style {
+  margin: 0px;
+  background: #ffffffdc;
+  border: none;
+  outline: none;
+}
+
+.zone-header {
+  overflow: hidden;
+  color: #fff;
+  font-weight: bold;
+  background: #a2b4ee;
+}

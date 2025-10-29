@@ -1,0 +1,19 @@
+﻿.taskPage{
+	width:98%;
+
+}
+.taskPage h1.caption{
+	background:transparent url(../images/table-input/25.gif) repeat-x scroll 0 0;	
+	height:27px;
+	position:relative;
+	font-weight:normal;
+}
+.taskPage h1.caption .text{
+	line-height:20px;
+	color:gray;
+	padding:0 10px;
+	position:absolute;
+}
+.taskPage h1.caption .text a{
+	color:gray;
+}

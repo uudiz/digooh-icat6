@@ -1,0 +1,197 @@
+/*input {font-weight:normal;font-size:12px;}*/
+.date {display:inline;}
+.dst {display:inline;}
+.dst-date {display:inline; width:100px;}
+input.text { margin-bottom:12px; padding: .4em; }
+fieldset { padding:0; border:0; margin-top:25px; }
+.new-company-area {width: 800px;}
+.timezone {width:120px;}
+#company-form{position: relative;}
+.logo-area{ 
+	float:right;
+	width:160px;
+	height:80px;
+	position: absolute;
+	top:2px;
+	right:2px;
+	border-style:dotted;
+	border-width:0.1em;
+}
+#uploadPic div {
+	clear:both;
+}
+
+.cls_divUploader {
+	background-color:Transparent;
+	height:24px;
+}
+
+.loadbutton {
+	-moz-background-clip:border;
+	-moz-background-inline-policy:continuous;
+	-moz-background-origin:padding;
+	background-attachment:scroll;
+	background-color:transparent;
+	background-image:url(http://pic2.58.com/n/images/post/loadbutton.gif);
+	background-position:0 0;
+	background-repeat:repeat;
+	display:inline-block;
+	float:left;
+	height:21px;
+	margin-right:5px;
+	overflow-x:hidden;
+	overflow-y:hidden;
+	position:relative;
+	vertical-align:middle;
+	width:74px;
+}
+
+#fileUploadInput {
+	font-size:36px;
+	filter:alpha(opacity:0);
+	opacity:0;
+	position:absolute;
+	right:-2px;
+	top:-2px;
+}
+
+input[type="file"] {
+	-moz-appearance:none;
+	-moz-binding:none;
+	border-bottom-style:none !important;
+	border-left-style-ltr-source:physical !important;
+	border-left-style-rtl-source:physical !important;
+	border-left-style-value:none !important;
+	border-right-style-ltr-source:physical !important;
+	border-right-style-rtl-source:physical !important;
+	border-right-style-value:none !important;
+	border-top-style:none !important;
+	cursor:default;
+	padding-bottom:0 !important;
+	padding-left:0 !important;
+	padding-right:0 !important;
+	padding-top:0 !important;
+	white-space:nowrap;
+}
+
+#uploadPic li {
+	-moz-background-clip:border;
+	-moz-background-inline-policy:continuous;
+	-moz-background-origin:padding;
+	background-attachment:scroll;
+	background-color:#EEEEEE;
+	background-image:none;
+	background-position:0 0;
+	background-repeat:repeat;
+	float:left;
+	height:88px;
+	margin-bottom:5px;
+	margin-left:0;
+	margin-right:5px;
+	margin-top:0;
+	overflow-x:hidden;
+	overflow-y:hidden;
+	padding-bottom:3px;
+	position:relative;
+	width:82px;
+}
+img, ul, li {
+	border-bottom-color:-moz-use-text-color;
+	border-bottom-style:none;
+	border-bottom-width:medium;
+	border-left-color-ltr-source:physical;
+	border-left-color-rtl-source:physical;
+	border-left-color-value:-moz-use-text-color;
+	border-left-style-ltr-source:physical;
+	border-left-style-rtl-source:physical;
+	border-left-style-value:none;
+	border-left-width-ltr-source:physical;
+	border-left-width-rtl-source:physical;
+	border-left-width-value:medium;
+	border-right-color-ltr-source:physical;
+	border-right-color-rtl-source:physical;
+	border-right-color-value:-moz-use-text-color;
+	border-right-style-ltr-source:physical;
+	border-right-style-rtl-source:physical;
+	border-right-style-value:none;
+	border-right-width-ltr-source:physical;
+	border-right-width-rtl-source:physical;
+	border-right-width-value:medium;
+	border-top-color:-moz-use-text-color;
+	border-top-style:none;
+	border-top-width:medium;
+	list-style-image:none;
+	list-style-position:outside;
+	list-style-type:none;
+	margin-bottom:0;
+	margin-left:0;
+	margin-right:0;
+	margin-top:0;
+	padding-bottom:0;
+	padding-left:0;
+	padding-right:0;
+	padding-top:0;
+}
+
+#uploadPic .displayimg {
+	-moz-background-clip:border;
+	-moz-background-inline-policy:continuous;
+	-moz-background-origin:padding;
+	background-attachment:scroll;
+	background-color:#FFFFFF;
+	background-image:none;
+	background-position:0 0;
+	background-repeat:repeat;
+	border-bottom-color:#CCCCCC;
+	border-bottom-style:solid;
+	border-bottom-width:1px;
+	border-left-color-ltr-source:physical;
+	border-left-color-rtl-source:physical;
+	border-left-color-value:#CCCCCC;
+	border-left-style-ltr-source:physical;
+	border-left-style-rtl-source:physical;
+	border-left-style-value:solid;
+	border-left-width-ltr-source:physical;
+	border-left-width-rtl-source:physical;
+	border-left-width-value:1px;
+	border-right-color-ltr-source:physical;
+	border-right-color-rtl-source:physical;
+	border-right-color-value:#CCCCCC;
+	border-right-style-ltr-source:physical;
+	border-right-style-rtl-source:physical;
+	border-right-style-value:solid;
+	border-right-width-ltr-source:physical;
+	border-right-width-rtl-source:physical;
+	border-right-width-value:1px;
+	border-top-color:#CCCCCC;
+	border-top-style:solid;
+	border-top-width:1px;
+	height:60px;
+	overflow-x:hidden;
+	overflow-y:hidden;
+	width:80px;
+}
+#uploadPic div {
+	clear:both;
+}
+
+.delete {
+	-moz-background-clip:border;
+	-moz-background-inline-policy:continuous;
+	-moz-background-origin:padding;
+	background-attachment:scroll;
+	background-color:transparent;
+	background-image:url(http://pic2.58.com/n/images/post/closeyes.gif);
+	background-position:0 0;
+	background-repeat:no-repeat;
+	display:block;
+	height:12px;
+	line-height:100px;
+	overflow-x:hidden;
+	overflow-y:hidden;
+	position:absolute;
+	right:3px;
+	top:3px;
+	width:13px;
+	z-index:999;
+}

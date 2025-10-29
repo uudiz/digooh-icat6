@@ -1,0 +1,38 @@
+#tabs { height:100%; margin-top: 1em; }
+#tabs li .ui-icon-close { float: left; margin: 0.4em 0.2em 0 0; cursor: pointer; }
+
+.example-image {
+    height: 112px;
+    max-width: 200px;
+    border-radius: 6px;
+}
+
+.example-image-link {
+  position: relative;
+  float:left;
+
+  display: inline-block;
+  padding: 4px;
+  margin: 0 0.5rem 1rem 0.5rem;
+  background-color: #f9f9f9;
+  line-height: 0;
+  border-radius: 8px;
+}
+.example-image-link:hover {
+  background-color: #fc4c02;
+}
+
+
+.example-image-link:hover input {
+    display: block;
+}
+.example-image-link input {
+    position:absolute;
+    display:none;
+}
+.example-image-link input.delete {
+    top:0;
+    left:90%;
+}
+
+

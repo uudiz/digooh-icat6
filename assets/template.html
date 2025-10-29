@@ -1,0 +1,632 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <meta charset="UTF-8" />
+    <title>ID Template</title>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/vue/3.3.11/vue.global.prod.min.js"></script>
+    <style scoped>
+      @font-face {
+        font-family: "Roboto";
+        src: local("Roboto"),
+          url("./fonts/Roboto-Regular.ttf") format("truetype");
+      }
+      @font-face {
+        font-family: "AralV2Med";
+        src: local("AralV2Med"),
+          url("./fonts/aralm.ttf") format("truetype");
+      }
+      @font-face {
+        font-family: "AralV2Bold";
+        src: local("AralV2Bold"),
+          url("./fonts/aralb.ttf") format("truetype");
+      }
+      body {
+        background: transparent;
+      }
+
+      div {
+        background: transparent;
+      }
+
+      .container {
+        position: absolute;
+        display: flex;
+        align-items: center;
+        justify-content: flex-start;
+        overflow: hidden;
+        white-space: nowrap;
+        border: 1px solid transparent;
+        border-radius: 10px;
+      }
+
+      .charger-container {
+        position: absolute;
+        display: flex;
+        align-items: center;
+        justify-content: flex-start;
+        width: 100%;
+        height: 100%;
+        overflow: hidden;
+        white-space: nowrap;
+        border: 0px solid transparent;
+      }
+
+      .charger-number {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        height: 100%;
+        margin-left: 5px;
+        border: 0px solid transparent;
+        border-top-left-radius: 10px;
+        border-bottom-left-radius: 10px;
+      }
+
+      .charger-status {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        width: 100%;
+        height: 100%;
+        border-top-right-radius: 10px;
+        border-bottom-right-radius: 10px;
+      }
+
+      .right {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        width: 100%;
+        height: 100%;
+        background: transparent;
+      }
+
+      .left {
+        position: relative;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        height: 100%;
+        color: black;
+        text-align: center;
+        background-color: #fff;
+        aspect-ratio: 1;
+      }
+
+      .left::after {
+        position: absolute;
+        top: 0px;
+        left: 100%;
+        width: 50%;
+        height: 100%;
+        background: white;
+        content: "";
+        clip-path: polygon(0 0, 0 100%, 100% 50%);
+      }
+
+      .textprice{
+        white-space:normal;
+        word-break:normal;
+        word-wrap: break-word;
+      }
+
+      .center {
+        justify-content: center;
+      }
+
+      .box{
+          background: #b2cce7;
+          border-radius: 3px;
+          box-shadow: 0px 1px 7px rgba(0,0,0, 0.25);
+          &:hover{
+            box-shadow: 0px 1px 4px rgba(0,0,0, 0.5);
+          }
+
+          h1{
+            font-size: 0.8em;
+            text-align: center;
+          }
+          .temp{
+            font-size: 0.6em;
+            line-height: 1;
+            text-align: center;
+            display: block;
+            padding-left: 30px;
+            margin-bottom: 24px;
+          }
+          .high-low{
+            font-size: 0.4em;
+            text-align: center;
+            display: block;
+            font-weight: 100;
+          }
+        }
+    </style>
+  </head>
+
+  <body>
+    <div id="app">
+      <div :style="{ width: width,height:height, background: 'transparent'}">
+        <div
+          v-for="(zone, index) in zones "
+          :key="index "
+          class="container"
+          :style="zone.containerStyle"
+          :class="{ 'center': zone.isCentered }"
+        >
+          <ev-charger
+            v-if="zone.type==0"
+            :id="zone.id"
+            :settings="zone.settings"
+            :charger_number="zone.name"
+            :transparent="zone.transparent"
+          >
+          </ev-charger>
+          <div v-if="zone.type==1">
+            <forecast-zone
+              v-if="zone.name!=1"
+              :src="zone.id"
+              width="100%"
+              height="100%"
+              :autoplay="true"
+              target="_parent"
+            ></forecast-zone>
+      
+            <qrcode-zone
+              v-if="zone.name==1"
+              :url="zone.id"
+              :darkColor="zone.containerStyle.color"
+              :lightColor="zone.containerStyle.background"
+              :style="{width:zone.containerStyle.width,height:zone.containerStyle.height  ,display: 'flex', justifyContent: 'center', alignItems: 'center' }" 
+            />
+          </div>
+          <div
+            v-if="zone.type==2"
+            class="textprice"
+            :style="{transform: `rotate(${zone.name}deg)`}"
+          >
+            {{zone.id}}
+          </div>
+          <free-charger v-if="zone.type==3" :id="zone.id"> </free-charger>
+          <price-zone v-if="zone.type==4" :id="zone.id"></price-zone>
+        </div>
+      </div>
+    </div>
+
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
+    <script>
+      const username = "kdh-api";
+      const password = "ze7G*Ns*QbYrHcv9";
+      const application_key = "e09132de76fafc5a91718ecc8c0d95ea";
+      let ws_socket;
+      const app = Vue.createApp({
+        data() {
+          return {
+            width: "2160px",
+            height: "3840px",
+            opacity: "0 ",
+            zones: [],
+          };
+        },
+        methods: {
+          hex2Rgb(sColor, transparent) {
+            if (!sColor) {
+              sColor = "#FFFFFFFF";
+            }
+            sColor = sColor.toLowerCase();
+            var reg = /^#([0-9a-fA-f]{3}|[0-9a-fA-f]{6})$/;
+            if (sColor && reg.test(sColor)) {
+              if (sColor.length === 4) {
+                var sColorNew = "#";
+                for (var i = 1; i < 4; i += 1) {
+                  sColorNew += sColor
+                    .slice(i, i + 1)
+                    .concat(sColor.slice(i, i + 1));
+                }
+                sColor = sColorNew;
+              }
+              var sColorChange = [];
+              var transparency = (100 - transparent) / 100;
+              for (var i = 1; i < 7; i += 2) {
+                sColorChange.push(parseInt("0x" + sColor.slice(i, i + 2)));
+              }
+
+              return "RGB(" + sColorChange.join(",") + "," + transparency + ")";
+            }
+            return sColor;
+          },
+
+          async fetchZones() {
+            let uri = window.location.search.substring(1);
+            let params = new URLSearchParams(uri);
+            const playlist_id = params.get("playlist_id");
+            try {
+              const url =
+                window.location.protocol +
+                "//" +
+                window.location.host +
+                "/api/getIdAreas?playlist_id=" +
+                playlist_id;
+
+              const response = await fetch(url);
+              const data = await response.json();
+
+              this.width = data.width + "px";
+              this.height = data.height + "px";
+              data.zones.forEach(async (zone) => {
+                var newZone = new Object();
+                newZone.containerStyle = {
+                  height: zone.height * data.rate + "px",
+                  width: zone.width * data.rate + "px",
+                  left: zone.left * data.rate + "px",
+                  top: zone.top * data.rate + "px",
+                  background: this.hex2Rgb(zone.bg_color, zone.transparent),
+                  fontSize: zone.font_size + "px",
+                  fontFamily: zone.font_family,
+                  color: zone.color,
+                  //"border-color":this.hex2Rgb(zone.bg_color, 0),
+                };
+                newZone.type = zone.type;
+                newZone.id = zone.id_number;
+                newZone.name = zone.name;
+                newZone.transparent = zone.transparent;
+                newZone.settings = zone.settings;
+
+                newZone.isCentered = false;
+                this.zones.push(newZone);
+              });
+            } catch (error) {
+              console.log("has error");
+              console.log(error);
+            }
+          },
+
+        },
+        mounted() {
+          this.fetchZones();
+        },
+      });
+
+      /*Available, Occupied, Faulted, Unavailable, Reserved, Charging, Preparing, SuspendedEVSE, SuspendedEV, Finishing*/
+      //:style="{background:background_color}"
+      app.component(
+        // the registered name
+        "ev-charger",
+        {
+          template: `
+                    <div class="charger-container" :style="{background:background_color,color:font_color,width:'100%'}">
+                        <div class="charger-number">{{ charger_number }}</div>
+                        <div class="charger-status">{{ status }}</div>
+                    </div>
+                      `,
+          props: {
+            id: {
+              type: String,
+              required: true,
+            },
+            charger_number: {
+              type: String,
+            },
+            transparent: {
+              type: Number,
+              default: 0,
+            },
+            settings: {
+              type: Object,
+            },
+          },
+          data() {
+            return {
+              sequence: "0",
+              status: "...",
+              font_color: "#FFFFFF",
+              background_color: "transparent",
+            };
+          },
+          mounted() {
+            this.getData();
+            setInterval(() => {
+              this.getData();
+            }, 60000);
+          },
+
+          methods: {
+            hex2Rgb(sColor, transparent) {
+              if (!sColor) {
+                sColor = "#FFFFFFFF";
+              }
+              sColor = sColor.toLowerCase();
+              var reg = /^#([0-9a-fA-f]{3}|[0-9a-fA-f]{6})$/;
+              if (sColor && reg.test(sColor)) {
+                if (sColor.length === 4) {
+                  var sColorNew = "#";
+                  for (var i = 1; i < 4; i += 1) {
+                    sColorNew += sColor
+                      .slice(i, i + 1)
+                      .concat(sColor.slice(i, i + 1));
+                  }
+                  sColor = sColorNew;
+                }
+                var sColorChange = [];
+                var transparency = (100 - transparent) / 100;
+                for (var i = 1; i < 7; i += 2) {
+                  sColorChange.push(parseInt("0x" + sColor.slice(i, i + 2)));
+                }
+
+                return (
+                  "RGB(" + sColorChange.join(",") + "," + transparency + ")"
+                );
+              }
+              return sColor;
+            },
+            translate_status(status) {
+              let trans_status = "N/A";
+              let trans_color = "#9ba9be";
+              for (var setting of this.settings) {
+                if (status === setting["name"]) {
+                  this.status = setting["translation"];
+                  this.font_color = setting["font_color"];
+                  this.background_color = this.hex2Rgb(
+                    setting["bg_color"],
+                    this.transparent
+                  );
+                  return;
+                }
+              }
+              return;
+            },
+            async getData() {
+              try {
+                const url =
+                  "https://demo.chargecloud.de/rest:client/" +
+                  application_key +
+                  "/getEmobilityLocationsDataDetails?limit=100&offset=0&evseId=" +
+                  this.id;
+                const response = await fetch(url, {
+                  method: "GET",
+
+                  headers: {
+                    Authorization:
+                      "Basic " + btoa("client#" + username + ":" + password),
+                    "Content-Type": "application/json",
+                  },
+                });
+                const data = await response.json();
+                if (!data.data || !data.data.length) {
+                  this.status = "N/A";
+                }
+                var status = data.data[0].evses[0].status;
+                this.translate_status(data.data[0].evses[0].status);
+              } catch (error) {
+                this.status = "N/A";
+                console.log(error);
+              }
+            },
+          },
+        }
+      );
+      app.component(
+        // the registered name
+        "free-charger",
+        {
+          template: `
+                        <div class="charger-status">{{ free_count }}</div>
+
+                      `,
+          props: {
+            id: {
+              type: String,
+              required: true,
+            },
+          },
+          data() {
+            return {
+              free_count: "",
+              background_color: "transparent",
+            };
+          },
+          mounted() {
+            this.getFree();
+            setInterval(() => {
+              this.getFree();
+            }, 60000);
+          },
+
+          methods: {
+            async getFree() {
+              const ids = this.id.split(",");
+              if (ids.length == 0) {
+                return;
+              }
+              var free_cnt = 0;
+
+              for (id of ids) {
+                try {
+                  const url =
+                    "https://demo.chargecloud.de/rest:client/" +
+                    application_key +
+                    "/getEmobilityLocationsDataDetails?limit=100&offset=0&evseId=" +
+                    id;
+                  const response = await fetch(url, {
+                    method: "GET",
+
+                    headers: {
+                      Authorization:
+                        "Basic " + btoa("client#" + username + ":" + password),
+                      "Content-Type": "application/json",
+                    },
+                  });
+                  const data = await response.json();
+                  if (!data.data || !data.data.length) {
+                    continue;
+                  }
+                  var status = data.data[0].evses[0].status;
+                  if (status == "AVAILABLE") {
+                    free_cnt++;
+                  }
+                } catch (error) {
+                  continue;
+                }
+              }
+              this.free_count = free_cnt;
+            },
+          },
+        }
+      );
+
+
+      app.component(
+        // the registered name
+        "price-zone",
+        {
+          template: `
+                        <div class="charger-status">{{ price }}</div>
+
+                      `,
+          props: {
+            id: {
+              type: String,
+              required: true,
+            },
+          },
+          data() {
+            return {
+              price: "",
+              background_color: "transparent",
+            };
+          },
+          mounted() {
+            this.getPrice();
+            setInterval(() => {
+              this.getPrice();
+            }, 60000);
+          },
+
+          methods: {
+            async getPrice() {
+                try {
+                  const url =
+                    window.location.protocol +
+                    "//" +
+                    window.location.host +
+                    "/api/getProductPrice?product_id=" +
+                    this.id;
+
+                  const response = await fetch(url, {
+                    method: "GET",
+                  });
+                  const data = await response.json();
+
+                  if(data.discounts.length > 0){
+                    const discounts = data.discounts;
+                    //discount has start_time and end_time with format HH:mm, check if current time is between start_time and end_time
+                    const now = new Date();
+                    const now_time = now.getHours() + ":" + now.getMinutes();
+                    for (discount of discounts) {
+                      if (
+                        discount.start_time <= now_time &&
+                        discount.end_time >= now_time
+                      ) {
+                        this.price = discount.price;
+                        return;
+                      }
+                    }
+                  }
+                  this.price = data.price;
+
+                } catch (error) {
+                  return "";
+                }
+              
+            },
+          },
+        }
+      );
+
+      const Qrcode = {
+        template: ` <div>
+                      <div ref="qrcode"></div>
+                    </div>`,
+        
+        props: {
+            url: {
+              type: String,
+              required: true,
+            },
+            colorDark:{
+              type: String, 
+              default:"#000000"
+            },
+            colorLight:{
+              type: String, 
+              default:"#ffffff"
+            },
+
+          },
+        mounted() {
+            const width = Math.min(this.$refs.qrcode.parentNode.clientWidth, this.$refs.qrcode.parentNode.clientHeight);
+            console.log(this.url);
+            const qrcode = new QRCode(this.$refs.qrcode,{
+              text: this.url,
+              width:width,
+              height:width,
+              colorDark: this.colorDark,
+              colorLight: this.colorLight,
+              correctLevel: QRCode.CorrectLevel.H,
+            });
+        },
+      };
+
+      app.component("qrcode-zone", Qrcode);
+
+      const Forecast = {
+        template: ` 
+              <div>
+                <div v-if="weatherData">
+                  <div class="box">
+                  <div class="icon bubble black">
+                      <div class="spin">
+                        <img :src="weatherData.forecast.forecastday[0].day.condition.icon">
+                      </div>
+                    </div>
+                    
+                    <h1>{{weatherData.location.name}}</h1>
+                    <span class="temp">{{weatherData.current.feelslike_c}}&deg;</span>
+                    <span class="high-low">{{ weatherData.forecast.forecastday[0].day.mintemp_c }}&deg;/ {{ weatherData.forecast.forecastday[0].day.maxtemp_c }}&deg;</span>
+                  </div>
+                </div>
+              </div>
+        `,
+        
+        props: {
+
+
+          },
+          data() {
+            return {
+              weatherData: null,
+            };
+          },
+          methods: {
+            async getWeatherData(lat, lng) {
+              const response = await fetch(
+                `https://api.weatherapi.com/v1/forecast.json?key=d70322c660144b6b9a224643230812&q=${lat},${lng}&days=1`
+              );
+              const data = await response.json();
+              console.log(data);
+              this.weatherData = data;
+            },
+            getIconUrl(iconCode) {
+              return `https://cdn.weatherapi.com/weather/64x64/day/${iconCode}.png`;
+            },
+          },
+          mounted() {
+            this.getWeatherData(37.7749, -122.4194); // Replace with your desired latitude and longitude
+          },
+      };
+      app.component("forecast-zone", Forecast);
+      
+      app.mount("#app");
+    </script>
+  </body>
+</html>

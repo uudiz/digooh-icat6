@@ -1,0 +1,9 @@
+input {font-weight:normal;font-size:12px;}
+.rule {display:inline;}
+input.text { margin-bottom:12px; padding: .4em; }
+fieldset { padding:0; border:0; margin-top:25px; }
+.new-area {width: 800px;}
+.timezone {width:120px;}
+#user-form{position: relative;}
+ul.ztree {margin-top: 10px;border: 1px solid #617775;background: #f0f6e4;width:220px;height:200px;overflow-y:scroll;overflow-x:auto;}
+

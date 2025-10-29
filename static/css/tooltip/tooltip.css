@@ -1,0 +1,10 @@
+.tooltip {
+	display:none;
+	background:transparent url(images/black_arrow.png);
+	font-size:12px;
+	height:28px;
+	width:90px;
+	padding:16px;
+	color:#fff;
+	z-index:999;
+}

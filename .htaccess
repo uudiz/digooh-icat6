@@ -1,0 +1,7 @@
+RewriteEngine on
+RewriteCond $1 !^(index\.php|phpinfo\.php|images|static|resources|assets|cdmsA|cdms|phpMyAdmin|cdmsLicence)
+RewriteRule ^(.*)$ /index.php/$1 [L]
+
+RewriteRule ^cdmsA/receive\!(.*)\.action$  /receive/$1 [L]
+RewriteRule ^cdms/receive\!(.*)\.action$  /receive/$1 [L]
+RewriteRule ^cdmsLicence/licenceAction\!(.*)\.action$  /licence/$1 [L]

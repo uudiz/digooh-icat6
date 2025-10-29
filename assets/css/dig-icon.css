@@ -1,0 +1,30 @@
+@font-face {
+    font-family: 'DIGOOH';
+    src: url('../fonts/DIGOOH.woff') format('woff');
+    font-weight: normal;
+    font-style: normal;
+    font-display: block;
+}
+
+[class^="dig-"]::before,
+[class*=" dig-"]::before {
+    /* use !important to prevent issues with browser extensions that change fonts */
+    font-family: 'DIGOOH' !important;
+    speak: never;
+    font-style: normal;
+    font-weight: normal;
+    font-variant: normal;
+    text-transform: none;
+    line-height: 1;
+    /* Better Font Rendering =========== */
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+}
+
+.dig-display:before {
+    content: "\e900";
+}
+
+.dig-campaign:before {
+    content: "\e901";
+}

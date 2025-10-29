@@ -1,0 +1,25 @@
+<?php
+$lang['playback'] = 'Wiedergabebericht';
+$lang['post.date'] = 'Veröffentlichungsdatum';
+$lang['date.time'] = 'Date/Time';
+$lang['sn'] = 'ID #';
+$lang['times'] = 'Anzahl';
+$lang['duration'] = 'Sekunden';
+$lang['export.excel'] = 'Exportiere als Excel Datei';
+$lang['export'] = 'Exportieren';
+$lang['planed_times'] = "Geplant";
+$lang['fulfillment_planed'] = "Erfüllung (geplant) on %";
+$lang['fulfillment_booked'] = "Erfüllung (gebucht) in %";
+$lang['no_playback'] = 'Keine Wiedergabe';
+$lang['summary'] = 'Summe';
+$lang['player_number'] = 'Anzahl von Display';
+$lang['campaign_number'] = 'Anzahl von Kampagne';
+$lang['media_number'] = 'Anzahl von Medien';
+$lang['total'] = 'Gesamtergebnis';
+$lang['total_planed'] = 'Summe von Geplant';
+$lang['total_count'] = 'Summe von Anzahl';
+$lang['total_duration'] = 'Summe von Sekunden';
+$lang['avg_ful_booked'] = 'Mittelwert von Erfüllung (gebucht) in %';
+$lang['avg_ful_planed'] = 'Mittelwert von Erfüllung (geplant) on %';
+$lang['labels'] = 'Zeilenbeschriftungen';
+$lang['date_selected'] = 'Date Selected';

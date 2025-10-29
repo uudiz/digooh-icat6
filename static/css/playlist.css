@@ -1,0 +1,29 @@
+.playlist{
+	font-size:14px;
+	width:100%;
+	position:relative;
+}
+.playlist .liner{
+	clear:both;
+}
+.playlist .base{
+	
+}
+.playlist .screen{
+	float:right;
+	width:240px;
+	height:180px;
+	margin:5px;
+	background-color:#FFF000;
+}
+.playlist .screen img{
+	width:240px;
+	height:180px;
+	background-color: #CEE1EE;
+	text-align:center;
+	cursor:pointer;
+}
+
+.text-content{
+	width:80%;
+}

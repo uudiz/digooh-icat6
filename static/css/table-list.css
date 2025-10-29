@@ -1,0 +1,172 @@
+﻿.table-list.tb-layout {
+  table-layout: fixed;
+}
+
+.table-list {
+  font-size: 12px;
+  border: 1px solid #ccc;
+}
+
+.table-list th {
+  border-top: 1px solid #ccc;
+  border-bottom: 1px solid #ccc;
+  font-size: 14px;
+  text-align: left;
+  height: 30px;
+  line-height: 30px;
+  /*text-align: center;*/
+  padding-left: 20px;
+  background: url(../images/table-th.gif);
+  white-space: nowrap;
+  font-weight: normal;
+}
+
+.table-list td {
+  font-size: 12px;
+  height: 30px;
+  padding: 4px 0px 4px 4px;
+  color: #4f6b72;
+  white-space: normal;
+  text-align: left;
+  padding-left: 20px;
+  word-break: break-word;
+}
+
+.table-list tr.even {
+  background: #f5f5f5;
+}
+
+.table-list tr.onSelected {
+  background-color: #fbd05c;
+}
+
+.table-list td.alt {
+  background: #f5fafa;
+  color: #797268;
+}
+
+.table-list .desc {
+  display: none;
+}
+
+.table-list .tip {
+  display: block;
+  width: 100%;
+  overflow: hidden;
+}
+
+.table-list .name {
+  color: #67b024;
+}
+
+.table-list td.control-panel {
+  text-align: left;
+}
+
+.control-panel {
+  background: #f7f7f7;
+  border: 1px solid #ccc;
+  text-align: left;
+}
+
+.control-panel td {
+  text-align: left;
+  margin: 2px 2px;
+}
+
+.control-panel h1 {
+  font-size: 16px;
+  color: #d6d6d6;
+  margin-bottom: 12px;
+  font-weight: normal;
+}
+
+.control-panel .left-l {
+  padding: 6px 12px;
+  width: 260px;
+  float: left;
+  border-right: 1px dashed #ccc;
+}
+
+.control-panel .left-l ul li {
+  float: left;
+  width: 64px;
+  margin-bottom: 12px;
+  text-align: center;
+}
+
+.control-panel .right-l {
+  float: left;
+  padding: 6px 12px;
+}
+
+.tab-01 {
+  position: absolute;
+  left: 100px;
+  top: 8px;
+}
+
+.tab-02 {
+  position: absolute;
+  left: 8px;
+  top: 8px;
+}
+
+.tab-02 a {
+  float: left;
+  display: inline-block;
+  margin-right: 4px;
+  height: 27px;
+  text-align: center;
+  line-height: 27px;
+  cursor: pointer;
+  background: #848484;
+  color: #fff;
+  border: 1px solid #949494;
+  border-bottom: none;
+  padding: 0 4px;
+  text-indent: 0;
+  font-weight: normal;
+}
+
+.tab-02 a.on {
+  background: #fff;
+  color: #525252;
+  border: 1px solid #949494;
+  border-bottom: none;
+}
+.tab-02 a:hover {
+  text-decoration: none;
+}
+
+.tab-01 a {
+  float: left;
+  display: inline-block;
+  margin-right: 4px;
+  height: 27px;
+  text-align: center;
+  line-height: 27px;
+  cursor: pointer;
+  background: #848484;
+  color: #fff;
+  border: 1px solid #949494;
+  border-bottom: none;
+  padding: 0 2px;
+  text-indent: 0;
+  font-weight: normal;
+}
+
+.tab-01 a.on {
+  background: #fff;
+  color: #525252;
+  border: 1px solid #949494;
+  border-bottom: none;
+}
+.tab-01 a:hover {
+  text-decoration: none;
+}
+
+.tab-01-in .content {
+  border: 1px solid #ccc;
+  padding: 12px;
+}

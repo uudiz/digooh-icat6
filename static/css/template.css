@@ -1,0 +1,165 @@
+ul {
+    list-style-image: none;
+    list-style-position: outside;
+    list-style-type: none;
+}
+
+li {
+    list-style-image: none;
+    list-style-position: outside;
+    list-style-type: none;
+}
+
+#tabs{height:600px;}
+#dialog {
+	overflow:hidden;
+}
+
+.screen {
+	background-color:#ffff80;
+	padding: 0px; 
+	margin: 0px; 
+	position:relative;
+}
+.screen .title a{float:right;}
+
+.screen .movie{
+	width: 320px; 
+	height: 240px; 
+	padding: 0px; 
+	margin: 0px; 
+	top:0px; 
+	left:0px;
+	background-color:#ffffff;
+	position: absolute;
+}
+.screen .full{
+	width:800px;
+	height:600px;
+	left:0px;
+	top: 0px;
+	background-color:#ffffff;
+	position: absolute;
+}
+.screen .image{
+	width: 320px; 
+	height: 240px; 
+	padding: 0px; 
+	margin: 0px; 
+	top:241px; 
+	left:0px;
+	position: absolute;
+} 
+.screen .text {
+	 width: 800px; 
+	 height: 50px; 
+	 padding: 0px; 
+	 margin: 0px; 
+	 top:550px; 
+	 left:0px;
+	 position: absolute;
+}
+.screen .date {
+	width: 100px; 
+	height: 80px; 
+	padding: 0px; 
+	margin: 0px; 
+	top:0px; 
+	left:700px;
+	position: absolute;
+}
+
+.screen .time {
+	width: 100px; 
+	height: 80px; 
+	padding: 0px; 
+	margin: 0px; 
+	top:80px; 
+	left:700px;
+	position: absolute;
+}
+
+.screen .logo {
+	width: 100px; 
+	height: 80px; 
+	padding: 0px; 
+	margin: 0px; 
+	top:10px; 
+	left:10px;
+	position: absolute;
+}
+
+.template-zone-bg{
+  	width:100%;
+     height:100%;
+ }
+ 
+ .movie .template-zone-bg{
+     background-color:#336b96;      
+ }
+
+ .logo .template-zone-bg{
+     background-color:#336b96;      
+ }
+ 
+ .image .template-zone-bg{  
+     background-color:#95b555;           
+ }
+
+.image1 .template-zone-bg{  
+     background-color:#95b555;           
+ }
+ 
+ .image2 .template-zone-bg{
+	background-color:#5a974b;
+}
+.image3 .template-zone-bg{
+	background-color:#378c6d;
+}
+.image4 .template-zone-bg{
+	background-color:#528B8B;
+}
+.date .template-zone-bg{
+	background-color:#5f698c;
+}
+.time .template-zone-bg{
+	background-color:#4876FF;
+}
+.weather .template-zone-bg{
+	background-color:#4d7ea3;
+}
+.text .template-zone-bg{
+	background-color:#679fca;
+}
+
+.branch_text .template-zone-bg{
+	background-color:#679fca;
+}
+.webpage .template-zone-bg{
+	background-color:#0072E3;
+}
+.btnGroup .template-zone-bg{
+	background-color:#EBEBEB;
+}
+.bton .template-zone-bg{
+	background-color: #74afe4;
+}
+.staticText .template-zone-bg{
+	background-color:#7171C6;
+}
+
+.mask .template-zone-bg{
+	background-color:#FBDC62;
+}
+
+.aligncenter { 
+	clear: both; 
+	display: block; 
+	width:auto;
+	max-width: 100%;  
+    max-height: 100%;
+    position: absolute;
+    top:50%; 
+    left:50%;
+    transform: translate(-50%,-50%);
+} 

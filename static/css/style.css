@@ -1,0 +1,357 @@
+html, body, div, span, applet, object, iframe, h1, h2, h3, h4, h5, h6, p, blockquote, pre, a, abbr, acronym, address, big, cite, code, del, dfn, font, img, ins, kbd, q, s, samp, small, strike, strong, sub, sup, tt, var, dl, dt, dd, ol, ul, li, fieldset, form, label, legend, table, caption, tbody, tfoot, thead, tr, th, td {
+    margin: 0;
+    padding: 0;
+    border: 0;
+    outline: 0;
+    font-weight: inherit;
+    font-style: inherit;
+    font-size: 100%;
+    font-family: inherit;
+    vertical-align: baseline;
+}
+
+.validateTips {
+    border: 1px solid transparent;
+    padding: 0.3em;
+    font-size: 12px;
+    color: red;
+}
+
+fieldset {
+    padding: 0;
+    border: 0;
+    margin-top: 25px;
+}
+
+fieldset input.text {
+    margin-bottom: 12px;
+    padding: .4em;
+}
+
+fieldset label, fieldset input {
+    display: block;
+}
+
+fieldset input[type =
+"radio"] {
+    display: inline;
+}
+
+.loading {
+    z-index: 9999;
+}
+
+.loading .mask {
+    z-index: 10000;
+}
+
+.loading .img {
+    z-index: 10001;
+    float: right;
+}
+
+.loading .bar {
+    clear: both;
+    height: 0px;
+}
+
+.photo-list {
+    overflow-x: hidden;
+    overflow-y: hidden;
+}
+
+.photo-list li {
+    display: block;
+    float: left;
+    margin-bottom: 5px;
+    margin-left: 0;
+    margin-right: 3px;
+    margin-top: 0;
+    position: relative;
+}
+
+.photo-list li {
+    border-bottom-color: #FFFFFF;
+    border-bottom-style: solid;
+    border-bottom-width: 1px;
+    border-left-color-ltr-source: physical;
+    border-left-color-rtl-source: physical;
+    border-left-color-value: #FFFFFF;
+    border-left-style-ltr-source: physical;
+    border-left-style-rtl-source: physical;
+    border-left-style-value: solid;
+    border-left-width-ltr-source: physical;
+    border-left-width-rtl-source: physical;
+    border-left-width-value: 1px;
+    border-right-color-ltr-source: physical;
+    border-right-color-rtl-source: physical;
+    border-right-color-value: #FFFFFF;
+    border-right-style-ltr-source: physical;
+    border-right-style-rtl-source: physical;
+    border-right-style-value: solid;
+    border-right-width-ltr-source: physical;
+    border-right-width-rtl-source: physical;
+    border-right-width-value: 1px;
+    border-top-color: #FFFFFF;
+    border-top-style: solid;
+    border-top-width: 1px;
+    height: 160px;
+    margin-bottom: 0;
+    margin-left: 0;
+    margin-right: 0;
+    margin-top: 0;
+    overflow-x: hidden;
+    overflow-y: hidden;
+    padding-bottom: 4px;
+    padding-left: 4px;
+    padding-right: 4px;
+    padding-top: 4px;
+    display: list-item;
+}
+
+.photo-list li:hover, .photo-list li.hover, .photo-list li.select {
+    background-color: #CEE1EE;
+    border-bottom-color: #005EAC;
+    border-bottom-style: solid;
+    border-bottom-width: 1px;
+    border-left-color-ltr-source: physical;
+    border-left-color-rtl-source: physical;
+    border-left-color-value: #005EAC;
+    border-left-style-ltr-source: physical;
+    border-left-style-rtl-source: physical;
+    border-left-style-value: solid;
+    border-left-width-ltr-source: physical;
+    border-left-width-rtl-source: physical;
+    border-left-width-value: 1px;
+    border-right-color-ltr-source: physical;
+    border-right-color-rtl-source: physical;
+    border-right-color-value: #005EAC;
+    border-right-style-ltr-source: physical;
+    border-right-style-rtl-source: physical;
+    border-right-style-value: solid;
+    border-right-width-ltr-source: physical;
+    border-right-width-rtl-source: physical;
+    border-right-width-value: 1px;
+    border-top-color: #005EAC;
+    border-top-style: solid;
+    border-top-width: 1px;
+}
+
+.photo-list li .picture {
+    display: block;
+    overflow-x: hidden;
+    overflow-y: hidden;
+    width: 170px;
+    height: 130px;
+}
+
+.photo-list li img {
+    background-color: #DDDDDD;
+    background-position: center 25%;
+    background-repeat: no-repeat;
+    display: block;
+    margin-bottom: 0;
+    margin-left: 0;
+    margin-right: 0;
+    margin-top: 0;
+    overflow-x: hidden;
+    overflow-y: hidden;
+    width: 170px;
+    height: 130px;
+}
+
+.photo-list li:hover .frid-photo, .photo-list li.hover .frid-photo {
+    display: none;
+}
+
+img.photo {
+    border-bottom-color: #BBC9E2;
+    border-bottom-style: solid;
+    border-bottom-width: 1px;
+    border-left-color-ltr-source: physical;
+    border-left-color-rtl-source: physical;
+    border-left-color-value: #BBC9E2;
+    border-left-style-ltr-source: physical;
+    border-left-style-rtl-source: physical;
+    border-left-style-value: solid;
+    border-left-width-ltr-source: physical;
+    border-left-width-rtl-source: physical;
+    border-left-width-value: 1px;
+    border-right-color-ltr-source: physical;
+    border-right-color-rtl-source: physical;
+    border-right-color-value: #BBC9E2;
+    border-right-style-ltr-source: physical;
+    border-right-style-rtl-source: physical;
+    border-right-style-value: solid;
+    border-right-width-ltr-source: physical;
+    border-right-width-rtl-source: physical;
+    border-right-width-value: 1px;
+    border-top-color: #BBC9E2;
+    border-top-style: solid;
+    border-top-width: 1px;
+    display: inline-block;
+    margin-bottom: 5px;
+    margin-right: 10px;
+    padding-bottom: 3px;
+    padding-left: 3px;
+    padding-right: 3px;
+    padding-top: 3px;
+    vertical-align: top;
+}
+
+.dialog {
+    overflow: hidden;
+}
+
+.pager {
+    border-bottom-color: -moz-use-text-color;
+    border-bottom-style: none;
+    border-bottom-width: medium;
+    padding-top: 0;
+}
+
+.pager span {
+    color: #888888;
+}
+
+.pager span {
+    float: left;
+    padding-bottom: 6px;
+}
+
+.pagerpro {
+    float: right;
+    list-style-image: none;
+    list-style-position: outside;
+    list-style-type: none;
+    margin-bottom: 0;
+    margin-left: 0;
+    margin-right: 0;
+    margin-top: 0;
+    padding-bottom: 0;
+    padding-left: 0;
+    padding-right: 0;
+    padding-top: 0;
+}
+
+.pagerpro li {
+    display: inline;
+    float: left;
+}
+
+.pagerpro li.current a, .pagerpro li.current a:hover {
+    -moz-background-clip: border;
+    -moz-background-inline-policy: continuous;
+    -moz-background-origin: padding;
+    background-attachment: scroll;
+    background-color: transparent;
+    background-image: none;
+    background-position: 0 0;
+    background-repeat: repeat;
+    border-bottom-color: #005EAC;
+    border-bottom-style: solid;
+    border-bottom-width: 2px;
+    border-left-color-ltr-source: physical;
+    border-left-color-rtl-source: physical;
+    border-left-color-value: #005EAC;
+    border-right-color-ltr-source: physical;
+    border-right-color-rtl-source: physical;
+    border-right-color-value: #005EAC;
+    border-top-color: #005EAC;
+    color: #005EAC;
+    font-weight: 700;
+    padding-left: 2px;
+    padding-right: 2px;
+}
+
+.pagerpro li a {
+    display: block;
+    font-size: 12px;
+    padding-bottom: 2px;
+    padding-left: 3px;
+    padding-right: 3px;
+    padding-top: 3px;
+}
+
+.pagerpro li a.chn {
+    font-size: 12px;
+}
+
+/*
+button {
+    -moz-background-clip: border;
+    -moz-background-inline-policy: continuous;
+    -moz-background-origin: padding;
+    background-attachment: scroll;
+    background-color: transparent;
+    background-image: none;
+    background-position: 0 0;
+    background-repeat: repeat;
+    border-bottom-color: -moz-use-text-color;
+    border-bottom-style: none;
+    border-bottom-width: 0;
+    border-left-color-ltr-source: physical;
+    border-left-color-rtl-source: physical;
+    border-left-color-value: -moz-use-text-color;
+    border-left-style-ltr-source: physical;
+    border-left-style-rtl-source: physical;
+    border-left-style-value: none;
+    border-left-width-ltr-source: physical;
+    border-left-width-rtl-source: physical;
+    border-left-width-value: 0;
+    border-right-color-ltr-source: physical;
+    border-right-color-rtl-source: physical;
+    border-right-color-value: -moz-use-text-color;
+    border-right-style-ltr-source: physical;
+    border-right-style-rtl-source: physical;
+    border-right-style-value: none;
+    border-right-width-ltr-source: physical;
+    border-right-width-rtl-source: physical;
+    border-right-width-value: 0;
+    border-top-color: -moz-use-text-color;
+    border-top-style: none;
+    border-top-width: 0;
+    cursor: pointer;
+    margin-bottom: 0;
+    margin-left: 0;
+    margin-right: 0;
+    margin-top: 0;
+    overflow-x: visible;
+    overflow-y: visible;
+    padding-bottom: 0;
+    padding-left: 0;
+    padding-right: 0;
+    padding-top: 0;
+    width: auto;
+}
+
+button span {
+    -moz-background-clip: border;
+    -moz-background-inline-policy: continuous;
+    -moz-background-origin: padding;
+    background-attachment: scroll;
+    background-color: transparent;
+    background-image: url(/images/bg-button.png);
+    background-position: 0 0;
+    background-repeat: no-repeat;
+    float: left;
+    font-size: 14px !important;
+    font-weight: bold;
+    height: 31px;
+    line-height: 31px;
+    padding-bottom: 0;
+    padding-left: 10px;
+    padding-right: 0;
+    padding-top: 0;
+    text-align: center;
+    white-space: nowrap;
+}
+
+button span span {
+    background-position: 100% 0;
+    padding-bottom: 0;
+    padding-left: 10px;
+    padding-right: 20px;
+    padding-top: 0;
+}
+*/

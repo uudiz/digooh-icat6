@@ -1,0 +1,338 @@
+<head>
+
+<link rel="stylesheet" href="/static/css/jquery/chosen.min.css" />
+<link rel="stylesheet" href="/static/css/zTreeStyle.css" />
+<link rel="stylesheet" href="/static/css/user.css" />
+<script src='/static/js/jquery/jquery.ztree.core.min.js'></script>
+<script src="/static/js/jquery/jquery.ztree.excheck.js"></script>
+<script src='/static/js/jquery/chosen.jquery.min.js'></script>
+<script src='/static/fileuploader/all.fine-uploader.min.js'></script>
+
+</head>
+
+<div id="validateTips">
+	<div >
+		<div id="formMsgContent"></div>
+	</div>
+</div>
+<table width="100%" cellspacing="0" cellpadding="0" border="0" class="add_user">
+	<style>
+.add_user td {
+	text-align: left;
+	padding: 8px 8px;
+	font-size: 14px;
+}
+.table-list td{
+	height: 15px;
+}
+.logo {
+    border: 0.1em;
+    border-style: dotted;
+    width: 200px;
+    height: 70px;
+}
+
+</style>
+	<tbody>
+		<tr>
+			<td>
+				<?php echo lang('user_name');?>
+			</td>
+			<td>
+				<input type="text" id="name" name="name" style="width:200px;" value="<?php echo $user->name;?>" readonly="readonly" />
+			</td>
+		</tr>
+		<tr>
+			<td>
+				<?php echo lang('password');?>
+			</td>
+			<td>
+				<input type="password" id="password" name="password" style="width:200px;" value=""/> <span class="information"><?php echo lang('tip.reset.password');?></span>
+			</td>
+		</tr>
+		<tr>
+				<td>
+					<?php echo lang('email_address');?>
+				</td>
+				<td>
+					<input type="text" id="email" name="email" value="<?php echo $user->email;?>" style="width:200px;"/>
+				</td>
+		</tr>
+		<tr>
+			<td>
+				<?php echo lang("desc");?>
+			</td>
+			<td>
+				<textarea name="descr" id="descr" style="width:200px;" rows="2"><?php echo $user->descr;?></textarea>
+			</td>
+		</tr>
+		<tr>
+			<td>
+				<?php echo lang('rule');?>
+			</td>
+			<td>
+				<input type="radio" class="rule" name="auth" value="0" <?php if ($user->auth == $VIEW) {
+    echo 'checked="checked"';
+}?> onclick="u.changeAuth(this);"/>
+				<?php echo lang('rule.view');?>&nbsp;&nbsp;&nbsp;
+				 
+				<input type="radio" class="rule" name="auth" value="1" <?php if ($user->auth == $FRANCHISE) {
+    echo 'checked="checked"';
+}?> onclick="u.changeAuth(this);" />
+				<?php echo lang('rule.franchise');?>&nbsp;&nbsp;&nbsp;
+	
+
+				<input type="radio" class="rule" name="auth" value="4" <?php if ($user->auth == 4) {
+    echo 'checked="checked"';
+}?> onclick="u.changeAuth(this);"/>
+				<?php echo lang('role.staff');?>&nbsp;&nbsp;&nbsp;
+				
+				<?php if ($auth > $ADMIN):?>
+				<input type="radio" class="rule" name="auth" value="5" <?php if ($user->auth == $ADMIN) {
+    echo 'checked="checked"';
+}?> onclick="u.changeAuth(this);"/>
+				<?php echo lang('rule.admin');?>
+				<?php endif;?>
+			</td>
+		</tr>
+
+
+		<tr id="canPublishLine" <?php if ($user->auth != $VIEW):?>style="display:none;"<?php endif;?>>
+			<td>
+				Can Publish
+			</td>
+			<td>
+				<input type="radio"  name="publish" value="1" <?php if ($user->can_publish) {
+    echo 'checked="checked"';
+}?> />
+				Yes&nbsp;&nbsp;&nbsp;
+				 
+				<input type="radio"  name="publish" value="0" <?php if (!$user->can_publish) {
+    echo 'checked="checked"';
+}?>/>
+				No&nbsp;&nbsp;&nbsp;
+			</td>			
+		</tr>
+		 
+		<tr id="assignFolderLine" <?php if ($user->auth > 3):?>style="display:none;"<?php endif;?>>
+
+
+			<td>
+				<?php echo lang('select.folders');?>
+			</td>
+			<td>
+				<?php if (isset($folders)&&!empty($folders)):?>
+				<?php if ($this->config->item('with_sub_folders')):?>
+					<div class="zTreeDemoBackground left">
+						<ul id="treeFolder" class="ztree"></ul>
+					</div>
+				<?php else:?>
+					<select  data-placeholder="Choose Folders..." id="folder-select-options" class="chosen-select tag-input-style" multiple>
+							<?php foreach ($folders as $folder):?>
+								<option value="<?php echo $folder->id;?>" <?php if (isset($user_folders) && in_array($folder->id, $user_folders)):?>selected<?php endif;?>><?php echo $folder->name;?></option>
+							<?php endforeach;?>
+					</select>   
+				<?php endif;?>
+				<?php endif;?>
+			</td>
+		</tr>
+	
+
+		<tr class="assignCriteriaLine" <?php if ($user->auth != 0&&$user->auth != 2):?>style="display:none;"<?php endif;?>>
+		
+			<td>
+				<input type="radio" id="usecriteria" name="useplayer" <?php if (!$use_player):?>checked<?php endif;?> value=0 >
+				<?php echo lang('select.criterias');?>
+
+			</td>
+			<td>
+				<?php if (isset($criterias)&&!empty($criterias)):?>
+				<select  data-placeholder="Choose Criterias..." id="criteria-select-options" class="chosen-select tag-input-style" multiple>
+						<option value="0"></option>
+						<?php foreach ($criterias as $crit):?>
+							<option value="<?php echo $crit->id;?>" <?php if (isset($selected_criterias) && in_array($crit->id, $selected_criterias)):?>selected<?php endif;?>><?php echo $crit->name;?></option>
+						<?php endforeach;?>
+				</select>         
+	
+				<?php endif;?>
+			</td>
+		</tr>
+
+		<tr class="assignCriteriaLine" <?php if ($user->auth != 0&&$user->auth != 2):?>style="display:none;"<?php endif;?>>
+		
+			<td>
+				<input type="radio" id="useplayer" name='useplayer' <?php if ($use_player):?>checked<?php endif;?> value=1>
+				<?php echo lang('select.players');?>
+			</td>
+			<td>
+				<?php if (isset($players)&&!empty($players)):?>
+				<select  data-placeholder="Choose Players..." id="player-select-options" class="chosen-select tag-input-style" multiple>
+						<option value="0"></option>
+						<?php foreach ($players as $crit):?>
+							<option value="<?php echo $crit->id;?>" <?php if (isset($selected_player) && in_array($crit->id, $selected_player)):?>selected<?php endif;?>><?php echo $crit->name;?></option>
+						<?php endforeach;?>
+				</select>         
+	
+				<?php endif;?>
+			</td>
+		</tr>
+		
+		<tr id="assignCampaignLine" <?php if ($user->auth != $FRANCHISE&&$user->auth != $VIEW):?>style="display:none;"<?php endif;?>>
+
+			<td>
+				<?php echo lang('select.campaigns');?>
+			</td>
+			<td>
+				<?php if (isset($campaigns)&&!empty($campaigns)):?>
+				<select  data-placeholder="Choose Criterias..." id="campaign-select-options" class="chosen-select tag-input-style" multiple>
+						<option value="0"></option>
+						<?php foreach ($campaigns as $crit):?>
+							<option value="<?php echo $crit->id;?>" <?php if (isset($user->campaigns) && in_array($crit->id, explode(',', $user->campaigns))):?>selected<?php endif;?>><?php echo $crit->name;?></option>
+						<?php endforeach;?>
+				</select>         
+	
+				<?php endif;?>
+			</td>
+		</tr>
+		
+		<tr id="airtimeLine" <?php if ($user->auth != 2):?>style="display:none;"<?php endif;?>>
+			<td>
+				<?php echo lang('air.time');?>
+			</td>
+			<td>
+				<input id="air_time_input" type="number" min=0 max=100 value="<?php if (isset($user->airtime)) {
+    echo $user->airtime;
+}?>" /><span>%</span>
+			</td>			
+		</tr>
+
+		<tr>
+			<td>
+				logo
+			</td>
+			<td>
+
+				<div class="logo"  <?php if (isset($user->logo)&&!empty($user->logo)):?>style="background-image:url(/images/logos/<?php echo $user->logo?>);"<?php endif;?>></div>
+
+					<a id="uploader" >browse</a>
+					<a id="reset" onclick="u.resetLogo()">reset</a>
+		
+					<div id="UploadProgress" style="display: none;"></div>
+				<script type="text/template" id="qq-template">
+					<div class="qq-uploader-selector qq-uploader qq-gallery">
+						<ul class="qq-upload-list-selector qq-upload-list" role="region" aria-live="polite" aria-relevant="additions removals">
+							<li>
+								<div class="qq-file-info">
+									<div class="qq-file-name">
+										<span class="qq-upload-file-selector qq-upload-file"></span>
+									</div>
+								</div>
+							</li>
+						</ul>
+					</div>
+				</script>
+			</td>
+
+		</tr>
+
+		<?php if ($cur_uid == $user->id):?>
+		<tr>
+			<td colspan="2">
+				<div class="information">
+					<?php echo lang('warn.user.self');?>
+				</div>
+			</td>
+		</tr>
+		<?php endif;?>
+	</tbody>
+</table>
+<p class="btn-center">
+	<input type="hidden" id="custom_logo" name="custom_logo" value="<?php echo $user->logo;?>" />
+	<input type="hidden" name="cid" id="cid" value="<?php echo $user->cid;?>"/>
+	<input type="hidden" name="id" id="id" value="<?php echo $user->id;?>"/>
+	<input type="hidden" name="save_type" id="save_type" value=0 />
+	<a class="btn-01" href="javascript:void(0);" onclick="u.doSave();"><span><?php echo lang('button.save');?></span></a>
+	<a class="btn-01" href="javascript:void(0);" onclick="tb_remove();"><span><?php echo lang('button.cancel');?></span></a>	
+</p>
+
+<script type="text/javascript">
+$('.chosen-select').chosen({width: "400px"}); 
+	var errorHandler = function(id, fileName, reason) {
+			    return qq.log("id: " + id + ", fileName: " + fileName + ", reason: " + reason);
+			};
+	var settings = {
+				element: document.getElementById("UploadProgress"),
+				button: document.getElementById("uploader"),
+				autoUpload: true,
+			    debug: false,
+			    uploadButtonText: "Select Files",
+				display: {
+			 		fileSizeOnSubmit: true
+				},
+				validation: {
+					allowedExtensions: ["jpg", "jpeg","png"],
+			        sizeLimit: 1000000,
+			       	//itemLimit: 4
+				},
+				request: {
+					endpoint: "/user/upload_logo"
+				},
+				deleteFile: {
+					enabled: false
+			  	},
+			 	resume: {
+			   		enabled: true
+			  	},
+				retry: {
+			  		enableAuto: false
+				},
+			 	callbacks: {
+			 		onError: errorHandler,
+			    	onComplete: function (id, name, response) {
+			      		if(response.success == true) {
+							$('#custom_logo').val(response.file_name);
+							$('.logo').css('background-image','url(/images/logos/'+response.file_name+')');
+				      	}else {
+				      		alert(response.msg);
+					    }
+			   		}
+				}
+			};
+			fileuploader = new qq.FineUploader(settings);
+
+<?php if ($this->config->item('with_sub_folders')):?>
+		var setting = {
+			check: {
+				enable: true,
+				chkboxType: { "Y": "s", "N": "s" }
+			},
+			data: {
+				simpleData: {
+					enable: true
+				}
+			}
+		};
+
+		var zNodes;
+		<?php
+           $folder_ary = array();
+           if ($folders) {
+               foreach ($folders as &$folder) {
+                   if (isset($user_folders) && in_array($folder['id'], $user_folders)) {
+                       $folder['checked'] = true;
+                   }
+                   $folder_ary[] = $folder;
+               }
+           }
+        ?>
+		
+		zNodes = eval(<?php echo json_encode($folder_ary)?>);
+
+		
+		$(document).ready(function(){	
+			$.fn.zTree.init($("#treeFolder"), setting, zNodes);	
+			var treeObj = $.fn.zTree.getZTreeObj("treeFolder");
+			treeObj.expandAll(true);				
+		});
+<?php endif?>		
+</script>

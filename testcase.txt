@@ -1,0 +1,49 @@
+下载文件
+http://localhost/receive/downloadMMF?fid=217_71&sn=1482832517
+http://localhost/cdms/receive!downloadMMF.action?fid=265_127&sn=1482652710
+http://demo.miatek.com:8080/cdmsA/receive!downloadMMF.action?sn=1792892586&hid=6EB00667&fid=4_1
+
+下载SCH
+http://localhost/receive/downloadSCH?type=0&sn=1482652710
+http://localhost/cdms/receive!downloadSCH.action?type=0&sn=0BB00009
+
+下载PLS
+http://localhost/receive/downloadPLS?fid=30&sn=1482652710
+http://localhost/cdms/receive!downloadPLS.action?sn=0BB00009&fid=558_520
+
+下载 Weather.xml
+http://localhost/receive/downloadDynamicData?dynamicType=0&sn=1482652710
+http://localhost/cdms/receive!downloadDynamicData.action?dynamicType=0&sn=1482652710
+
+同步Time
+http://localhost/receive/syncPlayerTime?sn=1482652710&time1=1334494721
+http://localhost/cdms/receive!syncPlayerTime.action?sn=1482652710&time1=1334494721
+
+RSS
+http://localhost/receive/downloadRss?sn=1482652710&id=4
+http://localhost/cdms/receive!downloadRss.action?sn=0BB00003&id=4
+
+下载策略
+http://localhost/cdms/receive!downloadDownloadStrategy.action?sn=0BB00003
+http://localhost/receive/downloadDownloadStrategy?sn=0BB00003
+
+终端定时开关机策略下载
+http://localhost/cdms/receive!downloadTimecfg.action?sn=0BB00003
+http://localhost/receive/downloadTimecfg?sn=1482652710
+http://demo.miatek.com:8080/cdmsA/receive!downloadTimecfg.action?sn=0BB00003
+
+下载config.xml
+http://localhost/receive/downloadViewConfig?sn=1482652710
+http://localhost/cdms/receive!downloadViewConfig.action?sn=0BB00003
+
+
+np200下载task.xml (每个任务文件的最后修改时间)
+http://demo.miatek.com:8080/receive/status2?sn=1502773007&hid=6EB00667&enforceDownload=1
+
+ffmpeg
+./ffmpeg -i /data/mia/Adidas01.mpg -y -f image2 -ss 0 -t 0.001 -s 720*480 test.jpg
+./ffmpeg -i /data/mia/Adidas01.mpg -y -ab 128 -ar 22050 -b 500 -s 720*480 test.flv
+./ffmpeg -i /data/mia/Adidas01.mpg -y -acodec copy -vf "transpose=1" -s 720*480 test.mpg
+
+http://demo.miatek.com:8080/player/plist 在此页面发送生成log压缩包命令
+http://demo.miatek.com:8080/player/logList 

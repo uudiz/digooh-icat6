@@ -1,0 +1,92 @@
+.accordion{
+	height:100%;
+	background:var(--mainColor);/*#1166BB*/;
+	overflow:hidden;
+	position:relative;
+}
+div.sdmenu {
+	width: 100%;
+	font-family: Arial, Verdana, Geneva, sans-serif;
+	font-size: 14px;
+	color: #393939;
+	
+}
+div.sdmenu div {
+	/*background: url(../images/nav-bg.gif) 0 -33px repeat-x;*/
+	overflow: hidden;
+	color: #3c3c3c;
+	cursor: pointer;
+}
+div.sdmenu div.collapsed {
+	height: 32px;
+	
+}
+
+
+div.sdmenu div span {
+	display: block;
+	background: #fff;
+	/*background: url(../images/nav-bg.gif) repeat-x;*/
+	text-indent: 20px;
+	height:32px;
+	line-height: 32px;
+	font-weight: bold;
+	font-size: 15px;
+	cursor: pointer;
+}
+
+div.sdmenu div span::after {
+  border-right: 2px solid;
+  border-bottom: 2px solid;
+  content: '';
+  float: right;
+  width: 0.4em;
+  height: 0.4em;
+  margin-top: 1em;
+  margin-right: 1em;
+  -webkit-transform: rotate(225deg);
+          transform: rotate(225deg);
+  transition: inherit;
+}
+
+
+
+
+div.sdmenu div.collapsed span {
+	/*background-image: url("");*/
+	background: var(--mainColor);;
+	color: #f7f7f7;
+	cursor: pointer;
+}
+
+div.sdmenu div.collapsed span::after {
+  border-right: 1px solid;
+  border-bottom: 1px solid;
+  content: '';
+  float: right;
+  width: 0.4em;
+  height: 0.4em;
+  margin-top: 0.7em;
+  margin-right: 1em;
+  -webkit-transform: rotate(45deg);
+          transform: rotate(45deg);
+  transition: inherit;
+}
+
+
+div.sdmenu div a {
+	padding: 5px 10px;
+	display: block;
+	color: #fff;
+	text-indent:26px;
+}
+
+div.sdmenu div a.on {
+	background : #84c4ff;
+	color: #00268e;
+}
+div.sdmenu div a:hover {
+	background: #84c4ff;
+	color: #00268e;
+	text-decoration: none;
+}

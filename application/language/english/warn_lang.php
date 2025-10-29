@@ -1,0 +1,22 @@
+<?php
+$lang['warn.system.user'] = 'System user can\'t use this function';
+$lang['warn.param'] = 'Invalid request parameter!';
+$lang['warn.no.auth'] = 'No auth to operate this!';
+$lang['warn.choose.empty.tip'] = 'Please choose at least one!';
+$lang['warn.ftp.format'] = 'FTP server format error. Please use like this "ftp://demo.miatek.com" or "demo.miatek.com"';
+$lang['tip.remove.item'] = 'Are you sure to remove this item?';
+$lang['tip.remove.empty.item'] = 'Please choose at least one item before operate!';
+$lang['tip.remove.choose.item'] = 'Are you sure to remove selected items?';
+$lang['tip.expland.item'] = 'Expland this item';
+$lang['tip.collapse.item'] = 'Collapse this item';
+$lang['empty'] = 'Empty';
+$lang['empty.result'] = 'Empty Result';
+$lang['search.empty.result1'] = 'Your search ';
+$lang['search.empty.result2'] = ' did not match any records.';
+$lang['warn.player.restart'] = 'The selective players will restart shortly';
+$lang['warn.player.format'] = 'The selective player will format its local storage and restart, all data will be erased entirely. Please execute carefully!';
+$lang['warn.area.you.sure'] = 'Are you sure to send the command?';
+$lang['warn.template.name'] = 'Invalid Filename! (Template.xxx.xml)';
+$lang['warn.import.name'] = 'Template already existed, please change to different name or delete current one!';
+$lang['warn.touch.template.name'] = 'Invalid Filename! (Touch.Template.xxx.xml)';
+$lang['warn.touch.import.name'] = 'Template already existed, please change to different name or delete current one!';

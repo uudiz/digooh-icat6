@@ -1,0 +1,22 @@
+<?php
+$lang['warn.system.user']='Systembenutzer können diese Funktion nicht ausführen';
+$lang['warn.param']='Ungültige Anfrageparameter!';
+$lang['warn.no.auth']='Keine Berechtigung für Ausführung!';
+$lang['warn.choose.empty.tip']='Bitte wählen Sie mindestens eines aus!';
+$lang['warn.ftp.format']='FTP Server Format falsch. Geben Sie es in der Form "ftp://test.ihreseite.com" oder "test.ihreseite.com" ein';
+$lang['tip.remove.item']='Wollen Sie sicher dieses Objekt entfernen?';
+$lang['tip.remove.empty.item']='Bitte treffen Sie eine Auswahl, damit fortgefahren werden kann!';
+$lang['tip.remove.choose.item']='Wollen Sie sicher die ausgewählten Objekte entfernen?';
+$lang['tip.expland.item']='Öffne die Objekteigenschaften';
+$lang['tip.collapse.item']='Verberge die Objekteigenschaften';
+$lang['empty']='Leer';
+$lang['empty.result']='Keine Ergebnisse';
+$lang['search.empty.result1']='Ihre Suche ';
+$lang['search.empty.result2'] = ' hat keine Treffer erzielt.';
+$lang['warn.player.restart'] = 'Die ausgewählten Player werden sobald wie möglich neustarten';
+$lang['warn.player.format'] = 'Die ausgewählten Player werden den ihren Speicher formatieren und neustarten. Alle Daten werden dabei vollständig gelöscht. Bitte mit Bedacht durchführen!';
+$lang['warn.area.you.sure'] = 'Are you sure you want to send data packets?';
+$lang['warn.template.name'] = 'Invalid Filename! (Template.xxx.xml)';
+$lang['warn.import.name'] = 'Template already existed, please change to different name or delete current one!';
+$lang['warn.touch.template.name'] = 'Invalid Filename! (Touch.Template.xxx.xml)';
+$lang['warn.touch.import.name'] = 'Template already existed, please change to different name or delete current one!';

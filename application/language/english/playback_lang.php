@@ -1,0 +1,26 @@
+<?php
+$lang['playback'] = 'Playback Report';
+$lang['post.date'] = 'Post Date';
+$lang['date.time'] = 'Date/Time';
+$lang['sn'] = 'ID #';
+$lang['times'] = 'Count';
+$lang['duration'] = 'Seconds';
+$lang['export.excel'] = 'Export Excel';
+$lang['export'] = 'Export';
+$lang['planed_times'] = "Planed";
+$lang['fulfillment_planed'] = "Fulfillment(planed) in %";
+$lang['fulfillment_booked'] = "Fulfillment(booked) in %";
+$lang['no_playback'] = 'No Playback';
+$lang['summary'] = 'Sum';
+$lang['player_number'] = 'Player count';
+$lang['campaign_number'] = 'Campaign count';
+$lang['media_number'] = 'Medium count';
+$lang['total'] = 'Total';
+$lang['total_planed'] = 'Total of Planned';
+$lang['total_count'] = 'Total of Count';
+$lang['total_duration'] = 'Total of Seconds';
+$lang['total_booked'] = 'Total of Booked';
+$lang['avg_ful_planed'] = 'Avg Fulfillment(planed) in %';
+$lang['avg_ful_booked'] = 'Avg Fulfillment(booked) in %';
+$lang['labels'] = 'Label';
+$lang['date_selected'] = 'Date Selected';

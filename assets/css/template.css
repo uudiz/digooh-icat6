@@ -1,0 +1,153 @@
+ul {
+    list-style-image: none;
+    list-style-position: outside;
+    list-style-type: none;
+}
+
+li {
+    list-style-image: none;
+    list-style-position: outside;
+    list-style-type: none;
+}
+
+#tabs {
+    height: 600px;
+}
+
+#dialog {
+    overflow: hidden;
+}
+
+.screen .title a {
+    float: right;
+}
+
+.icon-list {
+    margin: 10px;
+    border-bottom: 1px solid #ccc;
+    height: 42px;
+}
+
+.icon-list ul li {
+    float: left;
+    width: 48px;
+    text-align: center;
+}
+
+#area_movie dd {
+    background-color: #336b96;
+}
+
+#area_logo dd {
+    background-color: #7ec0ee;
+}
+
+#area_pic1 dd {
+    background-color: #95b555;
+}
+
+#area_mask dd {
+    background-color: #ffcc00;
+    opacity: 0.5;
+}
+
+#area_pic2 dd {
+    background-color: #5a974b;
+}
+
+#area_pic3 dd {
+    background-color: #378c6d;
+}
+
+#area_pic4 dd {
+    background-color: #528b8b;
+}
+
+#area_date dd {
+    background-color: #5f698c;
+}
+
+#area_time dd {
+    background-color: #4876ff;
+}
+
+#area_text dd {
+    background-color: #4d7ea3;
+}
+
+#area_5 dd {
+    background-color: #679fca;
+}
+
+#area_webpage dd {
+    background-color: #679fca;
+}
+
+#area_weather dd {
+    background-color: #0072e3;
+}
+
+.btnGroup dd {
+    background-color: #ebebeb;
+}
+
+.bton dd {
+    background-color: #74afe4;
+}
+
+#area_staticText dd {
+    background-color: #7171c6;
+}
+
+.gray-area {
+    border: 1px solid #ccc;
+    padding: 0px;
+    background: #f6f6f6;
+}
+
+.close {
+    color: #990000;
+    font-size: 9px;
+    position: relative;
+    float: right;
+    right: 1px;
+    top: 1px;
+    opacity: 0.6;
+}
+
+.close:hover {
+    opacity: 1;
+}
+
+.common-style {
+    margin: 0px;
+}
+
+.common-style dt {
+    background: #f7f7f7;
+    text-indent: 1px;
+    border: 1px solid #ccc;
+    height: 20px;
+    line-height: 20px;
+    font-size: 14px;
+    position: relative;
+    cursor: pointer;
+}
+
+.common-style dd {
+    background: #fff;
+    border: 0px solid #ccc;
+    border-top: none;
+    padding: 0px;
+    min-height: 0px;
+}
+
+.common-style dt .icon {
+    position: absolute;
+    right: 10px;
+    top: 2px;
+}
+
+.selected {
+    background-color: #a2b4ee !important;
+}
