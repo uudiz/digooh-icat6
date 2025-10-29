@@ -3643,6 +3643,7 @@ class Device extends MY_Model
         */
     }
 
+
     public function get_amc_from_timer($timer_id)
     {
         $result = new stdClass();
@@ -3881,5 +3882,35 @@ class Device extends MY_Model
             return $query->result();
         }
         return false;
+    }
+
+    public function saveMany_programmatic_bookings($arrays)
+    {
+        if (empty($arrays)) {
+            return false;
+        }
+        $this->db->insert_batch('cat_player_programmatic_booking', $arrays);
+    }
+
+    public function delete_player_programmatic_bookings($player_id, $start_date = false, $end_date = false)
+    {
+        if (!$player_id && !$end_date) {
+            return false;
+        }
+        if ($player_id) {
+            $this->db->where('player_id', $player_id);
+        }
+        if ($start_date && $end_date && $start_date == $end_date) {
+            $this->db->where('at_date', $start_date);
+        } else {
+            if ($start_date) {
+                $this->db->where('at_date>=', $start_date);
+            }
+            if ($end_date) {
+                $this->db->where('at_date<=', $end_date);
+            }
+        }
+
+        return $this->db->delete('cat_player_programmatic_booking');
     }
 }

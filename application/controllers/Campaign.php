@@ -574,6 +574,10 @@ class Campaign extends MY_Controller
             if ($pls && $pls->published) {
                 $this->program->reset_player_least_while_update_campaign($pls);
                 $this->program->delete_planed_records($playlist_id, date("Y-m-d"));
+
+                if ($pls->priority == 7) {
+                    $this->program->reset_players_programmatic_booking($pls);
+                }
             }
         }
 

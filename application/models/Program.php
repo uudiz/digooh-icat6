@@ -2011,6 +2011,10 @@ class Program extends MY_Model
         if ($force && $pls && $pls->published) {
             $this->reset_player_least_while_update_campaign($pls);
             $this->delete_planed_records($pls->id, date("Y-m-d"));
+
+            if (isset($pls->priority) && $pls->priority == 7) {
+                $this->reset_players_programmatic_booking($pls);
+            }
         }
 
 
@@ -6327,6 +6331,7 @@ class Program extends MY_Model
         $least_arrays = array();
         $media_planed_array = array();
 
+        $promatic_booking_array = array();
 
         foreach ($players as $player) {
             $runtime_start1 = microtime(true);
@@ -6607,9 +6612,19 @@ class Program extends MY_Model
                         }
                     }
 
+
+                    //Promatiic fill-in campaign, only one campaign per day
+
+
                     if (!$company->pId) {
                         //chrome_log($leastfree);
                         $least_arrays[] = $this->get_least_from_timeslot($player->id,  $today, $time_slots);
+                        if ($playlist->priority == 7) {
+                            $promatic_booking_data = $this->get_promatic_booking_from_timeslot($player->id, $today, $time_slots);
+                            if ($promatic_booking_data) {
+                                $promatic_booking_array[] = $promatic_booking_data;
+                            }
+                        }
                     }
                 }
 
@@ -6637,7 +6652,13 @@ class Program extends MY_Model
             $this->device->saveMany_least_free($least_arrays);
         }
 
-        //chrome_log("<!-- Processed in " . round(microtime(true) - $runtime_start, 6) . " second(s) -->");
+        if ($playlist->priority == 7 && !empty($promatic_booking_array)) {
+            foreach ($players as $player) {
+                $this->device->delete_player_programmatic_bookings($player->id, $start_date, $end_date);
+            }
+
+            $this->device->saveMany_programmatic_bookings($promatic_booking_array);
+        }
 
         $msg = $this->lang->line('playlist.publish.success');
         return array('code' => 0, 'msg' => $msg, 'extra_code' => $extra_code, 'extra_msg' => $extra_msg);
@@ -7163,6 +7184,23 @@ class Program extends MY_Model
         // return array('player_id' => $player_id, 'at_date' => $date, 'least_free' => 3600 - $maxused);
     }
 
+    private function get_promatic_booking_from_timeslot($player_id, $date, $timeslots)
+    {
+
+        $promatic_booking_data = array('player_id' => $player_id, 'at_date' => $date, 'h0' => null, 'h1' => null, 'h2' => null, 'h3' => null, 'h4' => null, 'h5' => null, 'h6' => null, 'h7' => null, 'h8' => null, 'h9' => null, 'h10' => null, 'h11' => null, 'h12' => null, 'h13' => null, 'h14' => null, 'h15' => null, 'h16' => null, 'h17' => null, 'h18' => null, 'h19' => null, 'h20' => null, 'h21' => null, 'h22' => null, 'h23' => null);
+
+        $has_data = false;
+        foreach ($timeslots as $slot) {
+
+            if (isset($slot->promatic_booking_time) && $slot->promatic_booking_time > 0) {
+                $has_data = true;
+                $promatic_booking_data["h" . $slot->startH] = $slot->promatic_booking_time;
+            }
+        }
+
+
+        return $has_data ? $promatic_booking_data : false;
+    }
 
 
     //重新发布的时候如果daterange有变化也需要调用这个
