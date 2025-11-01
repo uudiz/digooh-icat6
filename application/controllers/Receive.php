@@ -578,6 +578,25 @@ class Receive extends CI_Controller
                 foreach ($fillin_campaigns as $campaign) {
                     $campaign_medias = $this->program->get_playlist_area_media_list_noexclude($campaign->id, $this->config->item('area_video'));
 
+                    if ($this->config->item('medium_with_weekNtime')) {
+
+                        $current_weekday = date('w', strtotime($today));
+                        $this->load->helper('week');
+                        // Filter out media with time restrictions that don't match the current slot's time range
+
+
+                        $filtered_media_data = array_filter($campaign_medias['data'], function ($medium) use ($current_weekday) {
+                            if ($medium->week_flag && $medium->weekday != 127) {
+                                if (!isDayEnabled($medium->weekday, $current_weekday)) {
+                                    return false;
+                                }
+                            }
+                            return true;
+                        });
+                        $campaign_medias['data'] = array_values($filtered_media_data);
+                        $campaign_medias['total'] = count($filtered_media_data);
+                    }
+
                     if ($campaign_medias) {
                         $medias = array_merge_recursive($medias, $campaign_medias['data']);
                     }
@@ -607,7 +626,7 @@ class Receive extends CI_Controller
                     $xml .= sprintf(
                         '<Resource id="%d" name="%s" fid="%d" size="%d" signature="%s"
 								sw110Signature="%s" transmode="%d" startdate="%s" enddate="%s" duration="00:%s"
-								transittime="0.5" mode="%d" reload="%d"  replacable="1">',
+								transittime="0.5" mode="%d" reload="%d"  replacable="1"',
                         $media->id,
                         //htmlspecialchars($media->name, ENT_XML1, 'UTF-8'),
                         $this->safInputs($media->name),
@@ -621,7 +640,16 @@ class Receive extends CI_Controller
                         $times,
                         0,
                         $media->reload
-                    ) . $this->sep;
+                    );
+
+                    if ($this->config->item('medium_with_weekNtime')) {
+                        if (isset($media->time_flag) && $media->time_flag) {
+                            $xml .= sprintf(' starttime="%s" endtime="%s"', $media->start_time, $media->end_time);
+                        }
+                    }
+                    $xml .= ">" . $this->sep;
+
+
                     $xml .= sprintf('<URL>%s</URL>', $media->full_path) . $this->sep;
                     $xml .= '</Resource>' . $this->sep;
                 }
@@ -885,7 +913,7 @@ class Receive extends CI_Controller
 
                 if ($con->networkmode == '2') {
                     if ($con->wifissid != '') {
-                        $cfg['ssidname'] = $con->wifissid;
+                        $cfgArray['ssidname'] = $con->wifissid;
                         if ($con->wifipwd != '') {
                             $cfgArray['wifipwd'] = $con->wifipwd;
                         }
@@ -2834,10 +2862,32 @@ class Receive extends CI_Controller
                 $sense = 2;
             }
 
+            /*
             if (isset($pl->pls_custom_type) && $pl->pls_custom_type == 1) {
                 $sch .= sprintf('<Programme name="%d.PLS" id="%d" fid="%d" type="%d" sense="%d" model="3" CustomType="offline">', $pl->id, $pl->id,  $pl->id, $type, $sense) . $this->sep;
             } else {
                 $sch .= sprintf('<Programme name="%d.PLS" id="%d" fid="%d" type="%d" sense="%d" model="3">', $pl->id, $pl->id,  $pl->id, $type, $sense) . $this->sep;
+            }
+            */
+            if ($this->config->item("mutli_screen_output")) {
+                $programStr = sprintf('<Programme name="%d.PLS" id="%d" fid="%d" type="%d" sense="%d" model="3"', $pl->id, $pl->id,  $pl->id, $type, $sense);
+                if (isset($pl->pls_custom_type) && $pl->pls_custom_type == 1) {
+                    $programStr .= ' CustomType="offline"';
+                }
+                if (isset($pl->target_display) && $pl->target_display > 0) {
+
+                    $programStr .= ' screentype="' . $pl->target_display . '"';
+                }
+                $programStr .= '>' . $this->sep;
+
+
+                $sch .= $programStr;
+            } else {
+                if (isset($pl->pls_custom_type) && $pl->pls_custom_type == 1) {
+                    $sch .= sprintf('<Programme name="%d.PLS" id="%d" fid="%d" type="%d" sense="%d" model="3" CustomType="offline">', $pl->id, $pl->id,  $pl->id, $type, $sense) . $this->sep;
+                } else {
+                    $sch .= sprintf('<Programme name="%d.PLS" id="%d" fid="%d" type="%d" sense="%d" model="3">', $pl->id, $pl->id,  $pl->id, $type, $sense) . $this->sep;
+                }
             }
 
             $sch .= sprintf('<PublishTime>%s</PublishTime>', date("Y-m-d H:i:s")) . $this->sep;

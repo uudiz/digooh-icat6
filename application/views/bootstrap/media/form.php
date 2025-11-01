@@ -16,7 +16,7 @@
 			<div class="card-header">
 				<h2><?php echo $title ?></h2>
 			</div>
-			<form id="dataForm" action="/media/do_save">
+			<form id="mediumForm">
 				<div class="card-body">
 					<div class="card d-flex flex-column">
 						<div class="row row-0 flex-fill">
@@ -49,7 +49,7 @@
 											<label for="folders"><?php echo lang("folder"); ?></label>
 											<select class="form-select" id="folders" name='folder_id'></select>
 										</div>
-										<div class="col-12">
+										<div class="mb-3">
 											<label for="tags_select"><?php echo $this->config->item("with_template") ? lang('categories') : lang('tag'); ?></label>
 											<select id="tags_select" name='tags_select[]' class="form-select select2" multiple>
 												<option value="0"></option>
@@ -64,27 +64,90 @@
 												<?php endforeach; ?>
 											</select>
 										</div>
-										<div class="col-12 row">
+										<div class="mb-3 row">
 											<div class="col-auto ">
-												<label></label>
 												<label class="form-check form-switch">
-													<label><?php echo lang("date.range"); ?></label>
+													<label><?php echo lang("date_range"); ?></label>
 													<input type="checkbox" id='date_flag' name='date_flag' class="form-check-input" <?php if (isset($data) && $data->date_flag) : ?>checked <?php endif ?> />
 												</label>
 											</div>
 											<div class="col date_range row" <?php if (!isset($data) || !$data->date_flag) : ?>style="display:none" <?php endif ?>>
 
 												<div class="col-auto ">
-													<label for="start_date"><?php echo lang('start_date'); ?></label>
+
 													<input type="date" class="form-control" required name="start_date" value="<?php if (isset($data->start_date)) echo $data->start_date; ?>" />
 												</div>
 												<div class="col-auto">
-													<label for="end_date"><?php echo lang('end_date'); ?></label>
+
 													<input type="date" class="form-control" required name="end_date" value="<?php if (isset($data->end_date)) echo $data->end_date; ?>" />
 												</div>
 											</div>
 										</div>
 
+
+										<?php if ($this->config->item('medium_with_weekNtime')): ?>
+											<div class="mb-3 row">
+												<div class="col-auto ">
+													<label class="form-check form-switch">
+														<label><?php echo lang("time_range"); ?></label>
+														<input type="checkbox" id='time_flag' class="form-check-input" <?php if (isset($data) && $data->time_flag) : ?>checked <?php endif ?> />
+													</label>
+												</div>
+												<div class="col time_range row" <?php if (!isset($data) || !$data->time_flag) : ?>style="display:none" <?php endif ?>>
+
+													<div class="col-auto ">
+
+
+														<input required type="time" name="start_time" value="<?php echo  isset($data->start_time) ? $data->start_time : ""; ?>" />
+													</div>
+													<div class="col-auto">
+
+
+														<input required type="time" name="end_time" value="<?php echo  isset($data->end_time) ? $data->end_time : ""; ?>" />
+													</div>
+												</div>
+											</div>
+
+											<div class="mb-3 row">
+												<div class="col-auto">
+													<label class="form-check form-switch">
+														<label><?php echo lang("weekday"); ?></label>
+														<input type="checkbox" id='week_flag' name="week_flag" class="form-check-input" <?php if (isset($data) && $data->week_flag) : ?>checked <?php endif ?> />
+													</label>
+												</div>
+
+												<div class="weekdays col" <?php if (!isset($data) || !$data->week_flag) : ?>style="display: none" <?php endif ?>>
+													<label class="form-check form-check-inline">
+														<input class="form-check-input weekday" type="checkbox" value="1">
+														<span class="form-check-label"><?php echo lang("mon") ?></span>
+													</label>
+													<label class="form-check form-check-inline">
+														<input class="form-check-input weekday" type="checkbox" value="2">
+														<span class="form-check-label"><?php echo lang("tue") ?></span>
+													</label>
+													<label class="form-check form-check-inline">
+														<input class="form-check-input weekday" type="checkbox" value="4">
+														<span class="form-check-label"><?php echo lang("wed") ?></span>
+													</label>
+													<label class="form-check form-check-inline">
+														<input class="form-check-input weekday" type="checkbox" value="8">
+														<span class="form-check-label"><?php echo lang("thu") ?></span>
+													</label>
+													<label class="form-check form-check-inline">
+														<input class="form-check-input weekday" type="checkbox" value="16">
+														<span class="form-check-label"><?php echo lang("fri") ?></span>
+													</label>
+													<label class="form-check form-check-inline">
+														<input class="form-check-input weekday" type="checkbox" value="32">
+														<span class=" form-check-label"><?php echo lang("sat") ?></span>
+													</label>
+													<label class="form-check form-check-inline">
+														<input class="form-check-input weekday" type="checkbox" value="64">
+														<span class=" form-check-label"><?php echo lang("sun") ?></span>
+													</label>
+												</div>
+											</div>
+										<?php endif ?>
 
 										<div class="mb-3">
 											<label for="play_time"><?php echo lang('play_time'); ?> (MM:SS)</label>
@@ -161,6 +224,32 @@
 	};
 	var mask = IMask(element, maskOptions);
 
+	$.validator.addMethod("greaterThanStartTime", function(value, element) {
+		// Only validate if time_flag is checked
+		if (!$("#time_flag").is(':checked')) {
+			return true;
+		}
+
+		var startTime = $("input[name='start_time']").val();
+		var endTime = value;
+
+		// Convert times to minutes for comparison
+		function timeToMinutes(timeStr) {
+			var parts = timeStr.split(':');
+			return parseInt(parts[0]) * 60 + parseInt(parts[1]);
+		}
+
+		var startMinutes = timeToMinutes(startTime);
+		var endMinutes = timeToMinutes(endTime);
+
+		// Special case: if end time is 00:00, treat it as 24:00 (end of day)
+		/*		if (endTime === "00:00") {
+					endMinutes = 24 * 60;
+				}
+		*/
+		return endMinutes > startMinutes;
+	}, "End time must be greater than start time");
+
 	$('#date_flag').on('change', function() {
 		if ($("#date_flag").is(':checked')) {
 			$('.date_range').show();
@@ -168,6 +257,81 @@
 			$('.date_range').hide();
 		}
 	});
+	$('#time_flag').on('change', function() {
+		if ($("#time_flag").is(':checked')) {
+			$('.time_range').show();
+		} else {
+			$('.time_range').hide();
+		}
+	});
+	$('#week_flag').on('change', function() {
+		if ($("#week_flag").is(':checked')) {
+			$('.weekdays').show();
+		} else {
+			$('.weekdays').hide();
+		}
+	});
+	$.validator.addMethod("weekdaysInDateRange", function() {
+		// Only validate if both date_flag and week_flag are checked
+		if (!$("#date_flag").is(':checked') || !$("#week_flag").is(':checked')) {
+			return true;
+		}
+
+		// Get start and end dates
+		const startDate = new Date($("input[name='start_date']").val());
+		const endDate = new Date($("input[name='end_date']").val());
+
+		if (isNaN(startDate.getTime()) || isNaN(endDate.getTime())) {
+			return false; // Invalid dates
+		}
+
+		// Calculate which weekdays are in the range (as a bitmask)
+		let weekdayBitmaskInRange = 0;
+		for (let d = new Date(startDate); d <= endDate; d.setDate(d.getDate() + 1)) {
+			const jsDay = d.getDay(); // 0=Sunday, 1=Monday, etc.
+			let bitValue = 0;
+
+			switch (jsDay) {
+				case 1:
+					bitValue = 1;
+					break; // Monday
+				case 2:
+					bitValue = 2;
+					break; // Tuesday
+				case 3:
+					bitValue = 4;
+					break; // Wednesday
+				case 4:
+					bitValue = 8;
+					break; // Thursday
+				case 5:
+					bitValue = 16;
+					break; // Friday
+				case 6:
+					bitValue = 32;
+					break; // Saturday
+				case 0:
+					bitValue = 64;
+					break; // Sunday (0 in JS)
+			}
+
+			weekdayBitmaskInRange |= bitValue;
+		}
+
+		// Get selected weekdays as a bitmask
+		let selectedWeekdaysBitmask = 0;
+		$(".weekday:checked").each(function() {
+			selectedWeekdaysBitmask |= parseInt($(this).val());
+		});
+
+		// Check if there's overlap between selected days and days in range
+		return (selectedWeekdaysBitmask & weekdayBitmaskInRange) !== 0;
+	}, function() {
+		return localStorage.getItem("language") == "germany" ?
+			"Medien werden aufgrund der Vorgaben nicht wiedergegeben. Bitte überprüfen Sie die Einstellungen." :
+			"Media will not playback because of the settings. Please check the parameters.";
+	});
+
 	<?php if ($this->config->item("with_register_feature") && isset($register_feature) && $register_feature) : ?>
 		/*
 		var storeSelect = new TomSelect("#store_id", {
@@ -254,7 +418,24 @@
 		<?php endif ?>
 	<?php endif ?>
 	$(document).ready(function() {
+		var weekdays = parseInt("<?php echo (isset($data) && isset($data->weekday)) ? $data->weekday : '127' ?>");
+		var checkboxes = document.getElementsByClassName("weekday");
 
+		for (var i = 0; i < checkboxes.length; i++) {
+			if (checkboxes[i].value & weekdays) {
+				checkboxes[i].checked = true;
+			} else {
+				checkboxes[i].checked = false;
+			}
+		}
+
+		<?php if ($this->config->item('date_range_from_folder') && (isset($data) && isset($data->folder) && $data->folder->date_flag)): ?>
+			// Disable data switch and date inputs if parent folder has date_flag set
+			$('#date_flag').prop('disabled', true);
+			$('input[name="start_date"]').prop('disabled', true);
+			$('input[name="end_date"]').prop('disabled', true);
+
+		<?php endif ?>
 		$.ajax({
 			url: '/player/getNestedFolders',
 			dataType: "json",
@@ -273,5 +454,110 @@
 			contentType: false,
 			processData: false
 		});
+
+		$("#mediumForm")
+			.submit(function(e) {
+				e.preventDefault();
+			})
+			.validate({
+				lang: localStorage.getItem("language") == "germany" ? "de" : "en",
+				rules: {
+					start_time: {
+						required: function() {
+							return $("#time_flag").is(':checked');
+						}
+					},
+					end_time: {
+						required: function() {
+							return $("#time_flag").is(':checked');
+						},
+						greaterThanStartTime: function() {
+							return $("#time_flag").is(':checked');
+						}
+					},
+				},
+				// Add custom error messages
+				messages: {
+					start_time: {
+						required: function() {
+							return localStorage.getItem("language") == "germany" ?
+								"Bitte wählen Sie eine Startzeit" :
+								"Please select a start time";
+						}
+					},
+					end_time: {
+						required: function() {
+							return localStorage.getItem("language") == "germany" ?
+								"Bitte wählen Sie eine Endzeit" :
+								"Please select an end time";
+						},
+						greaterThanStartTime: function() {
+							return localStorage.getItem("language") == "germany" ?
+								"Die Endzeit muss nach der Startzeit liegen" :
+								"End time must be greater than start time";
+						}
+					},
+				},
+				submitHandler: function(form, e) {
+					e.preventDefault();
+
+					// Additional validation before form submission
+					if ($("#date_flag").is(':checked') && $("#week_flag").is(':checked') && !$.validator.methods.weekdaysInDateRange()) {
+						toastr.error(localStorage.getItem("language") == "germany" ?
+							"Medien werden aufgrund der Vorgaben nicht wiedergegeben. Bitte überprüfen Sie die Einstellungen." :
+							"Media will not playback because of the settings. Please check the parameters."
+						);
+						return false;
+					}
+					var formData = new FormData($("#mediumForm")[0]);
+					formData.append("date_flag", $("#date_flag").is(':checked') ? 1 : 0);
+					formData.append("time_flag", $("#time_flag").is(':checked') ? 1 : 0);
+
+					const week_flag = $("#week_flag").is(':checked') ? 1 : 0;
+					formData.append("week_flag", week_flag);
+
+					if (week_flag) {
+						var weekdays = 0;
+						var checkboxes = document.getElementsByClassName("weekday");
+
+						for (var i = 0; i < checkboxes.length; i++) {
+							if (checkboxes[i].checked) {
+								weekdays |= parseInt(checkboxes[i].value);
+							}
+						}
+
+						if (weekdays == 0) {
+							toastr.error("Please select at least one weekday.");
+							return false;
+						}
+
+						formData.append("weekday", weekdays);
+					}
+
+					$.ajax({
+						url: "/media/do_save",
+						type: "POST",
+						data: formData,
+						processData: false, // prevents jQuery from trying to process the data
+						contentType: false, // lets the browser set the proper content-type with boundary
+						dataType: "json",
+						success: function(data) {
+							if (data.code != 0) {
+								toastr.error(data.msg);
+							} else {
+								localStorage.setItem(
+									"Status",
+									JSON.stringify({
+										type: "success",
+										message: data.msg,
+									})
+								);
+								window.location.href = "/media";
+							}
+						}
+					});
+					return false;
+				},
+			});
 	});
 </script>

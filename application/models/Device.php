@@ -4,7 +4,7 @@ class Device extends MY_Model
 {
 
     /**
-     * ��ȡĳ�������û��µ�����Ⱥ��
+     * ï¿½ï¿½È¡Ä³ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Ã»ï¿½ï¿½Âµï¿½ï¿½ï¿½ï¿½ï¿½Èºï¿½ï¿½
      *
      * @param object $uid
      * @return
@@ -26,7 +26,7 @@ class Device extends MY_Model
 
 
     /**
-     * ������
+     * ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½
      *
      * @param object $groups
      * @param object $uid
@@ -43,7 +43,7 @@ class Device extends MY_Model
             $this->db->query($sql);
         }
 
-        //ɾ�����ڷ����е���
+        //É¾ï¿½ï¿½ï¿½ï¿½ï¿½Ú·ï¿½ï¿½ï¿½ï¿½Ðµï¿½ï¿½ï¿½
         $sql = "delete from cat_user_group where user_id=$uid and group_id not in(" . implode(',', $groups) . ")";
         $this->db->query($sql);
 
@@ -51,7 +51,7 @@ class Device extends MY_Model
     }
 
     /**
-     * ɾ�����û���������б�
+     * É¾ï¿½ï¿½ï¿½ï¿½ï¿½Ã»ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Ð±ï¿½
      *
      * @param object $uid
      * @return
@@ -64,7 +64,7 @@ class Device extends MY_Model
     }
 
     /**
-     * ��ȡ��˾�����е���ID
+     * ï¿½ï¿½È¡ï¿½ï¿½Ë¾ï¿½ï¿½ï¿½ï¿½ï¿½Ðµï¿½ï¿½ï¿½ID
      *
      * @param object $cid
      * @return
@@ -85,7 +85,7 @@ class Device extends MY_Model
     }
 
     /**
-     * ��ȡȫ�������б�
+     * ï¿½ï¿½È¡È«ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Ð±ï¿½
      *
      * @param object $cid
      * @return
@@ -97,7 +97,7 @@ class Device extends MY_Model
                 if (count($gids) > 0) {
                     $this->db->where_in('id', $gids);
                 } else {
-                    //����ֱ�ӷ���Ϊ��
+                    //ï¿½ï¿½ï¿½ï¿½Ö±ï¿½Ó·ï¿½ï¿½ï¿½Îªï¿½ï¿½
                     return array('total' => 0, 'data' => array());
                 }
             } else {
@@ -126,7 +126,7 @@ class Device extends MY_Model
 
 
     /**
-     * ��ȡ��������Ϣ
+     * ï¿½ï¿½È¡ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Ï¢
      *
      * @param object $id
      * @return
@@ -142,7 +142,7 @@ class Device extends MY_Model
         }
     }
     /**
-     * ���� ���� ��ȡ����Ϣ
+     * ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½È¡ï¿½ï¿½ï¿½ï¿½Ï¢
      * 2013-9-17 9:01:10
      * @param object $id
      * @param object $cid
@@ -166,11 +166,11 @@ class Device extends MY_Model
     }
 
     /**
-     * ���ӷ���
+     * ï¿½ï¿½ï¿½Ó·ï¿½ï¿½ï¿½
      *
      * @param object $array
-     * @param object $uid ��ǰ������
-     * @return �ɹ�����TRUE
+     * @param object $uid ï¿½ï¿½Ç°ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½
+     * @return ï¿½É¹ï¿½ï¿½ï¿½ï¿½ï¿½TRUE
      */
     public function add_group($array, $uid)
     {
@@ -190,7 +190,7 @@ class Device extends MY_Model
     }
 
     /**
-     * ��������Ϣ
+     * ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Ï¢
      *
      * @param object $array
      * @param object $id
@@ -212,11 +212,11 @@ class Device extends MY_Model
     }
 
     /**
-     * ɾ��һ�����飬ɾ���뵱ǰ�������й���������
+     * É¾ï¿½ï¿½Ò»ï¿½ï¿½ï¿½ï¿½ï¿½é£¬É¾ï¿½ï¿½ï¿½ëµ±Ç°ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Ð¹ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½
      *
-     * 1.ɾ������
-     * 2.ɾ���ն˻�
-     * 3.ɾ�������û�
+     * 1.É¾ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½
+     * 2.É¾ï¿½ï¿½ï¿½Õ¶Ë»ï¿½
+     * 3.É¾ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Ã»ï¿½
      *
      * @param object $group_id
      * @return
@@ -242,7 +242,7 @@ class Device extends MY_Model
     /***********************tag************************************/
 
     /**
-     * ��ȡĳ����˾�µ�tag�б�
+     * ï¿½ï¿½È¡Ä³ï¿½ï¿½ï¿½ï¿½Ë¾ï¿½Âµï¿½tagï¿½Ð±ï¿½
      *
      * @param object $cid
 
@@ -321,7 +321,7 @@ class Device extends MY_Model
 
 
     /**
-     * ��ȡ����tag��Ϣ
+     * ï¿½ï¿½È¡ï¿½ï¿½ï¿½ï¿½tagï¿½ï¿½Ï¢
      *
      * @param object $id
      * @return
@@ -413,7 +413,7 @@ class Device extends MY_Model
     }
 
     /**
-     * ����tag��Ϣ
+     * ï¿½ï¿½ï¿½ï¿½tagï¿½ï¿½Ï¢
      *
      * @param object $array
      * @param object $id
@@ -446,9 +446,9 @@ class Device extends MY_Model
     }
 
     /**
-     * ɾ��һ��tag��ɾ���뵱ǰ�������й���������
+     * É¾ï¿½ï¿½Ò»ï¿½ï¿½tagï¿½ï¿½É¾ï¿½ï¿½ï¿½ëµ±Ç°ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Ð¹ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½
      *
-     * 1.ɾ��tag
+     * 1.É¾ï¿½ï¿½tag
      *
      * @param object $group_id
      * @return
@@ -489,7 +489,7 @@ class Device extends MY_Model
     }
 
     /***************************************************************/
-    //��ȡ�û�������������û� 2013-12-17
+    //ï¿½ï¿½È¡ï¿½Ã»ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Ã»ï¿½ 2013-12-17
     public function get_all_user_by_usergroup($uid)
     {
         $sql = "select distinct user_id from cat_user_group where group_id in (select group_id from cat_user_group where user_id = $uid)";
@@ -503,7 +503,7 @@ class Device extends MY_Model
             return false;
         }
     }
-    //��ȡ�û�������������û������ƺͱ�� 2013-12-17
+    //ï¿½ï¿½È¡ï¿½Ã»ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Ã»ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ÆºÍ±ï¿½ï¿½ 2013-12-17
     public function get_all_user_name_by_usergroup($uid)
     {
         $sql = "select distinct g.user_id as id, u.name as name from cat_user_group g, cat_user u where u.id=g.user_id and g.group_id in (select group_id from cat_user_group where user_id = $uid)";
@@ -1015,7 +1015,7 @@ class Device extends MY_Model
     }
 
     /**
-     * �½�һ���ͻ���
+     * ï¿½Â½ï¿½Ò»ï¿½ï¿½ï¿½Í»ï¿½ï¿½ï¿½
      *
      * @param object $array
      * @param object $uid
@@ -1052,7 +1052,7 @@ class Device extends MY_Model
     }
 
     /**
-     * ���¿ͻ���
+     * ï¿½ï¿½ï¿½Â¿Í»ï¿½ï¿½ï¿½
      *
      * @param object $array
      * @param object $id
@@ -1096,7 +1096,7 @@ class Device extends MY_Model
     }
 
     /**
-     * ���¿ͻ���
+     * ï¿½ï¿½ï¿½Â¿Í»ï¿½ï¿½ï¿½
      *
      * @param object $array
      * @param object $id
@@ -1119,7 +1119,7 @@ class Device extends MY_Model
     }
 
     /**
-     * ���¿ͻ����޸�ʱ��
+     * ï¿½ï¿½ï¿½Â¿Í»ï¿½ï¿½ï¿½ï¿½Þ¸ï¿½Ê±ï¿½ï¿½
      *
      * @param object $array
      * @param object $id
@@ -1143,7 +1143,7 @@ class Device extends MY_Model
     }
 
     /**
-     * ɾ���ͻ���
+     * É¾ï¿½ï¿½ï¿½Í»ï¿½ï¿½ï¿½
      *
      * @param object $id
      * @param object $uid
@@ -1159,7 +1159,7 @@ class Device extends MY_Model
     }
 
     /**
-     * ��ȡ�ͻ�����ϸ��Ϣ
+     * ï¿½ï¿½È¡ï¿½Í»ï¿½ï¿½ï¿½ï¿½ï¿½Ï¸ï¿½ï¿½Ï¢
      *
      * @param object $id
      * @return
@@ -1219,7 +1219,7 @@ class Device extends MY_Model
     }
 
     /**
-     * ��ȡָ��meida��tag��Ϣ
+     * ï¿½ï¿½È¡Ö¸ï¿½ï¿½meidaï¿½ï¿½tagï¿½ï¿½Ï¢
      *
      * @param object $id
      * @return
@@ -1241,7 +1241,7 @@ class Device extends MY_Model
     }
 
     /**
-     * ���ؿͻ�����Ϣ
+     * ï¿½ï¿½ï¿½Ø¿Í»ï¿½ï¿½ï¿½ï¿½ï¿½Ï¢
      *
      * @param object $sn
      * @return
@@ -1261,7 +1261,7 @@ class Device extends MY_Model
         }
     }
     /**
-     * ���� �ͻ������� ��ȡ�ͻ�����Ϣ
+     * ï¿½ï¿½ï¿½ï¿½ ï¿½Í»ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½È¡ï¿½Í»ï¿½ï¿½ï¿½ï¿½ï¿½Ï¢
      * 2013-9-17 9:01:10
      * @param object $id
      * @param object $gid
@@ -1286,7 +1286,7 @@ class Device extends MY_Model
     }
 
     /**
-     * �жϵ�ǰsn�Ƿ���ڣ�����������򷵻�FALSE���򷵻�id
+     * ï¿½Ð¶Ïµï¿½Ç°snï¿½Ç·ï¿½ï¿½ï¿½Ú£ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ò·µ»ï¿½FALSEï¿½ï¿½ï¿½ò·µ»ï¿½id
      * @param object $sn
      * @return
      */
@@ -1303,7 +1303,7 @@ class Device extends MY_Model
     }
 
     /**
-     * ִ�пͻ�����¼�������ݿ⶯��
+     * Ö´ï¿½Ð¿Í»ï¿½ï¿½ï¿½ï¿½ï¿½Â¼ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Ý¿â¶¯ï¿½ï¿½
      *
      * @param object $sn
      * @param object $model
@@ -1334,7 +1334,7 @@ class Device extends MY_Model
     }
 
     /**
-     * ���¿ͻ���״̬����,�����������״̬�룬����Ϊ�Ƕ�ʱ����ִ�У�����Ҫ����������ӵ�ʱ��
+     * ï¿½ï¿½ï¿½Â¿Í»ï¿½ï¿½ï¿½×´Ì¬ï¿½ï¿½ï¿½ï¿½,ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½×´Ì¬ï¿½ë£¬ï¿½ï¿½ï¿½ï¿½Îªï¿½Ç¶ï¿½Ê±ï¿½ï¿½ï¿½ï¿½Ö´ï¿½Ð£ï¿½ï¿½ï¿½ï¿½ï¿½Òªï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Óµï¿½Ê±ï¿½ï¿½
      *
      * @param object $sn
      * @param object $status
@@ -1441,7 +1441,7 @@ class Device extends MY_Model
     }
 
     /**
-     * ��ȡ���һ���ͻ�����־��¼
+     * ï¿½ï¿½È¡ï¿½ï¿½ï¿½Ò»ï¿½ï¿½ï¿½Í»ï¿½ï¿½ï¿½ï¿½ï¿½Ö¾ï¿½ï¿½Â¼
      *
      * @param object $player_id
      * @param object $event_type
@@ -1520,12 +1520,12 @@ class Device extends MY_Model
         return $array;
     }
     /**
-     * ��ȡ�ͻ���ʱ��
+     * ï¿½ï¿½È¡ï¿½Í»ï¿½ï¿½ï¿½Ê±ï¿½ï¿½
      * @return
      */
     public function get_player_timezone($id)
     {
-        $timezone = 0; //Ĭ��UTC
+        $timezone = 0; //Ä¬ï¿½ï¿½UTC
         $sql = "select time_zone from cat_player where id = $id";
         $query = $this->db->query($sql);
         if ($query->num_rows() > 0) {
@@ -1534,7 +1534,7 @@ class Device extends MY_Model
         return $timezone;
     }
     /**
-     * liu 2013-10-10 ��ȡ�ͻ���reboot_flag��format_flag��־Ϊ1����Ϣ
+     * liu 2013-10-10 ï¿½ï¿½È¡ï¿½Í»ï¿½ï¿½ï¿½reboot_flagï¿½ï¿½format_flagï¿½ï¿½Ö¾Îª1ï¿½ï¿½ï¿½ï¿½Ï¢
      * @param $sn ,$flag
      * @return
      */
@@ -1550,7 +1550,7 @@ class Device extends MY_Model
     }
 
     /**
-     * liu 2013-10-10 ���±���cat_player; ��reboot_flag��format_flag Ϊ 1
+     * liu 2013-10-10 ï¿½ï¿½ï¿½Â±ï¿½ï¿½ï¿½cat_player; ï¿½ï¿½reboot_flagï¿½ï¿½format_flag Îª 1
      * @param $sn $flag
      * @return
      */
@@ -1567,7 +1567,7 @@ class Device extends MY_Model
     }
 
     /**
-     * liu 2013-10-10 ���±���cat_player; �ָ�reboot_flag��format_flag Ϊ 0
+     * liu 2013-10-10 ï¿½ï¿½ï¿½Â±ï¿½ï¿½ï¿½cat_player; ï¿½Ö¸ï¿½reboot_flagï¿½ï¿½format_flag Îª 0
      * @param $sn  $flag
      * @return
      */
@@ -1596,7 +1596,7 @@ class Device extends MY_Model
     }
 
 
-    ////////////////////configxml����////////////////////////////////////
+    ////////////////////configxmlï¿½ï¿½ï¿½ï¿½////////////////////////////////////
     public function update_config_player($config_id, $player_ids, $dailyRestartTime = false)
     {
 
@@ -1684,8 +1684,8 @@ class Device extends MY_Model
         return $array;
     }
 
-    //////////////////configxml���ֽ���//////////////////////////////////////
-    //�����ն�id ��ȡ�ն˵��б�
+    //////////////////configxmlï¿½ï¿½ï¿½Ö½ï¿½ï¿½ï¿½//////////////////////////////////////
+    //ï¿½ï¿½ï¿½ï¿½ï¿½Õ¶ï¿½id ï¿½ï¿½È¡ï¿½Õ¶Ëµï¿½ï¿½Ð±ï¿½
     public function get_playlist_by_playerId($id)
     {
         $sql = "select sp.playlist_id, p.id, g.name as groupname, pl.name as playlistname, p.name as playername, pl.template_id, temp.w, temp.h from cat_group g, cat_player p, cat_template temp, cat_playlist pl ,cat_schedule_group sg, cat_schedule_playlist sp, cat_schedule sch where p.id=$id and sg.group_id=p.group_id and g.id=p.group_id and sg.schedule_id=sp.schedule_id and sp.playlist_id=pl.id and pl.template_id=temp.id and sch.end_date>='" . date("Y-m-d") . "' and sch.status=1 and sg.schedule_id=sch.id order by sch.status desc";
@@ -1697,7 +1697,7 @@ class Device extends MY_Model
         return $array;
     }
 
-    //����group_id ��ȡ�б��ļ����Ƿ���HTTP�ļ�
+    //ï¿½ï¿½ï¿½ï¿½group_id ï¿½ï¿½È¡ï¿½Ð±ï¿½ï¿½Ä¼ï¿½ï¿½ï¿½ï¿½Ç·ï¿½ï¿½ï¿½HTTPï¿½Ä¼ï¿½
     public function get_playlist_by_sn($sn)
     {
         $sql = "select distinct pl.id as playlist_id, sp.schedule_id, t.width, t.height from cat_template as t, cat_player as p, cat_schedule_group as sg, cat_schedule_playlist as sp, cat_playlist as pl, cat_playlist_area_media as pm, cat_media as m where p.sn = $sn and p.group_id = sg.group_id and sg.schedule_id = sp.schedule_id and sp.playlist_id = pl.id  and pl.id = pm.playlist_id and m.id = pm.media_id and m.source = 2 and pl.published = 1 and pl.template_id=t.id and pm.status=0";
@@ -1709,7 +1709,7 @@ class Device extends MY_Model
         return $array;
     }
 
-    //���� playlist_id ��ȡ��Ӧ��HTTP���͵��ļ�id
+    //ï¿½ï¿½ï¿½ï¿½ playlist_id ï¿½ï¿½È¡ï¿½ï¿½Ó¦ï¿½ï¿½HTTPï¿½ï¿½ï¿½Íµï¿½ï¿½Ä¼ï¿½id
     public function get_HttpMedia_by_pid($pid)
     {
         $sql = "select distinct m.id, m.full_path from cat_playlist as pl, cat_playlist_area_media as pm, cat_media as m where pl.id=$pid and pl.id=pm.playlist_id and pm.media_id=m.id and m.source=2";
@@ -1721,7 +1721,7 @@ class Device extends MY_Model
         return $array;
     }
 
-    //xml�������ַ��滻
+    //xmlï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Ö·ï¿½ï¿½æ»»
     public function xmlencode($tag)
     {
         $tag = str_replace("&", "&amp;", $tag);
@@ -1785,7 +1785,7 @@ class Device extends MY_Model
     }
 
     /**
-     * ��ȡ������Ϣ
+     * ï¿½ï¿½È¡ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Ï¢
      */
     public function get_software($id)
     {
@@ -1799,7 +1799,7 @@ class Device extends MY_Model
     }
 
     /**
-     * ����������Ϣ
+     * ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Ï¢
      *
      * @param object $array
      * @param object $id
@@ -1821,7 +1821,7 @@ class Device extends MY_Model
     }
 
     /**
-     * ��ȡ�б��е�ý���ļ���Ϣ
+     * ï¿½ï¿½È¡ï¿½Ð±ï¿½ï¿½Ðµï¿½Ã½ï¿½ï¿½ï¿½Ä¼ï¿½ï¿½ï¿½Ï¢
      *
      * @param object $ids
      * @return
@@ -1890,7 +1890,7 @@ class Device extends MY_Model
 
 
     /**
-     * �����ļ���
+     * ï¿½ï¿½ï¿½ï¿½ï¿½Ä¼ï¿½ï¿½ï¿½
      *
      * @param object $groups
      * @param object $uid
@@ -1914,7 +1914,7 @@ class Device extends MY_Model
     }
 
     /**
-     * ɾ�����û�������ļ����б�
+     * É¾ï¿½ï¿½ï¿½ï¿½ï¿½Ã»ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Ä¼ï¿½ï¿½ï¿½ï¿½Ð±ï¿½
      *
      * @param object $uid
      * @return
@@ -1926,7 +1926,7 @@ class Device extends MY_Model
         return $this->db->delete('cat_user_folder');
     }
 
-    //�����ն����к�  ��ȡweacher��ʾ������
+    //ï¿½ï¿½ï¿½ï¿½ï¿½Õ¶ï¿½ï¿½ï¿½ï¿½Ðºï¿½  ï¿½ï¿½È¡weacherï¿½ï¿½Ê¾ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½
     public function get_weather_lang_by_sn($sn)
     {
         $sql = "select aws.language from cat_player as p, cat_schedule_group as sg, cat_schedule_playlist as sp, cat_template_area as ta, cat_area_weather_setting as aws where p.sn = '$sn' and p.group_id = sg.group_id and sg.schedule_id = sp.schedule_id and sp.playlist_id = aws.playlist_id and aws.area_id = ta.id and ta.name = 'Weather'";
@@ -1961,7 +1961,7 @@ class Device extends MY_Model
     }
 
     /**
-     * ��ѯĳ����˾��ָ���ļ�¼��Ϣ
+     * ï¿½ï¿½Ñ¯Ä³ï¿½ï¿½ï¿½ï¿½Ë¾ï¿½ï¿½Ö¸ï¿½ï¿½ï¿½Ä¼ï¿½Â¼ï¿½ï¿½Ï¢
      *
      * @param object $company_id
      * @param object $group_ids [optional]
@@ -2203,7 +2203,7 @@ class Device extends MY_Model
         }
     }
     /**
-     * ����criteria
+     * ï¿½ï¿½ï¿½ï¿½criteria
      *
      * @param object $array
      * @return
@@ -2223,7 +2223,7 @@ class Device extends MY_Model
     }
 
     /**
-     * ����criteria��Ϣ
+     * ï¿½ï¿½ï¿½ï¿½criteriaï¿½ï¿½Ï¢
      *
      * @param object $array
      * @param object $id
@@ -2305,7 +2305,7 @@ class Device extends MY_Model
     }
 
     /**
-     * ɾ�����û�������ļ����б�
+     * É¾ï¿½ï¿½ï¿½ï¿½ï¿½Ã»ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Ä¼ï¿½ï¿½ï¿½ï¿½Ð±ï¿½
      *
      * @param object $uid
      * @return
@@ -2320,7 +2320,7 @@ class Device extends MY_Model
 
 
     /**
-     * ��ȡĳ����˾�µ�criteria�б�
+     * ï¿½ï¿½È¡Ä³ï¿½ï¿½ï¿½ï¿½Ë¾ï¿½Âµï¿½criteriaï¿½Ð±ï¿½
      *
      * @param object $cid
      * @param object $offset [optional]
@@ -2344,7 +2344,7 @@ class Device extends MY_Model
     }
 
     /**
-     * ����campaign
+     * ï¿½ï¿½ï¿½ï¿½campaign
      *
      * @param object $groups
      * @param object $uid
@@ -2366,7 +2366,7 @@ class Device extends MY_Model
     }
 
     /**
-     * ɾ�����û������campaigns
+     * É¾ï¿½ï¿½ï¿½ï¿½ï¿½Ã»ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½campaigns
      *
      * @param object $uid
      * @return
@@ -2379,10 +2379,10 @@ class Device extends MY_Model
     }
 
     /**
-     * ����״̬Ϊ���ߵ���ĳ��ʱ��֮ǰ
+     * ï¿½ï¿½ï¿½ï¿½×´Ì¬Îªï¿½ï¿½ï¿½ßµï¿½ï¿½ï¿½Ä³ï¿½ï¿½Ê±ï¿½ï¿½Ö®Ç°
      *
      * @param object $before_time
-     * @return ���ظ����˵�Player��Ϣ
+     * @return ï¿½ï¿½ï¿½Ø¸ï¿½ï¿½ï¿½ï¿½Ëµï¿½Playerï¿½ï¿½Ï¢
      */
     public function check_offline_email_players($cid, $start_time, $end_time, $is_dston)
     {
@@ -2657,7 +2657,7 @@ class Device extends MY_Model
     }
 
     /**
-     * ɾ�����û�������ļ����б�
+     * É¾ï¿½ï¿½ï¿½ï¿½ï¿½Ã»ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Ä¼ï¿½ï¿½ï¿½ï¿½Ð±ï¿½
      *
      * @param object $uid
      * @return
@@ -3023,8 +3023,8 @@ class Device extends MY_Model
             }
             socket_close($socket);
             /*
-            $socket = socket_create(AF_INET, SOCK_STREAM, SOL_TCP) or die("Could not create  socket\n");  // 创建一个Socket
-            $connection = socket_connect($socket, $host, $port) or die("Could not connet server\n");    //  连接
+            $socket = socket_create(AF_INET, SOCK_STREAM, SOL_TCP) or die("Could not create  socket\n");  // åˆ›å»ºä¸€ä¸ªSocket
+            $connection = socket_connect($socket, $host, $port) or die("Could not connet server\n");    //  è¿žæŽ¥
             $this->load->library('Utils');
             $utils = new Utils();
             $c_type = $type;
@@ -3034,20 +3034,20 @@ class Device extends MY_Model
                 $data = pack('Ca4CCa' . $sn_length . 'a' . $fd_length . 'CCC', 0x00, '1234', $sn_length, $fd_length, $player->sn, $player->socket_fd, $c_type, $value, 0x3);
 
 
-                //blowfish 加密DATA数据
+                //blowfish åŠ å¯†DATAæ•°æ®
                 $encdata = $utils->blowfish_enc($data);
                 $length = strlen($encdata);
 
                 $header = pack('C4', 0xec, 0xeb, 0x0f, $length);
 
-                //CRC校验
+                //CRCæ ¡éªŒ
                 $msg = $header . $encdata;
                 $crc = $utils->crc16($msg);
-                //拼装数据包
+                //æ‹¼è£…æ•°æ®åŒ…
                 $loginmsg = $msg . pack('C2', (($crc & 0xff00) >> 8), ($crc & 0xff));
 
 
-                socket_write($socket, $loginmsg) or die("Write failed\n"); // 数据传送 向服务器发送消息
+                socket_write($socket, $loginmsg) or die("Write failed\n"); // æ•°æ®ä¼ é€ å‘æœåŠ¡å™¨å‘é€æ¶ˆæ¯
             }
           
             socket_close($socket);
@@ -3185,7 +3185,7 @@ class Device extends MY_Model
         }
     }
     /**
-     * ����criteria
+     * ï¿½ï¿½ï¿½ï¿½criteria
      *
      * @param object $array
      * @return
@@ -3205,7 +3205,7 @@ class Device extends MY_Model
     }
 
     /**
-     * ����criteria��Ϣ
+     * ï¿½ï¿½ï¿½ï¿½criteriaï¿½ï¿½Ï¢
      *
      * @param object $array
      * @param object $id
@@ -3331,7 +3331,7 @@ class Device extends MY_Model
 
 
     /**
-     * ��ȡ����tag��Ϣ
+     * ï¿½ï¿½È¡ï¿½ï¿½ï¿½ï¿½tagï¿½ï¿½Ï¢
      *
      * @param object $id
      * @return
@@ -3423,7 +3423,7 @@ class Device extends MY_Model
     }
 
     /**
-     * ����tag��Ϣ
+     * ï¿½ï¿½ï¿½ï¿½tagï¿½ï¿½Ï¢
      *
      * @param object $array
      * @param object $id
@@ -3444,9 +3444,9 @@ class Device extends MY_Model
     }
 
     /**
-     * ɾ��һ��tag��ɾ���뵱ǰ�������й���������
+     * É¾ï¿½ï¿½Ò»ï¿½ï¿½tagï¿½ï¿½É¾ï¿½ï¿½ï¿½ëµ±Ç°ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Ð¹ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½
      *
-     * 1.ɾ��tag
+     * 1.É¾ï¿½ï¿½tag
      *
      * @param object $group_id
      * @return
@@ -3814,7 +3814,7 @@ class Device extends MY_Model
             $host = $this->config->item("socket_server") ?: "127.0.0.1";
 
             $port = $this->config->item("tcp_port") ?: 4702;
-            $socket = socket_create(AF_INET, SOCK_STREAM, SOL_TCP) or die("Could not create  socket\n");  // 创建一个Socket
+            $socket = socket_create(AF_INET, SOCK_STREAM, SOL_TCP) or die("Could not create  socket\n");  // åˆ›å»ºä¸€ä¸ªSocket
             //$connection = socket_connect($socket, $host, $port);
 
             $connection = socket_connect($socket, $host, $port);
@@ -3843,20 +3843,20 @@ class Device extends MY_Model
                 */
 
                 $data = pack('NCCa' . $commandLen . 'Ca' . $setings_length, $player->socket_fd, $params->address, $commandLen, $command, $setings_length, $settings);
-                //blowfish 加密DATA数据
+                //blowfish åŠ å¯†DATAæ•°æ®
                 $encdata = $utils->blowfish_enc($data);
                 $length = strlen($encdata);
 
                 $header = pack('C4', 0xec, 0xeb, 0x0ff, $length);
 
-                //CRC校验
+                //CRCæ ¡éªŒ
                 $msg = $header . $encdata;
                 $crc = $utils->crc16($msg);
-                //拼装数据包
+                //æ‹¼è£…æ•°æ®åŒ…
                 $loginmsg = $msg . pack('C2', (($crc & 0xff00) >> 8), ($crc & 0xff));
                 $this->device->add_player_log($player->id, 5, "Send command to $params->name: $params->command");
 
-                socket_write($socket, $loginmsg) or die("Write failed\n"); // 数据传送 向服务器发送消息
+                socket_write($socket, $loginmsg) or die("Write failed\n"); // æ•°æ®ä¼ é€ å‘æœåŠ¡å™¨å‘é€æ¶ˆæ¯
             }
 
             socket_close($socket);

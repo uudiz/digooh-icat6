@@ -62,7 +62,6 @@ class Media extends MY_Controller
 
         $folders = $this->get_folders();
 
-
         if ($folder_id != null) {
             if (($folder_id == -1 && isset($folders['folder_id']))) {
                 $filter_array['folder_id'] = $folders['folder_id'];
@@ -84,6 +83,7 @@ class Media extends MY_Controller
         $cid = $folders['cid'];
 
         $media = $this->material->get_media_list($cid, $offset, $limit, $order_item, $order, $filter_array);
+
 
         $data['total'] = $media['total'];
         $data['rows']  = $media['data'];
@@ -111,7 +111,9 @@ class Media extends MY_Controller
                 $data['tagstr'] = $this->device->get_tags_id_by_media($id);
                 if ($media->play_time) {
                     if ($media->play_time > 59) {
-                        $times = sprintf("%02d:%02d", ($media->play_time / 60), ($media->play_time % 60));
+                        $minutes = intval($media->play_time / 60);
+                        $seconds = intval($media->play_time) % 60;
+                        $times = sprintf("%02d:%02d", $minutes, $seconds);
                     } else {
                         $times = sprintf("00:%02d", $media->play_time);
                     }
@@ -122,7 +124,6 @@ class Media extends MY_Controller
                 return;
             }
         }
-
 
         $tags = $this->device->get_tag_list($cid);
         $data['tags'] = $tags['data'];
@@ -414,6 +415,49 @@ class Media extends MY_Controller
                 if ($this->input->post('approved') !== null) {
                     $data['approved'] = $this->input->post('approved');
                 }
+
+                if ($this->config->item('medium_with_weekNtime')) {
+                    $time_flag = $this->input->post('time_flag');
+                    $data['time_flag'] = $time_flag;
+                    if ($time_flag) {
+                        $data['start_time'] = $this->input->post('start_time');
+                        $data['end_time'] = $this->input->post('end_time');
+                    }
+
+                    $week_flag = $this->input->post('week_flag');
+                    $data['week_flag'] = $week_flag;
+                    if ($week_flag) {
+                        $data['weekday'] = $this->input->post('weekday');
+                    }
+                }
+
+                if ($this->config->item("with_register_feature")) {
+
+                    $data['product_id'] = $this->input->post('product_id');
+                    $data['store_id'] = $this->input->post('store_id');
+                    if ($this->input->post('product_id') !== null) {
+                        $this->load->model('product');
+
+                        //For TASK Only
+                        if ($data['store_id'] == 1) {
+                            $product = $this->product->get_by_id($this->input->post('product_id'));
+                            if ($product && $product->group_name) {
+                                $category_name =  $product->group_name;
+                                $category_name .= $product->sub_group_name ? ' - ' . $product->sub_group_name : '';
+                                $this->load->model('device');
+                                $tag_id = $this->device->create_or_get_tag($category_name, $this->get_cid(), $this->get_uid());
+                                if ($tags) {
+                                    if (array_search($tag_id, $tags) === false) {
+                                        array_push($tags, $tag_id);
+                                    }
+                                } else {
+                                    $tags[] = $tag_id;
+                                }
+                            }
+                        }
+                    }
+                }
+
 
                 $this->material->update_media($data, $id, $tags);
                 $msg = $this->lang->line('save.success');

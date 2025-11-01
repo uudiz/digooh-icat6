@@ -1548,6 +1548,7 @@ class Program extends MY_Model
         }
         $this->db->where('deleted_at is null');
         $query = $this->db->get();
+
         if ($query->num_rows() > 0) {
             return $query->row();
         } else {
@@ -2214,6 +2215,10 @@ class Program extends MY_Model
         $data = array();
 
         $this->db->select('p.id,p.media_id,m.name,m.play_time,m.file_size,m.signature,m.date_flag,m.start_date,m.end_date,m.full_path, p.transmode,p.reload,cp.name as playlist_name,cp.start_date as pls_start_date, cp.end_date as pls_end_date');
+        if ($this->config->item('medium_with_weekNtime')) {
+            $this->db->select('m.time_flag,m.week_flag,m.start_time,m.end_time,m.weekday');
+        }
+
         $this->db->from('cat_playlist_area_media p');
         $this->db->join('cat_media m', 'm.id = p.media_id', 'left');
         $this->db->join('cat_playlist cp', 'cp.id = p.playlist_id', 'left');
@@ -2236,18 +2241,11 @@ class Program extends MY_Model
             $this->db->or_where('m.date_flag', 0);
             $this->db->group_end();
         }
-        /*
-        if ($flag !== false) {
-            if (is_array($flag)) {
-                $this->db->where_in('p.flag', $flag);
-            } else {
-                $this->db->where('p.flag', $flag);
-            }
-        } else {
-            $this->db->where('p.flag >', $this->config->item('area_media_flag_temp'));
-        }
-        */
+
         $this->db->order_by('p.position', 'asc');
+
+        //Check date is "YYYY-MM-DD", can we get week day of check date?
+
 
 
         //$this->db->limit($limit, $offset);
@@ -5707,7 +5705,6 @@ class Program extends MY_Model
         } else {
             $today = date("Y-m-d");
         }
-
         foreach ($slot->campaigns as $key => $cam) {
             $playllist_id_array = array();
             if (isset($cam['extended_campaigns_id'])) {
@@ -5739,10 +5736,62 @@ class Program extends MY_Model
                 }
             }
 
+            if ($this->config->item('medium_with_weekNtime')) {
+                $current_weekday = date('w', strtotime($today));
+                $this->load->helper('week');
+                // Filter out media with time restrictions that don't match the current slot's time range
+                $filtered_media_data = array_filter($cam_medias['data'], function ($medium) use ($slot, $current_weekday) {
+
+                    if ($medium->week_flag && $medium->weekday != 127) {
+
+                        if (!isDayEnabled($medium->weekday, $current_weekday)) {
+                            return false; // Media not valid for today
+                        }
+                    }
+                    // If time flag isn't set, include the media
+                    if (!isset($medium->time_flag) || $medium->time_flag == 0) {
+                        return true;
+                    }
+
+
+
+                    // Convert slot times to minutes for easier comparison
+                    $slot_start_minutes = $slot->startH * 60 + $slot->startM;
+                    $slot_end_minutes = $slot->stopH * 60 + $slot->stopM;
+
+                    // Parse medium start and end times to minutes
+                    list($start_hour, $start_minute) = explode(':', $medium->start_time);
+                    list($end_hour, $end_minute) = explode(':', $medium->end_time);
+
+                    if (!isset($start_hour) || !isset($start_minute) || !isset($end_hour) || !isset($end_minute)) {
+                        return true; // No time restrictions, include the media
+                    }
+
+                    $medium_start_minutes = intval($start_hour) * 60 + intval($start_minute);
+                    $medium_end_minutes = intval($end_hour) * 60 + intval($end_minute);
+
+                    // Check for time range overlap
+                    // Media spans midnight case
+                    if ($medium_start_minutes > $medium_end_minutes) {
+                        // Either slot starts after medium start OR slot ends before medium end
+                        return ($slot_start_minutes >= $medium_start_minutes || $slot_end_minutes <= $medium_end_minutes);
+                    } else {
+                        // Normal case: slot overlaps with medium time range
+                        return ($slot_start_minutes < $medium_end_minutes && $slot_end_minutes > $medium_start_minutes);
+                    }
+                });
+
+                // Update the medias data with filtered results
+                $cam_medias['data'] = array_values($filtered_media_data);
+                $cam_medias['total'] = count($filtered_media_data);
+                if ($cam_medias['total'] == 0) {
+                    unset($slot->campaigns[$key]);
+                    continue;
+                }
+            }
             foreach ($cam_medias['data'] as $medium) {
                 $medium->replacable = ($cam['priority'] == 3 || $cam['priority'] == 6 || $cam['priority'] == 7) ? 1 : 0;
             }
-
             /*
             if ($cam['playcnt_type']==3) {
                 $fill_in_count += $cam['count'];
@@ -7637,13 +7686,14 @@ class Program extends MY_Model
                         $tickerList['Ticker'] = $ticker;
                     }
                 } else if ($area->area_type == $this->config->item('area_type_webpage')) {
-                    //$webpages = $this->get_playlist_webpage_list($cam_id);
-                    $webpages = $this->get_playlist_mce_list($cam_id);
+                    $webpages = $this->get_playlist_webpage_list($cam_id);
+                    //$webpages = $this->get_playlist_mce_list($cam_id);
                     if ($webpages['total'] > 0) {
                         $areaList = ['_attributes' => ["id" => $area->id, "playtime" => "00:00:10"]];
                         foreach ($webpages['data'] as $webpage) {
 
                             $cid = $playlist->company_id;
+                            /*
                             $targetDir =  './resources/' . $cid . "/webpage";
                             $destHtml = $targetDir . '/' . $webpage->mid . ".html";
 
@@ -7680,7 +7730,8 @@ class Program extends MY_Model
                             $html->save($destHtml);
 
                             $url = ($this->is_ssl() ? "https:" : "http:") . '//' . $_SERVER['HTTP_HOST'] . '/' . substr($destHtml, 1);
-
+                            */
+                            $url = $webpage->url;
                             $resource = [
                                 "_attributes" => [
                                     "id" => $webpage->id,
@@ -7691,8 +7742,10 @@ class Program extends MY_Model
                                     "startdate" =>  "",
                                     "enddate" => "",
                                     "cleardate" => "",
-                                    "duration" => $webpage->play_time,
-                                    "refreshtime" => "12:00:00",
+                                    //"duration" => $webpage->play_time,
+                                    //"refreshtime" => "12:00:00",
+                                    "duration" => $webpage->duration,
+                                    'refreshtime' => $webpage->updateF,
                                 ],
 
                                 'URL' => $url,
@@ -7724,7 +7777,7 @@ class Program extends MY_Model
                                 "startdate" => "",
                                 "enddate" =>  "",
                                 "cleardate" => "",
-                                "duration" => "23:00:00",
+                                "duration" => "23:59:59",
                                 'reload' => 0,
                             ],
                             'URL' => $medium->full_path,
@@ -7761,7 +7814,7 @@ class Program extends MY_Model
                 $url = ($this->is_ssl() ? "https:" : "http:") . '//' . $_SERVER['HTTP_HOST'] . '/assets/template.html?playlist_id=' . $cam_id . "&time=" . time();
 
 
-                $id_duration = $hasMoive ? "00:01:00" : "00:00:10";
+                $id_duration = $hasMoive ? "00:05:00" : "00:00:10";
 
 
                 $resource = [
@@ -7775,7 +7828,7 @@ class Program extends MY_Model
                         "enddate" => "",
                         "cleardate" => "",
                         "duration" => $id_duration,
-                        "refreshtime" => "24:00:00",
+                        "refreshtime" => "00:05:00", //"23:59:59",
                     ],
 
                     'URL' => $url,
@@ -7820,6 +7873,7 @@ class Program extends MY_Model
 
         return false;
     }
+
 
     public function update_affected_players($cam_id)
     {
@@ -7996,7 +8050,8 @@ class Program extends MY_Model
             //$today = date("Y-m-d", $day);
             //$this->db->where('p.start_date<=', $today);
             $this->db->where('p.start_date<=', $day);
-            $this->db->where('p.end_date>=', $day);
+            //$this->db->where('p.end_date>=', $day);
+            $this->db->where('CONCAT(p.end_date, " 23:59:59") >=', $day);
         }
 
         $this->db->where('p.deleted_at is null');
@@ -8081,10 +8136,10 @@ class Program extends MY_Model
     {
         $data = array();
 
-        //$this->db->select('p.id,p.name,p.area_id,p.id_number,p.descr,s.style as type');
-        $this->db->select('p.*');
+        $this->db->select('p.id,p.name,p.area_id,p.id_number,p.descr,s.style as type');
+        //$this->db->select('p.*');
         $this->db->from('cat_playlist_area_id p');
-        //$this->db->join('cat_area_extra_setting s', 's.area_id=p.area_id', 'left');
+        $this->db->join('cat_area_extra_setting s', 's.area_id=p.area_id', 'left');
         $this->db->where('p.playlist_id', $playlist_id);
         if ($area_id !== false) {
             $this->db->where('p.area_id', $area_id);
@@ -8107,11 +8162,11 @@ class Program extends MY_Model
 
     public function get_playlist_id_areas($playlist_id)
     {
-        $this->load->model('charger_status');
+
         $template = $this->get_template_of_playlist($playlist_id);
         if ($template) {
             $rate = $template->width / $template->w;
-            $this->db->select("i.id_number,i.name,ta.x as left,ta.y as top ,ta.w as width, ta.h as height,s.color,s.font_size,s.transparent,s.bg_color,s.style,s.font_family,s.charger_setting_id, i.type");
+            $this->db->select("i.id_number,i.name,i.area_id, ta.x as left,ta.y as top ,ta.w as width, ta.h as height,s.color,s.font_size,s.transparent,s.bg_color,s.style,s.font_family,s.charger_setting_id, i.type");
             $this->db->from('cat_playlist_area_id i');
             $this->db->join('cat_template_area ta', 'ta.id=i.area_id', 'left');
             $this->db->join('cat_area_extra_setting s', 's.area_id=i.area_id', 'left');
@@ -8124,8 +8179,14 @@ class Program extends MY_Model
 
                 foreach ($zones as &$zone) {
                     if ($zone['type'] == 0) {
+                        $this->load->model('charger_status');
                         $zone['settings'] = $this->charger_status->get_status_list($zone['charger_setting_id']);
                     }
+                    /*if ($zone['type'] == 5) {
+                        $this->load->model('qr_record');
+                        $zone['qrcode'] = $this->qr_record->get_by_id($zone['id_number']);
+                    }
+                    */
                 }
 
                 $data['width'] = $template->width;
@@ -8398,6 +8459,23 @@ class Program extends MY_Model
         }
         return false;
     }
+
+    public function delete_not_exsit_id_areas($playlist_id, $id_numbers)
+    {
+        $idArray = array();
+        foreach ($id_numbers as $id_number) {
+            if (isset($id_number->id)) {
+                $idArray[] = $id_number->id;
+            }
+        }
+
+        $idString = implode(',', $idArray);
+
+        $sql = "DELETE FROM cat_playlist_area_id WHERE playlist_id = $playlist_id AND id NOT IN ($idString)";
+
+        $this->db->query($sql);
+    }
+
     public function get_main_campaigns($company_id)
     {
         $this->db->select('id,name');
@@ -8470,5 +8548,404 @@ class Program extends MY_Model
             }
         }
         return array('total' => $total, 'replaced_extended_cnt' => $replace_media_cnt);
+    }
+
+    public function save_touch_campaign($cam_id)
+    {
+        $id = $cam_id;
+
+        $this->load->model('template');
+        $this->load->helper('media');
+        $this->load->helper('xml');
+
+        $transmodemapping = $this->config->item('media.transmode.mapping');
+        $playlist = $this->get_playlist($cam_id);
+
+        if ($playlist) {
+            $template = $this->template->get_template($playlist->template_id);
+            $areas = $this->template->get_area_list($playlist->template_id);
+
+            $array = [
+                'SignwayPoster' => [
+                    '_attributes' => ['type' => 'playlist', 'version' => '1.0.1'],
+                    'syspara' => [
+                        'activearea' => [
+                            '_attributes' => ['width' => $template->width, 'height' => $template->height, 'rotation' => '0']
+                        ],
+                        'timeout' => [
+                            '_attributes' => ['interval' => '00:05:00', 'action' => '1', 'duration' => '00:00:30']
+                        ]
+                    ],
+                    'Project' => [
+                        '_attributes' => ['id' => $playlist->id, 'name' => $playlist->name, 'playtime' => '00:00:30', 'showtext' => '0']
+                    ],
+                    'Programme' => [
+                        '_attributes' => ['id' => '1', 'name' => ''],
+                        'Page' => []
+                    ],
+                    'resource' => []
+                ]
+            ];
+
+            foreach ($areas as $area) {
+                $left = number_format(($area->x / $template->w) * 100, 2) . '%';
+                $top = number_format(($area->y / $template->h) * 100, 2) . '%';
+                $width = number_format(($area->w / $template->w) * 100, 2) . '%';
+                $height = number_format(($area->h / $template->h) * 100, 2) . '%';
+
+                $attributes = [
+                    'id' => $area->id,
+                    'name' => $area->name,
+                    'model' => $area->area_type,
+                    'left' => $left,
+                    'top' => $top,
+                    'width' => $width,
+                    'height' => $height,
+                    'zindex' => $area->zindex
+                ];
+
+                $page = [
+                    '_attributes' => ['id' => $area->id, 'name' => 'page1', 'interval' => '00:05:00'],
+                    'Area' => [
+                        '_attributes' => $attributes
+                    ]
+                ];
+
+                if ($area->area_type == $this->config->item('area_type_movie') || $area->area_type == $this->config->item('area_type_image')) {
+                    $medias = $this->get_playlist_area_media_list($id, $area->id, 0);
+                    if ($medias['total'] > 0) {
+                        $page['Area']['freerun'] = [];
+                        foreach ($medias['data'] as $medium) {
+                            if (!$medium->status) {
+                                $resource = [
+                                    '_attributes' => [
+                                        'id' => $medium->id,
+                                        'image' => $medium->id,
+                                        'transmode' => '',
+                                        'duration' => gmdate('H:i:s', $medium->play_time),
+                                        'fillmode' => '',
+                                        'startdate' => '',
+                                        'enddate' => '',
+                                        'starttime' => '',
+                                        'cleartime' => '',
+                                        'action' => '',
+                                        'target' => ''
+                                    ]
+                                ];
+                                $page['Area']['freerun'][] = ['gi' => $resource];
+                            }
+                        }
+                    }
+                } elseif ($area->area_type == $this->config->item('area_type_text')) {
+                    $settings = $this->template->get_area_extra_setting($area->id);
+                    $text = $this->get_playlist_text($cam_id);
+                    if ($settings) {
+                        $setting = [
+                            'face' => $settings->font_family,
+                            'size' => $settings->font_size,
+                            'color' => $settings->color,
+                            'bgcolor' => $settings->bg_color,
+                            'bgmix' => $settings->transparent . '%',
+                            'direction' => $settings->direction,
+                            'speed' => $settings->style,
+                            'align' => '0',
+                            'valign' => '0',
+                            'duration' => ''
+                        ];
+                        $page['Area']['textstyle'] = [
+                            '_attributes' => $setting,
+                            '@cdata' => $text ? ' ' . $text->text : ''
+                        ];
+                    }
+                } elseif ($area->area_type == $this->config->item('area_type_webpage')) {
+                    $webpages = $this->get_playlist_webpage_list($cam_id);
+                    if ($webpages['total'] > 0) {
+                        $page['Area']['freerun'] = [];
+                        foreach ($webpages['data'] as $webpage) {
+                            $resource = [
+                                '_attributes' => [
+                                    'id' => $webpage->id,
+                                    'image' => $webpage->id,
+                                    'transmode' => '',
+                                    'duration' => $webpage->duration,
+                                    'fillmode' => '',
+                                    'startdate' => '',
+                                    'enddate' => '',
+                                    'starttime' => '',
+                                    'refreshtime' => $webpage->updateF,
+                                    'cleartime' => '',
+                                    'action' => '',
+                                    'target' => ''
+                                ],
+                                'url' => $webpage->url
+                            ];
+                            $page['Area']['freerun'][] = ['gi' => $resource];
+                        }
+                    }
+                }
+
+                $array['SignwayPoster']['Programme']['Page'][] = $page;
+            }
+
+            /*
+            foreach ($resources as $resource) {
+                $array['SignwayPoster']['resource'][] = [
+                    'fi' => [
+                        '_attributes' => [
+                            'id' => $resource->id,
+                            'name' => $resource->name,
+                            'size' => $resource->file_size,
+                            'mode' => $resource->mode
+                        ]
+                    ]
+                ];
+            }
+            */
+
+            $arrayToXml = new ArrayToXml($array, [], false, 'UTF-8');
+            $xml = $arrayToXml->prettify()->toXml();
+
+            $playlist_path = $this->config->item('playlist_publish_path') . $playlist->company_id;
+            if (!file_exists($playlist_path)) {
+                mkdir($playlist_path, 0777, TRUE);
+            }
+
+            $this->load->helper('file');
+            $playlist_path .= '/' . $id . '.PLS';
+            saveFile($playlist_path, $xml);
+
+            $file_size = filesize($playlist_path);
+            $signature = md5_file($playlist_path);
+
+            $this->program->update_affected_players($id);
+            $updates = ['update_time' => date('Y-m-d H:i:s'), 'signature' => $signature, 'file_size' => $file_size, 'published' => $this->config->item('playlist.status.published')];
+            $this->update_playlist($updates, $id);
+            return true;
+        }
+
+        return false;
+    }
+
+
+    public function get_campaign_preview_data($cam_id)
+    {
+        $this->load->model('template');
+        $playlist = $this->get_playlist($cam_id);
+
+        if (!$playlist) {
+            return false;
+        }
+
+        $template = $this->template->get_template($playlist->template_id);
+        $areas = $this->template->get_area_list($playlist->template_id);
+        $campaignArray = [
+            'id' => $playlist->id,
+            'name' => $playlist->name,
+            "width" => $template->width,
+            "height" => $template->height,
+            "areas" => []
+        ];
+
+        $areaArray = [];
+
+        foreach ($areas as $area) {
+
+            // Calculate positions as percentages
+            $left = number_format(($area->x / $template->w) * 100, 2) . '%';
+            $top = number_format(($area->y / $template->h) * 100, 2) . '%';
+            $width = number_format(($area->w / $template->w) * 100, 2) . '%';
+            $height = number_format(($area->h / $template->h) * 100, 2) . '%';
+
+            $areaItem = [
+                "id" => $area->id,
+                "model" => $area->area_type,
+                "name" => $area->name,
+                "type" => $area->area_type,
+                "left" => $left,
+                "top" => $top,
+                "width" => $width,
+                "height" => $height,
+                "zindex" => $area->zindex
+            ];
+
+            // Handle media areas (movies, images, etc)
+            if (in_array($area->area_type, [
+                $this->config->item('area_type_movie'),
+                $this->config->item('area_type_image'),
+                $this->config->item('area_type_logo'),
+                $this->config->item('area_type_mask')
+            ])) {
+                $medias = $this->get_playlist_area_media_list($cam_id, $area->id, 0);
+                if ($medias['total'] > 0) {
+                    $areaItem['resources'] = [];
+                    foreach ($medias['data'] as $medium) {
+                        if (!$medium->status) {
+                            $mediumPath = $medium->full_path;
+                            if ($medium->main_url && file_exists('.' . $medium->main_url)) {
+                                $mediumPath = '.' . $medium->main_url;
+                            }
+                            $areaItem['resources'][] = [
+                                "url" => $mediumPath,
+                                "duration" => gmdate("H:i:s", (int)$medium->play_time),
+                            ];
+                        }
+                    }
+                }
+            } else if ($area->area_type == $this->config->item('area_type_bg')) {
+                $this->load->model('template');
+                $medium = $this->template->get_area_image_setting($area->id);
+                $areaItem['url'] = $medium->full_path;
+            } else if (
+                $area->area_type == $this->config->item('area_type_date')
+                || $area->area_type == $this->config->item('area_type_time')
+                || $area->area_type == $this->config->item('area_type_weather')
+            ) {
+
+                $settings = $this->template->get_area_extra_setting($area->id);
+                //$xml .= sprintf('< bold="%d" color="%s" bgcolor="%s" family="%s" size="%spx" style="%d" bgmix="%d%%" type="%d" lang="%d"/>', $area->id, $area->name, $area->area_type, ($area->x / $template->w) * 100, ($area->y / $template->h) * 100, ($area->w / $template->w) * 100, ($area->h / $template->h) * 100, $area->zindex, $setting->bold, $setting->color, $setting->bg_color, $setting->font_family, $setting->font_size, $setting->style, $setting->transparent, $setting->format, $setting->language) . $this->sep;
+                if ($settings) {
+                    $setting = [
+                        'bold' => 0,
+                        'color' => $settings->color,
+                        'bgcolor' => $settings->bg_color,
+                        'family' => $settings->font_family,
+                        'size' => $settings->font_size . 'px',
+                        'style' => $settings->style,
+                        "bgmix" => $settings->transparent . '%',
+                        'type' => 0,
+                    ];
+                    if (!$area->area_type == $this->config->item('area_type_weather')) {
+                        $setting['lang'] = 0;
+                    }
+                    $areaItem = array_merge($areaItem, $setting);
+                }
+            }
+            // Handle text areas
+            else if ($area->area_type == $this->config->item('area_type_text')) {
+                $settings = $this->template->get_area_extra_setting($area->id);
+                $text = $this->get_playlist_text($cam_id);
+                if ($settings) {
+                    $areaItem['text'] = [
+                        'content' => $text ? $text->text : "",
+                        'font' => $settings->font_family,
+                        'size' => $settings->font_size,
+                        'color' => $settings->color,
+                        'bgcolor' => $settings->bg_color,
+                        'transparent' => $settings->transparent . '%',
+                        'direction' => $settings->direction,
+                        'speed' => $settings->style
+                    ];
+                }
+            } else if ($area->area_type == $this->config->item('area_type_id')) {
+                $settings = $this->template->get_area_extra_setting($area->id);
+                if ($settings) {
+                    $setting = [
+                        'bold' => 0,
+                        'color' => $settings->color,
+                        'bgcolor' => $settings->bg_color,
+                        'family' => $settings->font_family,
+                        'size' => $settings->font_size . 'px',
+                        'style' => $settings->style,
+                        "bgmix" => $settings->transparent . '%',
+                        'type' => 0,
+                    ];
+
+                    $areaItem = array_merge($areaItem, $setting);
+                    $id_number = $this->getPlaylistAreaID($cam_id, $area->id);
+
+                    if ($id_number && isset($id_number->type)) {
+                        $id_settings = [
+                            'id_number' => $id_number->id_number,
+                            'name' => $id_number->name,
+                            'type' => $id_number->type
+                        ];
+                        if ($id_number->type == 4 && $id_number->id_number) {
+                            $this->load->model('product');
+
+                            if (is_numeric($id_number->name)) {
+                                $id_settings['store_id'] = $id_number->name;
+                            }
+                        }
+                        if ($id_number->type == 0) {
+                            $this->load->model('charger_status');
+
+                            $areaItem['status_settings'] = $this->charger_status->get_status_list($settings->charger_setting_id);
+                        }
+                        if ($id_number->type == 5) {
+                            $this->load->model('qr_record');
+                            $qrCode = $this->qr_record->get_by_id($id_number->id_number);
+
+                            if ($qrCode) {
+                                $id_settings['qrcode'] = array('bg_color' => $qrCode->bg_color, 'width' => $qrCode->width, 'color' => $qrCode->color);
+                            }
+                        }
+
+                        $areaItem['settings'] = $id_settings;
+                    }
+                }
+            } else if ($area->area_type == $this->config->item('area_type_webpage')) {
+                $webpages = $this->get_playlist_webpage_list($cam_id);
+                if ($webpages['total'] > 0) {
+                    $areaItem['resources'] = [];
+
+                    foreach ($webpages['data'] as $webpage) {
+                        $areaItem['resources'][] = [
+                            "url" => $webpage->url,
+                            "duration" => $webpage->duration,
+                            'updateF' => $webpage->updateF
+                        ];
+                    }
+                }
+            }
+
+
+            $areaArray[] = $areaItem;
+        }
+        $campaignArray['areas'] = $areaArray;
+
+        return $campaignArray;
+    }
+
+    public function get_id_zone_by_area_id($area_id)
+    {
+        $this->db->select('*');
+        $this->db->from('cat_playlist_area_id');
+        $this->db->where('area_id', $area_id);
+        $query = $this->db->get();
+        if ($query->num_rows() > 0) {
+            return $query->row();
+        }
+        return false;
+    }
+
+    public function reset_players_programmatic_booking($pls)
+    {
+        $players = $this->program->get_player_by_campaign($pls->id);
+        $start_date = $pls->start_date;
+        $end_date = $pls->end_date;
+
+        if (empty($players)) {
+            return false;
+        }
+        $player_ids = array();
+        foreach ($players as $player) {
+            $player_ids[] = $player->id;
+        }
+        if (empty($player_ids)) {
+            return false;
+        }
+        if ($start_date && $end_date && $start_date == $end_date) {
+            $this->db->where('at_date', $start_date);
+        } else {
+            if ($start_date) {
+                $this->db->where('at_date>=', $start_date);
+            }
+            if ($end_date) {
+                $this->db->where('at_date<=', $end_date);
+            }
+        }
+
+        $this->db->where_in('player_id', $player_ids);
+        return $this->db->delete('cat_player_programmatic_booking');
     }
 }

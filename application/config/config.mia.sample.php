@@ -337,3 +337,5 @@ $config['with_transition'] = false;
 /* Location: ./application/config/config.php */
 
 $config['redis_password'] = "PW";
+$config['medium_with_weekNtime'] = true;
+$config['date_range_from_folder'] = true;

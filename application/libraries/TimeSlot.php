@@ -12,6 +12,7 @@ class TimeSlot
     public $xslot = 0;
     public $fulled = false;
     public $quota = 100;
+    public $promatic_booking_time = 0;
 
     public function __construct($para = array())
     {
@@ -112,6 +113,11 @@ class TimeSlot
                 $cam_ary['has_replace_main'] = isset($campaign->has_replace_main) ? $campaign->has_replace_main : 0;
             }
             $this->campaigns[] = $cam_ary;
+        }
+
+
+        if ($campaign->priority == 7) {
+            $this->promatic_booking_time += $cam_used;
         }
         return $cam_used;
         //return true;

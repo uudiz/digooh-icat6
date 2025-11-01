@@ -1287,7 +1287,7 @@ class Campaign extends MY_Controller
                         $pls_tags = array();
                     }
                     foreach ($mediaObjs as $medium) {
-                        $id = $this->program->add_area_media(array('playlist_id' => $playlist_id, 'area_id' => $area_id, 'media_id' => $medium->id,  'transmode' => $transmode, 'position' => $max_position, 'rotate' => $rotate), $uid);
+                        $id = $this->program->add_area_media(array('playlist_id' => $playlist_id, 'area_id' => $area_id, 'media_id' => $medium->id,  'transmode' => $transmode, 'position' => $max_position, 'rotate' => $rotate));
                         $max_position++;
                         if ($medium->tags) {
                             $pls_tags = array_merge($pls_tags, explode(",", $medium->tags));
@@ -1297,14 +1297,14 @@ class Campaign extends MY_Controller
                     $result['tags'] = array_values($pls_tags);
                 } else {
                     foreach ($media as $medium) {
-                        $id = $this->program->add_area_media(array('playlist_id' => $playlist_id, 'area_id' => $area_id, 'media_id' => $medium,  'transmode' => $transmode, 'position' => $max_position, 'rotate' => $rotate), $uid);
+                        $id = $this->program->add_area_media(array('playlist_id' => $playlist_id, 'area_id' => $area_id, 'media_id' => $medium,  'transmode' => $transmode, 'position' => $max_position, 'rotate' => $rotate));
 
                         $max_position++;
                     }
                 }
             } else {
                 foreach ($media as $medium) {
-                    $id = $this->program->add_area_media(array('playlist_id' => $playlist_id, 'area_id' => $area_id, 'media_id' => $medium,  'transmode' => $transmode, 'position' => $max_position, 'rotate' => $rotate), $uid);
+                    $id = $this->program->add_area_media(array('playlist_id' => $playlist_id, 'area_id' => $area_id, 'media_id' => $medium,  'transmode' => $transmode, 'position' => $max_position, 'rotate' => $rotate));
                     $max_position++;
                 }
             }
@@ -2599,7 +2599,7 @@ class Campaign extends MY_Controller
 
             $max_position++;
 
-            $id = $this->program->add_area_media(array('playlist_id' => $playlist_id, 'area_id' => $area_id, 'media_id' => $id, 'duration' => $duration, 'transmode' => $transmode, 'position' => $max_position, 'rotate' => $rotate), $uid);
+            $id = $this->program->add_area_media(array('playlist_id' => $playlist_id, 'area_id' => $area_id, 'media_id' => $id, 'duration' => $duration, 'transmode' => $transmode, 'position' => $max_position, 'rotate' => $rotate));
         }
 
         $result['success'] = true;

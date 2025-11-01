@@ -37,7 +37,7 @@ class SspModel extends CI_Model
     public function getPlayerLog($filter = array(), $offset = 0, $limit = -1)
     {
         $result = array();
-        $this->db->select('pm.created_at, p.name as player, p.sn as sn, c.campaign_name as campaign,m.media_id as media');
+        $this->db->select('pm.created_at, p.name as player, p.sn as sn, c.campaign_name as campaign,m.src as media');
         $this->db->from('ssp_player_media pm');
         $this->db->join('cat_player p', 'p.id = pm.player_id', 'left');
         $this->db->join('ssp_campaign_media cm', 'cm.media_id = pm.media_id', 'left');

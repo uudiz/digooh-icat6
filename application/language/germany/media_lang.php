@@ -39,6 +39,7 @@ $lang['http.url.image.tip'] = 'Zum Beispiel:http://news.baidu.com/resource/img/l
 $lang['http.url.video.tip'] = 'Zum Beispiel:http://news.baidu.com/resource/log.avi';
 
 $lang['msg.media.not.exists'] = 'Diese Mediendatei existiert nicht!';
+$lang['msg.media.exists'] = 'Der Dateiname ist schon vergeben. Bitte einen anderen Dateinamen angeben.';
 $lang['msg.media.not.support.preview'] = 'Bei dieser Mediendatei ist keine Vorschau möglich!';
 $lang['msg.media.preview.fail'] = 'Vorschaukonvertierung fehlgeschlagen!';
 
@@ -58,7 +59,10 @@ $lang['upload.file.error'] = 'Upload %s fehlgeschlagen!';
 $lang['playcount'] = 'Play Count';
 
 $lang['playtime.format'] = 'Format: MM:SS';
-
+$lang['date.range'] = 'Datum';
+$lang['time.range'] = 'Uhrzeit';
+$lang['date_range'] = 'Datum';
+$lang['time_range'] = 'Uhrzeit';
 
 $lang['dest.folder'] = 'Destination Folder';
 

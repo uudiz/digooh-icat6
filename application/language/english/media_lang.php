@@ -63,6 +63,8 @@ $lang['upload.file.error'] = 'Upload %s fail!';
 $lang['playcount'] = 'Play Count';
 $lang['date.range'] = 'Date Range';
 $lang['time.range'] = 'Time Range';
+$lang['date_range'] = 'Date Range';
+$lang['time_range'] = 'Time Range';
 $lang['playtime.format'] = 'Format: MM:SS';
 
 $lang['dest.folder'] = 'Destination Folder';
