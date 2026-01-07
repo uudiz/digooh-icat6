@@ -128,7 +128,8 @@ $server->on('packet', function ($serv, $data, $clientInfo) {
     //echo "[" . date("Y-m-d H:i:s") . "]  [onPacket] command=" . $command . "\n";
     switch ($command) {
         case 0x3:
-            $data = pack('Ca4Ca10CC', 0x00, '1234', 10, $recv['sn'], $recv['type'], $recv['value']);
+            $value = isset($recv['value']) ? $recv['value'] : 0;
+            $data = pack('Ca4Ca10CC', 0x00, '1234', 10, $recv['sn'], $recv['type'], $value);
             break;
         case 0x4:
             $data = pack('Ca4Ca10', 0x00, '1234', 10, $recv['sn']);
