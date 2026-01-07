@@ -3016,9 +3016,11 @@ class Device extends MY_Model
 
             $port = $this->config->item("tcp_port") ?: 4702;
             $socket = socket_create(AF_INET, SOCK_DGRAM, SOL_UDP);
+            $this->load->helper('chrome_logger');
             foreach ($players as $player) {
                 $item = array("command" => 0x3, "sn" => $player->sn, 'fd' => $player->socket_fd, 'type' => $type, "value" => $value);
                 $str = json_encode($item);
+                chrome_log($str);
                 $ret = socket_sendto($socket, $str, strlen($str), 0, $host, $port);
             }
             socket_close($socket);
