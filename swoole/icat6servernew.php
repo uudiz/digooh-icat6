@@ -125,22 +125,15 @@ $server->on('packet', function ($serv, $data, $clientInfo) {
         return;
     }
     $command = $recv['command'];
-
+    //echo "[" . date("Y-m-d H:i:s") . "]  [onPacket] command=" . $command . "\n";
     switch ($command) {
         case 0x3:
-        case 0x0:
-            if ($command == 0) {
-                echo "[" . date("Y-m-d H:i:s") . "]  [onPacket] command=" . $command . "\n";
-                var_dump($recv);
-            }
-            $value = isset($recv['value']) ? $recv['value'] : 0;
-            $data = pack('Ca4Ca10CC', 0x00, '1234', 10, $recv['sn'], $recv['type'], $value);
+            $data = pack('Ca4Ca10CC', 0x00, '1234', 10, $recv['sn'], $recv['type'], $recv['value']);
             break;
         case 0x4:
             $data = pack('Ca4Ca10', 0x00, '1234', 10, $recv['sn']);
             break;
     }
-
 
     $encdata = blowfish_enc($data);  //blowfish 加密DATA数据
     $length = strlen($encdata);
