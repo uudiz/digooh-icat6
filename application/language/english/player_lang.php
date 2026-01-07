@@ -161,3 +161,4 @@ $lang['send'] = "Send command";
 $lang['screen_resolution'] = "Screen Resolution";
 $lang['modell_nubmer'] = "Modell Number";
 $lang['show.planned.displays'] = "Show planned displays";
+$lang['audio'] = 'Audio';

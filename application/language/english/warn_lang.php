@@ -20,3 +20,4 @@ $lang['warn.template.name'] = 'Invalid Filename! (Template.xxx.xml)';
 $lang['warn.import.name'] = 'Template already existed, please change to different name or delete current one!';
 $lang['warn.touch.template.name'] = 'Invalid Filename! (Touch.Template.xxx.xml)';
 $lang['warn.touch.import.name'] = 'Template already existed, please change to different name or delete current one!';
+$lang['warn.player.set.volume'] = 'Player\'s audio volume can be set (0-100) range!';

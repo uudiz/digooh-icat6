@@ -55,6 +55,7 @@
             <button class="btn btn-danger" onclick="sendCommand(8)"><?php echo lang('format'); ?></button>
             <button class="btn btn-primary" onclick="sendCommand(3)"><?php echo lang('control.type3'); ?></button>
             <button class="btn btn-primary" onclick="sendCommand(4)"><?php echo lang('control.type4'); ?></button>
+            <button class="btn btn-primary" onclick="sendCommand(0)"><?php echo lang('audio'); ?></button>
             <?php if ($auth == 10) : ?>
               <button class="btn btn-primary" onclick="sendCommand(10)">Detail Log</button>
             <?php endif ?>
@@ -394,7 +395,13 @@
       prompt_str = "<?php echo lang('warn.player.format'); ?>";
     } else if (command == 3) {
       prompt_str = "<?php echo lang('warn.area.you.sure'); ?>";
+    } else if (command == 0) {
+      prompt_str = `
+      <label class="form-label"><?php echo lang('warn.player.set.volume'); ?></label>
+      <input type="range" class="form-range mb-2" id="volume_slider" min="0" max="100" value="0" oninput="this.nextElementSibling.value = this.value">
+      <output>0</output>`;
     }
+
     $('#prompt').html(prompt_str);
     var selections = $('#table').bootstrapTable('getSelections');
 
@@ -416,10 +423,14 @@
 
     $('#command_confirm').modal("show").off('click')
       .on('click', '#confirm', function(e) {
+        var val = 0;
+        if (command == 0) {
+          val = $('#volume_slider').val();
+        }
         $.post('/player/android_control', {
           "ids": ids,
           "type": command,
-          "value": 0
+          "value": val
         }, function(data) {
           $('#table').bootstrapTable('uncheckAll');
           //alert(data);
