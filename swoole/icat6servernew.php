@@ -161,6 +161,7 @@ $server->start();
 function onHeartBeat($serv, $fd, $data, $length)
 {
     //echo "[" . date("Y-m-d H:i:s") . "]  [Heartbeat] Got Heart beat! fd=" . $fd . " \n";
+    /*
     $respval = 0;
     $loginpara_tmp = unpack('Cstype/a4netid/Csnlen/a10sn/Cstatus/a8voltage/a8elec/Cfan/a8discspace/Cwet/Ctemp/Cdownnum/Coffstate/Cplen', $data);
 
@@ -172,6 +173,29 @@ function onHeartBeat($serv, $fd, $data, $length)
             $loginpara = unpack('Cstype/a4netid/Csnlen/a10sn/Cstatus/a8voltage/a8elec/Cfan/a8discspace/Cwet/Ctemp/Cdownnum/Coffstate/Cplen/a' . $loginpara_tmp['plen'] . 'plsName/Cpmodel', $data);
         }
     }
+
+    */
+    $respval = 0;
+    $loginpara_tmp = unpack('Cstype/a4netid/Csnlen/a10sn/Cstatus/a8voltage/a8elec/Cfan/a8discspace/Cwet/Ctemp/Cdownnum/Coffstate/Cplen', $data);
+
+    // Calculate dynamic base length: Header (47 bytes) + Playlist Name Length (plen) + Model (1 byte)
+    $plen = isset($loginpara_tmp['plen']) ? $loginpara_tmp['plen'] : 0;
+    $base_len = 48 + $plen;
+
+    // Start with the base format
+    $format = 'Cstype/a4netid/Csnlen/a10sn/Cstatus/a8voltage/a8elec/Cfan/a8discspace/Cwet/Ctemp/Cdownnum/Coffstate/Cplen/a' . $plen . 'plsName/Cpmodel';
+
+    // Check if packet contains extended sensor data (17 bytes: wetnew 8, tempnew 8, brightnew 1)
+    if ($length >= $base_len + 17) {
+        $format .= '/a8wetnew/a8tempnew/Cbrightnew';
+
+        // Check for extra volume byte
+        if ($length >= $base_len + 18) {
+            $format .= '/Cvol';
+        }
+    }
+
+    $loginpara = unpack($format, $data);
 
     //$this->my_memcache_set($loginpara['sn'], $fd);
     if (empty($loginpara)) {
@@ -327,6 +351,10 @@ function onHeartBeat($serv, $fd, $data, $length)
     }
     if (isset($loginpara['brightnew'])) {
         $sql .= "', brightness='" .  $loginpara['brightnew'];
+    }
+
+    if (isset($loginpara['vol'])) {
+        $sql .= "', volume='" .  $loginpara['vol'];
     }
 
 
