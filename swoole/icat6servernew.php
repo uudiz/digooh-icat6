@@ -189,8 +189,10 @@ function onHeartBeat($serv, $fd, $data, $length)
     if ($length >= $base_len + 17) {
         $format .= '/a8wetnew/a8tempnew/Cbrightnew';
 
+
         // Check for extra volume byte
         if ($length >= $base_len + 18) {
+            echo "length: " . $length . ", base_len: " . $base_len . "\n";
             $format .= '/Cvol';
         }
     }
@@ -354,7 +356,11 @@ function onHeartBeat($serv, $fd, $data, $length)
     }
 
     if (isset($loginpara['vol'])) {
-        $sql .= "', volume='" .  $loginpara['vol'];
+        $volume = $loginpara['vol'];
+        echo "Heartbeat received volume: " . $volume . " from SN: " . $loginpara['sn'] . "\n";
+        if ($volume >= 0 && $volume <= 100) {
+            $sql .= "', volume='" .  $loginpara['vol'];
+        }
     }
 
 

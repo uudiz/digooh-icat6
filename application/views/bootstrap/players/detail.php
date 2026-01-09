@@ -137,6 +137,11 @@
 						<strong><?php echo lang('ethernet_tethering'); ?> </strong> <?php echo $player->ethTetheringOnOff ? "On" : "Off" ?>
 					</div>
 				</div>
+				<div class="col-auto">
+					<div class="text-truncate">
+						<strong><?php echo lang('audio'); ?> </strong> <?php echo $player->volume ? $player->volume  : "N/A"; ?>
+					</div>
+				</div>
 
 			</div>
 		</dl>
