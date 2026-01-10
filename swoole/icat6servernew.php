@@ -128,7 +128,9 @@ $server->on('packet', function ($serv, $data, $clientInfo) {
     //echo "[" . date("Y-m-d H:i:s") . "]  [onPacket] command=" . $command . "\n";
     switch ($command) {
         case 0x3:
-            $value = isset($recv['value']) ? $recv['value'] : 0;
+            $value = isset($recv['value']) ? dechex($recv['value']) : 0;
+            //echo "Control command: type=" . $recv['type'] . ", value=" . $value . "\n";
+            // echo "original value: " . $recv['value'] . "\n";
             $data = pack('Ca4Ca10CC', 0x00, '1234', 10, $recv['sn'], $recv['type'], $value);
             break;
         case 0x4:
@@ -192,7 +194,6 @@ function onHeartBeat($serv, $fd, $data, $length)
 
         // Check for extra volume byte
         if ($length >= $base_len + 18) {
-            echo "length: " . $length . ", base_len: " . $base_len . "\n";
             $format .= '/Cvol';
         }
     }
@@ -356,10 +357,10 @@ function onHeartBeat($serv, $fd, $data, $length)
     }
 
     if (isset($loginpara['vol'])) {
-        $volume = $loginpara['vol'];
-        echo "Heartbeat received volume: " . $volume . " from SN: " . $loginpara['sn'] . "\n";
+        $volume = hexdec($loginpara['vol']);
+        // echo "sn:" . $loginpara['sn'] . " Volume received hex: " . $loginpara['vol'] . ", dec:" . $volume . "\n";
         if ($volume >= 0 && $volume <= 100) {
-            $sql .= "', volume='" .  $loginpara['vol'];
+            $sql .= "', volume='" .  $volume;
         }
     }
 
@@ -429,8 +430,17 @@ function onLogin($serv, $fd, $data, $input)
                     }
                     $exPara = json_decode($extraPara['extra'], true);
                     if ($exPara) {
+                        $simICCID = '';
                         foreach ($exPara as $key => $value) {
+                            if ($key == 'simICCID') {
+                                // Remove any non-digit characters from the value
+                                $simICCID = preg_replace('/\D/', '', $value);
+                                continue;
+                            }
                             $sql .= ", " . $key . "=" . '"' . $value . '"';
+                        }
+                        if ($simICCID != '') {
+                            $mysqli->query("update cat_player_extra set simno = " . '"' . $simICCID . '"' .  " where player_id = " . $player->id);
                         }
                     }
                 }

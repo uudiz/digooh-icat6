@@ -426,7 +426,7 @@ class Receive extends CI_Controller
 
         $headers = array();
         $headers[] = "PInterval: " . $this->player->comm_intval;
-        $headers[] = "PVolume: " . $this->player->volume;
+        //$headers[] = "PVolume: " . $this->player->volume;
 
         return downloadContent($task, 'task.xml', $headers);
     }
