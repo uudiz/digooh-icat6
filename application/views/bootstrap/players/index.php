@@ -398,7 +398,7 @@
     } else if (command == 0) {
       prompt_str = `
       <label class="form-label"><?php echo lang('warn.player.set.volume'); ?></label>
-      <input type="range" class="form-range mb-2" id="volume_slider" min="0" max="100" value="0" oninput="this.nextElementSibling.value = this.value">
+      <input type="range" class="form-range mb-2" id="volume_slider" min="0" max="100" step="10" value="0" oninput="this.nextElementSibling.value = this.value">
       <output>0</output>`;
     }
 

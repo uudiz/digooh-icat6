@@ -128,7 +128,7 @@ $server->on('packet', function ($serv, $data, $clientInfo) {
     //echo "[" . date("Y-m-d H:i:s") . "]  [onPacket] command=" . $command . "\n";
     switch ($command) {
         case 0x3:
-            $value = isset($recv['value']) ? dechex($recv['value']) : 0;
+            $value = isset($recv['value']) ? $recv['value'] : 0;
             //echo "Control command: type=" . $recv['type'] . ", value=" . $value . "\n";
             // echo "original value: " . $recv['value'] . "\n";
             $data = pack('Ca4Ca10CC', 0x00, '1234', 10, $recv['sn'], $recv['type'], $value);
@@ -357,7 +357,7 @@ function onHeartBeat($serv, $fd, $data, $length)
     }
 
     if (isset($loginpara['vol'])) {
-        $volume = hexdec($loginpara['vol']);
+        $volume = $loginpara['vol'];
         // echo "sn:" . $loginpara['sn'] . " Volume received hex: " . $loginpara['vol'] . ", dec:" . $volume . "\n";
         if ($volume >= 0 && $volume <= 100) {
             $sql .= "', volume='" .  $volume;
