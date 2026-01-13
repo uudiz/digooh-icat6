@@ -30,7 +30,8 @@ class MY_Controller extends CI_Controller
 
             if (!$lang) {
                 //$lang =  $this->config->item('language');
-                $browser_lang = substr($_SERVER['HTTP_ACCEPT_LANGUAGE'], 0, 4);
+                $accept_lang = isset($_SERVER['HTTP_ACCEPT_LANGUAGE']) ? $_SERVER['HTTP_ACCEPT_LANGUAGE'] : '';
+                $browser_lang = substr($accept_lang, 0, 4);
                 if (preg_match("/de/i", $browser_lang)) {
                     $lang = 'germany';
                 } else {
