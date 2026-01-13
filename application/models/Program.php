@@ -6691,6 +6691,9 @@ class Program extends MY_Model
             $this->device->saveMany_Planed($media_planed_array);
         }
 
+        $this->load->helper('chrome_logger');
+        chrome_log("saving least free data...");
+
         if (!empty($least_arrays)) {
             $this->db->trans_start();
             foreach ($players as $player) {
@@ -6699,6 +6702,8 @@ class Program extends MY_Model
             }
             $this->db->trans_complete();
             $this->device->saveMany_least_free($least_arrays);
+        } else {
+            chrome_log("no least free data to save.");
         }
 
         if ($playlist->priority == 7 && !empty($promatic_booking_array)) {
