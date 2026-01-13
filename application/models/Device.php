@@ -3631,14 +3631,9 @@ class Device extends MY_Model
 
     public function saveMany_least_free($arrays)
     {
-        $this->load->helper('chrome_logger');
-        chrome_log("saving least free data...");
         if (empty($arrays)) {
             return false;
         }
-
-        chrome_log("count of least free:" . count($arrays));
-        chrome_log($arrays[0]);
         $this->db->insert_batch('cat_player_leastfree', $arrays);
         /*
         $this->db->trans_start();

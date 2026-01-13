@@ -6496,7 +6496,6 @@ class Program extends MY_Model
 
                 $today = $checkday->format("Y-m-d");
 
-                chrome_log("processing date: " . $today);
                 $todaystimer = null;
 
                 if ($ptimer) {
@@ -6629,7 +6628,6 @@ class Program extends MY_Model
 
 
                                 $media_cnt = count($today_media);
-                                chrome_log("media couint = " . $media_cnt);
                                 //$media_planed_array = [];
 
                                 $planed_cnt = $ret['day_used'];
@@ -6669,7 +6667,6 @@ class Program extends MY_Model
 
                     if (!$company->pId) {
                         //chrome_log($leastfree);
-                        chrome_log("getting least free time slot for player " . $player->id . " on " . $today);
                         $least_arrays[] = $this->get_least_from_timeslot($player->id,  $today, $time_slots);
                         if ($playlist->priority == 7) {
                             $promatic_booking_data = $this->get_promatic_booking_from_timeslot($player->id, $today, $time_slots);
@@ -6694,10 +6691,6 @@ class Program extends MY_Model
             $this->device->saveMany_Planed($media_planed_array);
         }
 
-        $this->load->helper('chrome_logger');
-        chrome_log("company pid: " . $company->pId);
-        chrome_log("saving least free data...");
-
         if (!empty($least_arrays)) {
             $this->db->trans_start();
             foreach ($players as $player) {
@@ -6706,8 +6699,6 @@ class Program extends MY_Model
             }
             $this->db->trans_complete();
             $this->device->saveMany_least_free($least_arrays);
-        } else {
-            chrome_log("no least free data to save.");
         }
 
         if ($playlist->priority == 7 && !empty($promatic_booking_array)) {
