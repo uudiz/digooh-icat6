@@ -6496,6 +6496,7 @@ class Program extends MY_Model
 
                 $today = $checkday->format("Y-m-d");
 
+                chrome_log("processing date: " . $today);
                 $todaystimer = null;
 
                 if ($ptimer) {
@@ -6667,6 +6668,7 @@ class Program extends MY_Model
 
                     if (!$company->pId) {
                         //chrome_log($leastfree);
+                        chrome_log("getting least free time slot for player " . $player->id . " on " . $today);
                         $least_arrays[] = $this->get_least_from_timeslot($player->id,  $today, $time_slots);
                         if ($playlist->priority == 7) {
                             $promatic_booking_data = $this->get_promatic_booking_from_timeslot($player->id, $today, $time_slots);
