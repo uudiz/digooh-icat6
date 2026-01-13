@@ -6692,6 +6692,7 @@ class Program extends MY_Model
         }
 
         $this->load->helper('chrome_logger');
+        chrome_log("company pid: " . $company->pId);
         chrome_log("saving least free data...");
 
         if (!empty($least_arrays)) {
