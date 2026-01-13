@@ -6629,6 +6629,7 @@ class Program extends MY_Model
 
 
                                 $media_cnt = count($today_media);
+                                chrome_log("media couint = " . $media_cnt);
                                 //$media_planed_array = [];
 
                                 $planed_cnt = $ret['day_used'];
