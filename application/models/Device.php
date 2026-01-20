@@ -3021,6 +3021,12 @@ class Device extends MY_Model
                 $item = array("command" => 0x3, "sn" => $player->sn, 'fd' => $player->socket_fd, 'type' => $type, "value" => $value);
                 $str = json_encode($item);
                 $ret = socket_sendto($socket, $str, strlen($str), 0, $host, $port);
+
+                if ($type == 0) {
+                    //save volume to db
+                    $this->db->where('id', $player->id);
+                    $this->db->update('cat_player', array('volume' => $value));
+                }
             }
             socket_close($socket);
             /*
