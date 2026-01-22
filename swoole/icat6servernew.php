@@ -321,6 +321,9 @@ function onHeartBeat($serv, $fd, $data, $length)
                     case 127:
                         $status_str = "Idle(Sleep Mode)";
                         break;
+                    default:
+                        $status_str = "Unknown(code:" . $status . ")";
+                        break;
                 }
 
                 $p_str = "Player[" . $player->name . "] Status: " . $status_str . $pls;
