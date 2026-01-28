@@ -306,6 +306,9 @@ function onHeartBeat($serv, $fd, $data, $length)
                     case 7:
                         $status_str = "Exception";
                         break;
+                    case 8:
+                        $status_str = "Upgrade in progress";
+                        break;
                     case 9:
                         $status_str = "Login";
                         break;
