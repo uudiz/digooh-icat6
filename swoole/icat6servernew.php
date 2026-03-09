@@ -1,5 +1,6 @@
 <?php
 
+use Swoole\Server;
 use Swoole\Database\MysqliConfig;
 use Swoole\Database\MysqliPool;
 
@@ -19,7 +20,7 @@ const IActivate = 0x08;
 const SERVERCONTRL = 0x0f;
 const REFRESHPL = 0x0e;
 
-$server = new Swoole\Server('0.0.0.0', $server_port, SWOOLE_PROCESS, SWOOLE_SOCK_TCP);
+$server = new Server('0.0.0.0', $server_port, SWOOLE_PROCESS, SWOOLE_SOCK_TCP);
 
 $server->addlistener("0.0.0.0", $server_port, SWOOLE_SOCK_UDP); // UDP
 
@@ -58,15 +59,15 @@ $server->set([
 ]);
 
 
-$server->on('start', function ($serv) {
+$server->on('start', function () {
     echo "Swoole server is started at " . date("Y-m-d H:i:s") . PHP_EOL;
 });
 
-$server->on('connect', function ($server, $fd) {
+$server->on('connect', function () {
     //echo "Client:Connect.\n";
 });
 
-$server->on('receive', function ($serv, $fd, $reactor_id, $data) {
+$server->on('receive', function ($serv, $fd, $_reactor_id, $data) {
     $crcstr = unpack('C2', substr($data, -2));
     $crc1 = (($crcstr[1] << 8) & 0xff00) | $crcstr[2];
     $crc2 = crc16(substr($data, 0, -2));
@@ -118,7 +119,7 @@ $server->on('receive', function ($serv, $fd, $reactor_id, $data) {
 });
 
 //UDP Control command from ICAT 
-$server->on('packet', function ($serv, $data, $clientInfo) {
+$server->on('packet', function ($serv, $data, $_clientInfo) {
     $recv = json_decode($data, true);
 
     if (!$recv || !isset($recv['command'])) {
@@ -212,8 +213,6 @@ function onHeartBeat($serv, $fd, $data, $length)
     $msg = $header . $encdata;
     $crc = crc16($msg);   //CRC校验
     $loginmsg = $msg . pack('C2', (($crc & 0xff00) >> 8), ($crc & 0xff));  //拼装数据包
-
-    $output = $length + 3;
 
     $serv->send($fd, $loginmsg);
     //sendMsg($serv, $fd, $loginmsg);
@@ -494,8 +493,7 @@ function onLogin($serv, $fd, $data, $input)
             $temp_mac1 = str_replace(":", "-", $loginpara['mac']);
             $temp_mac2 = $loginpara['mac'];
             $mac_sql = "SELECT sn FROM cat_player WHERE sn!='0010010013' and batch_registration=1 and (mac='" . $temp_mac1 . "' or mac='" . $temp_mac2 . "') limit 0,1;";
-            $mysqli->query($sql);
-            $result = $mysqli->query($sql);
+            $result = $mysqli->query($mac_sql);
             if ($result && $result->num_rows) {
                 $rec = $result->fetch_object();;
 
@@ -561,7 +559,7 @@ function onControl($serv, $datastram)
         // sendMsg($serv, $player_fd, $controlMsg);
     }
 }
-function onConsumerCode($serv, $fd, $from_id, $data)
+function onConsumerCode($_serv, $_fd, $_from_id, $_data)
 {
     echo 'ConsumerCode command\n';
 }
