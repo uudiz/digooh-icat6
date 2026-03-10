@@ -214,6 +214,22 @@ class Material extends MY_Model
             return 0;
         }
 
+        $company_id = $this->get_folder_company_id($id);
+        if (!$company_id) {
+            return false;
+        }
+
+        $old_pid = $this->get_folder_parent_id($id);
+        if ($old_pid === false) {
+            return false;
+        }
+
+        $need_rebuild_nested_sets = false;
+        if (array_key_exists('pId', $array)) {
+            $new_pid = $this->normalize_folder_pid($array['pId']);
+            $need_rebuild_nested_sets = ($new_pid !== $old_pid);
+        }
+
         $tags = null;
         if (isset($array['tags'])) {
             if ($array['tags'] && $array['tags'] !== 'null') {
@@ -222,65 +238,68 @@ class Material extends MY_Model
             unset($array['tags']);
         }
 
+        $this->db->trans_begin();
 
         $this->db->where('id', $id);
-        if ($this->db->update('cat_media_folder', $array)) {
-            // $this->user_log($this->OP_TYPE_USER, 'update_media_folder['.$id.'] data['.json_encode($array).']');
-
-            //update tags info
-            if ($tags) {
-                $sql = "select id from cat_media where folder_id = '$id'";
-                $query = $this->db->query($sql);
-                if ($query->num_rows() > 0) {
-                    $mediaary = $query->result_array();
-                    foreach ($mediaary as $mid) {
-                        //先清空此media相关的tag
-                        $this->db->query("delete from cat_tag_media where media_id=" . $mid['id']);
-
-                        foreach ($tags as $tag) {
-                            $tmpary = array('tag_id' => $tag, 'media_id' => $mid['id']);
-                            $this->db->insert('cat_tag_media', $tmpary);
-                        }
-                    }
-                }
-
-                $this->sync_tags($id, $tags, 'App\Folder');
-            } else {
-                $this->detach_tags($id, 'App\Folder');
-            }
-
-
-
-            //todo: update media's property under this folder
-            if (isset($array['date_flag'])) {
-                $propery = array();
-                $propery['date_flag'] = $array['date_flag'];
-                if ($propery['date_flag'] == '1') {
-                    $propery['start_date'] = $array['start_date'];
-                    $propery['end_date'] = $array['end_date'];
-                }
-
-
-                $this->db->where('folder_id', $id);
-                $this->db->where('media_type', "2");
-
-
-                $this->db->update('cat_media', $propery);
-
-
-                if (isset($array['play_time'])) {
-                    $propery['play_time'] = $array['play_time'];
-                }
-
-                $this->db->where('folder_id', $id);
-                $this->db->where('media_type', "1");
-
-                $this->db->update('cat_media', $propery);
-            }
-            return $id;
-        } else {
+        if (!$this->db->update('cat_media_folder', $array)) {
+            $this->db->trans_rollback();
             return false;
         }
+
+        if ($tags) {
+            $sql = "select id from cat_media where folder_id = '$id'";
+            $query = $this->db->query($sql);
+            if ($query->num_rows() > 0) {
+                $mediaary = $query->result_array();
+                foreach ($mediaary as $mid) {
+                    $this->db->query("delete from cat_tag_media where media_id=" . $mid['id']);
+                    foreach ($tags as $tag) {
+                        $tmpary = array('tag_id' => $tag, 'media_id' => $mid['id']);
+                        $this->db->insert('cat_tag_media', $tmpary);
+                    }
+                }
+            }
+
+            $this->sync_tags($id, $tags, 'App\Folder');
+        } else {
+            $this->detach_tags($id, 'App\Folder');
+        }
+
+        if (isset($array['date_flag'])) {
+            $propery = array();
+            $propery['date_flag'] = $array['date_flag'];
+            if ($propery['date_flag'] == '1') {
+                $propery['start_date'] = $array['start_date'];
+                $propery['end_date'] = $array['end_date'];
+            }
+
+            $this->db->where('folder_id', $id);
+            $this->db->where('media_type', "2");
+            $this->db->update('cat_media', $propery);
+
+            if (isset($array['play_time'])) {
+                $propery['play_time'] = $array['play_time'];
+            }
+
+            $this->db->where('folder_id', $id);
+            $this->db->where('media_type', "1");
+            $this->db->update('cat_media', $propery);
+        }
+
+        if ($need_rebuild_nested_sets) {
+            if (!$this->rebuild_folder_nested_sets($company_id)) {
+                $this->db->trans_rollback();
+                return false;
+            }
+        }
+
+        if ($this->db->trans_status() === false) {
+            $this->db->trans_rollback();
+            return false;
+        }
+
+        $this->db->trans_commit();
+        return $id;
     }
     /**
      * 删除目录
@@ -884,16 +903,31 @@ class Material extends MY_Model
             unset($array['tags']);
         }
 
-        if ($this->db->insert('cat_media_folder', $array)) {
-            $id = $this->db->insert_id();
-            if ($tags) {
-                $this->attach_tags($id, $tags, 'App\Folder');
-            }
-            //$this->user_log($this->OP_TYPE_USER, 'add_media_folder['.$id.'] data['.json_encode($array).']');
-            return $id;
-        } else {
+        $this->db->trans_begin();
+
+        if (!$this->db->insert('cat_media_folder', $array)) {
+            $this->db->trans_rollback();
             return false;
         }
+
+        $id = $this->db->insert_id();
+
+        if ($tags) {
+            $this->attach_tags($id, $tags, 'App\Folder');
+        }
+
+        if (!$this->rebuild_folder_nested_sets($cid)) {
+            $this->db->trans_rollback();
+            return false;
+        }
+
+        if ($this->db->trans_status() === false) {
+            $this->db->trans_rollback();
+            return false;
+        }
+
+        $this->db->trans_commit();
+        return $id;
     }
 
     /**
@@ -2178,5 +2212,130 @@ class Material extends MY_Model
             return array_column($query->result_array(), "id");
         }
         return false;
+    }
+
+    private function get_folder_company_id($folder_id)
+    {
+        $this->db->select('company_id');
+        $this->db->from('cat_media_folder');
+        $this->db->where('id', $folder_id);
+        $query = $this->db->get();
+
+        if ($query->num_rows() === 0) {
+            return false;
+        }
+
+        return (int)$query->row()->company_id;
+    }
+
+    private function get_folder_parent_id($folder_id)
+    {
+        $this->db->select('pId');
+        $this->db->from('cat_media_folder');
+        $this->db->where('id', $folder_id);
+        $query = $this->db->get();
+
+        if ($query->num_rows() === 0) {
+            return false;
+        }
+
+        return $this->normalize_folder_pid($query->row()->pId);
+    }
+
+    private function normalize_folder_pid($pid)
+    {
+        if ($pid === null || $pid === '' || $pid === false) {
+            return 0;
+        }
+
+        return (int)$pid;
+    }
+
+    private function build_folder_nested_ranges($folder_id, &$children, &$visited, &$ranges, &$cursor)
+    {
+        if (isset($visited[$folder_id])) {
+            return;
+        }
+
+        $visited[$folder_id] = true;
+        $left = $cursor++;
+
+        if (isset($children[$folder_id])) {
+            foreach ($children[$folder_id] as $child_id) {
+                if ($child_id === $folder_id || isset($visited[$child_id])) {
+                    continue;
+                }
+                $this->build_folder_nested_ranges($child_id, $children, $visited, $ranges, $cursor);
+            }
+        }
+
+        $ranges[$folder_id] = array('_lft' => $left, '_rgt' => $cursor++);
+    }
+
+    private function rebuild_folder_nested_sets($cid)
+    {
+        $this->db->select('id,pId');
+        $this->db->from('cat_media_folder');
+        $this->db->where('company_id', $cid);
+        $this->db->order_by('id', 'asc');
+        $query = $this->db->get();
+
+        $rows = $query->result_array();
+        if (empty($rows)) {
+            return true;
+        }
+
+        $children = array();
+        $parents = array();
+        $id_map = array();
+
+        foreach ($rows as $row) {
+            $id = (int)$row['id'];
+            $pid = $this->normalize_folder_pid($row['pId']);
+
+            $id_map[$id] = true;
+            $parents[$id] = $pid;
+
+            if (!isset($children[$pid])) {
+                $children[$pid] = array();
+            }
+            $children[$pid][] = $id;
+        }
+
+        foreach ($children as $pid => $child_list) {
+            sort($children[$pid], SORT_NUMERIC);
+        }
+
+        $roots = array();
+        foreach ($parents as $id => $pid) {
+            if ($pid <= 0 || !isset($id_map[$pid]) || $pid === $id) {
+                $roots[] = $id;
+            }
+        }
+        sort($roots, SORT_NUMERIC);
+
+        $cursor = 1;
+        $visited = array();
+        $ranges = array();
+
+        foreach ($roots as $root_id) {
+            $this->build_folder_nested_ranges($root_id, $children, $visited, $ranges, $cursor);
+        }
+
+        foreach ($parents as $id => $pid) {
+            if (!isset($visited[$id])) {
+                $this->build_folder_nested_ranges($id, $children, $visited, $ranges, $cursor);
+            }
+        }
+
+        foreach ($ranges as $folder_id => $range) {
+            $this->db->where('id', $folder_id);
+            $this->db->where('company_id', $cid);
+            if (!$this->db->update('cat_media_folder', $range)) {
+                return false;
+            }
+        }
+
+        return true;
     }
 }
