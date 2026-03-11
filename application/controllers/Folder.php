@@ -328,11 +328,18 @@ class Folder extends MY_Controller
         $msg = '';
         if ($id) {
             $this->load->model('material');
-            if ($this->material->delete_folder($cid, $id)) {
+            $delete_reason = $this->material->get_folder_delete_reason($cid, $id);
+            if ($delete_reason !== false) {
+                $code = 1;
+                $msg = $this->lang->line($delete_reason);
+                if (!$msg) {
+                    $msg = sprintf($this->lang->line('delete.fail'), $this->lang->line('folder'));
+                }
+            } elseif ($this->material->delete_folder($cid, $id)) {
                 $msg = $this->lang->line('delete.success');
             } else {
                 $code = 1;
-                $msg = $this->lang->line('param.error');
+                $msg = sprintf($this->lang->line('delete.fail'), $this->lang->line('folder'));
             }
         } else {
             $code = 1;

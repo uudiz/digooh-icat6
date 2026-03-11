@@ -308,24 +308,47 @@ class Material extends MY_Model
      * @param object $id
      * @return
      */
+    public function get_folder_delete_reason($cid, $id)
+    {
+        $this->db->select('id');
+        $this->db->from('cat_media_folder');
+        $this->db->where('id', $id);
+        $this->db->where('company_id', $cid);
+        $query = $this->db->get();
+        if ($query->num_rows() === 0) {
+            return 'folder.delete.reason.not_found';
+        }
+
+        if ($this->get_folder_media_count($id) > 0) {
+            return 'folder.delete.reason.not_empty';
+        }
+
+        if ($this->folder_has_children($cid, $id)) {
+            return 'folder.delete.reason.has_child';
+        }
+
+        if ($this->is_folder_assigned_to_user($id)) {
+            return 'folder.delete.reason.assigned';
+        }
+
+        return false;
+    }
+
     public function delete_folder($cid, $id)
     {
+
         $this->db->where('id', $id);
         $this->db->where('company_id', $cid);
 
-        if ($this->db->delete('cat_media_folder')) {
-            $this->user_log($this->OP_TYPE_USER, 'delete_media_folder[' . $id . ']');
-            $this->detach_tags($id, 'App\Folder');
-
-            $media_ids = $this->get_folder_media_id($id);
-            if ($media_ids) {
-                $this->delete_media($media_ids);
-            }
-            return true;
-        } else {
+        if (!$this->db->delete('cat_media_folder') || $this->db->affected_rows() === 0) {
             $this->user_log($this->OP_TYPE_USER, 'delete_media_folder[' . $id . ']', $this->OP_STATUS_FAIL);
             return false;
         }
+
+        $this->detach_tags($id, 'App\Folder');
+
+        $this->user_log($this->OP_TYPE_USER, 'delete_media_folder[' . $id . ']');
+        return true;
     }
 
 
@@ -455,7 +478,9 @@ class Material extends MY_Model
 
         $this->db->select(
             array(
-                "m.*", "u.name as author", "IFNULL(f.name,'Root') as folder_name",
+                "m.*",
+                "u.name as author",
+                "IFNULL(f.name,'Root') as folder_name",
                 '(select GROUP_CONCAT(t.name ORDER BY t.name ASC SEPARATOR "/") from cat_tag t, cat_tag_media tm where m.id=tm.media_id and tm.tag_id=t.id GROUP BY m.id) as tag_name'
             )
         );
@@ -542,7 +567,7 @@ class Material extends MY_Model
             }
         }
 
-        $db = clone ($this->db);
+        $db = clone($this->db);
         $total = $this->db->count_all_results();
 
         if ($total > 0) {
@@ -2179,7 +2204,7 @@ class Material extends MY_Model
             }
         }
 
-        $db = clone ($this->db);
+        $db = clone($this->db);
         $total = $this->db->count_all_results();
 
         if ($total > 0) {
@@ -2212,6 +2237,27 @@ class Material extends MY_Model
             return array_column($query->result_array(), "id");
         }
         return false;
+    }
+
+    private function folder_has_children($cid, $folder_id)
+    {
+        $this->db->select('count(*) as total');
+        $this->db->from('cat_media_folder');
+        $this->db->where('company_id', $cid);
+        $this->db->where('pId', $folder_id);
+        $query = $this->db->get();
+
+        return ((int)$query->row()->total) > 0;
+    }
+
+    private function is_folder_assigned_to_user($folder_id)
+    {
+        $this->db->select('count(*) as total');
+        $this->db->from('cat_user_folder');
+        $this->db->where('folder_id', $folder_id);
+        $query = $this->db->get();
+
+        return ((int)$query->row()->total) > 0;
     }
 
     private function get_folder_company_id($folder_id)
