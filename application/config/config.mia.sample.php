@@ -339,3 +339,13 @@ $config['with_transition'] = false;
 $config['redis_password'] = "PW";
 $config['medium_with_weekNtime'] = true;
 $config['date_range_from_folder'] = true;
+
+$config['user_with_more_previlege'] = false;
+$config['aral_font'] = true;
+$config['with_docs'] = false;
+
+$config['sso_enabled'] = false;
+$config['sso_jwt_secret'] = '';
+$config['sso_jwt_issuers'] = array();
+$config['sso_jwt_ttl'] = 120;
+$config['sso_default_redirect'] = '/';

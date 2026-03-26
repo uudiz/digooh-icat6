@@ -174,6 +174,170 @@ class Login extends MY_Controller
         }
     }
 
+    public function sso()
+    {
+        if ((int) $this->config->item('sso_enabled') !== 1) {
+            show_404();
+            return;
+        }
+
+        $token = $this->get_sso_token();
+        if (!$token) {
+            $this->respond_sso_error('missing token', 400);
+            return;
+        }
+
+        $secret = (string) $this->config->item('sso_jwt_secret');
+        $issuers = $this->normalize_sso_issuers($this->config->item('sso_jwt_issuers'));
+        if ($secret === '' || empty($issuers)) {
+            $this->respond_sso_error('sso not configured', 500);
+            return;
+        }
+
+        $clockSkew = 0;
+
+        $ttl = (int) $this->config->item('sso_jwt_ttl');
+        if ($ttl <= 0) {
+            $ttl = 120;
+        }
+
+        $this->load->library('sso_jwt');
+        $verifyResult = $this->sso_jwt->verify($token, $issuers, $secret, $clockSkew, $ttl);
+        if (!$verifyResult['ok']) {
+            $this->respond_sso_error($verifyResult['error'], 401);
+            return;
+        }
+
+        $payload = $verifyResult['payload'];
+        $nonceResult = $this->consume_sso_nonce($payload['iss'], $payload['jti'], (int) $payload['exp'], $clockSkew);
+        if (!$nonceResult['ok']) {
+            $this->respond_sso_error($nonceResult['error'], 401);
+            return;
+        }
+
+        $this->load->model("membership");
+        $result = $this->membership->validate_login_by_uid((int) $payload['uid'], 'SSO Login');
+        if ($result['code'] != 0) {
+            $this->respond_sso_error('user validation failed code ' . $result['code'], 401);
+            return;
+        }
+
+        $sessionData = $result['data'];
+        $sessionData['sso_login'] = 1;
+
+        $this->session->sess_regenerate(true);
+        $this->session->set_userdata($sessionData);
+        session_write_close();
+
+        $path = $this->input->post('path', true);
+        if ($path === null || $path === '') {
+            $path = $this->input->get('path', true);
+        }
+        if (($path === null || $path === '') && isset($payload['path'])) {
+            $path = $payload['path'];
+        }
+        redirect($path);
+    }
+
+    private function get_sso_token()
+    {
+        $token = $this->input->post('token', true);
+        if ($token) {
+            return trim((string) $token);
+        }
+
+        $token = $this->input->get('token', true);
+        if ($token) {
+            return trim((string) $token);
+        }
+
+        $authHeader = $this->input->get_request_header('Authorization', true);
+        if ($authHeader && preg_match('/Bearer\s+(.+)/i', $authHeader, $matches)) {
+            return trim($matches[1]);
+        }
+
+        return '';
+    }
+
+    private function normalize_sso_issuers($issuers)
+    {
+        if (is_string($issuers)) {
+            $issuers = explode(',', $issuers);
+        }
+        if (!is_array($issuers)) {
+            return array();
+        }
+
+        $normalized = array();
+        foreach ($issuers as $issuer) {
+            $issuer = trim((string) $issuer);
+            if ($issuer !== '') {
+                $normalized[] = $issuer;
+            }
+        }
+
+        return array_values(array_unique($normalized));
+    }
+
+    private function consume_sso_nonce($issuer, $jti, $exp, $clockSkew = 0)
+    {
+        $issuer = trim((string) $issuer);
+        $jti = trim((string) $jti);
+        $exp = (int) $exp;
+        if ($issuer === '' || $jti === '' || $exp <= 0) {
+            return array('ok' => false, 'error' => 'invalid nonce claims');
+        }
+
+        if (!class_exists('Redis')) {
+            return array('ok' => false, 'error' => 'redis extension missing');
+        }
+
+        try {
+            $redisClass = 'Redis';
+            $redis = new $redisClass();
+            $host = $this->config->item('redis_server') ?: '127.0.0.1';
+            $port = $this->config->item('redis_port') ?: 6379;
+            $redis->connect($host, $port);
+
+            $password = $this->config->item('redis_password');
+            if ($password) {
+                if (!$redis->auth($password)) {
+                    return array('ok' => false, 'error' => 'redis authentication failed');
+                }
+            }
+
+            $key = 'icat:sso:nonce:' . sha1($issuer . '|' . $jti);
+            if (!$redis->setnx($key, '1')) {
+                return array('ok' => false, 'error' => 'token replayed');
+            }
+
+            $ttl = $exp - time() + max(0, (int) $clockSkew);
+            if ($ttl < 1) {
+                $ttl = 1;
+            }
+            $redis->expire($key, $ttl);
+
+            return array('ok' => true);
+        } catch (Exception $e) {
+            log_message('error', 'SSO nonce check failed: ' . $e->getMessage());
+            return array('ok' => false, 'error' => 'nonce check unavailable');
+        }
+    }
+
+    private function respond_sso_error($reason, $httpCode = 401)
+    {
+        log_message('error', 'SSO login failed [' . $reason . '] ip[' . $this->input->ip_address() . ']');
+
+        $this->output->set_status_header((int) $httpCode);
+        if ($this->input->is_ajax_request()) {
+            $this->output->set_content_type('application/json');
+            echo json_encode(array('code' => 1, 'msg' => 'SSO login failed'));
+            return;
+        }
+
+        $this->index(array('err_msg' => 'SSO login failed. Please login with username/password.'));
+    }
+
 
 
     public function doLogout()

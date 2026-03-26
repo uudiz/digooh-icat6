@@ -533,7 +533,7 @@ class Membership extends MY_Model
             }
         }
 
-        $db = clone ($this->db);
+        $db = clone($this->db);
 
         $total = $this->db->count_all_results();
 
@@ -1790,5 +1790,105 @@ class Membership extends MY_Model
             return $result;
         }
         return false;
+    }
+
+    /**
+     * Trusted login path without password verification.
+     * Used by SSO and privileged user-switch flows.
+     *
+     * @param string $id
+     * @param string $log_action
+     * @return array
+     */
+    public function validate_login_by_uid($id, $log_action = 'Login')
+    {
+        $uid = 0;
+        $cid = 0;
+        $auth = 0;
+        $media_view = 1;
+        $prompt_flag = 0;
+        $data_entry_text = 0;
+        $code = 1;
+        $data = array();
+        $name = '';
+
+        $user = $this->get_user($id);
+        $language = $this->config->item("language");
+        if ($user) {
+            $name = $user->name;
+            if (isset($user->api_only) && $user->api_only == 1) {
+                $code = 5;
+            } else {
+                $uid = $user->id;
+                $cid = $user->company_id;
+                $auth = $user->auth;
+                $media_view = $user->media_view;
+                $language = isset($user->language) ? $user->language : $this->config->item("language");
+
+                if ($cid != 0 && $auth != 10) {
+                    $sql = 'select * from cat_company where id = ? and CURDATE() between start_date and stop_date limit 1';
+                    $query = $this->db->query($sql, array($cid));
+                    if ($query->num_rows() == 1) {
+                        $row = $query->row();
+
+                        if ($row->flag != 0) {
+                            $code = 2;
+                        } else {
+                            $code = 0;
+                            $data['time_zone'] = $row->time_zone;
+                            $data['price_entry'] = $row->price_entry;
+                            $dst = false;
+                            if ($row->dst || $row->auto_dst == 0) {
+                                $now = date('Y-m-d');
+                                if ($now >= $row->dst_start && $now <= $row->dst_end) {
+                                    $dst = true;
+                                }
+                            }
+                            $data['dst'] = $dst;
+                            $data['logo'] = $row->logo;
+                            $data['sspfeature'] = $row->sspfeature;
+                            if ($user->logo) {
+                                $data['logo'] = $user->logo;
+                            }
+
+                            $data['nxslot'] = $row->nxslot;
+                            $data['theme_color'] = $row->theme_color;
+                            $data['touch_function'] = $row->touch_function;
+                            $data['pId'] = $row->pId;
+
+                            if ($this->config->item('with_register_feature')) {
+                                $data['register_feature'] = isset($row->register_feature) ? $row->register_feature : 0;
+                            }
+                        }
+                    } else {
+                        $code = 3;
+                    }
+                } else {
+                    $code = 0;
+                }
+
+                if ($this->config->item('tfa_enabled') == 1) {
+                    $data['tfa_secret'] = $user->tfa_secret;
+                    $data['tfa_enabled'] = $user->tfa_enabled;
+                }
+                $data['email'] = $user->email;
+            }
+        }
+
+        if ($code == 0 && $uid > 0) {
+            $this->user_log($this->OP_TYPE_SYSTEM, $log_action, $uid, $cid);
+        }
+
+        $data['uid'] = $uid;
+        $data['cid'] = $cid;
+        $data['auth'] = $auth;
+        $data['code'] = $code;
+        $data['uname'] = $name;
+        $data['prompt_flag'] = $prompt_flag;
+        $data['language'] = $language;
+        $data['data_entry_text'] = $data_entry_text;
+        $data['media_view'] = $media_view;
+
+        return array('code' => $code, 'data' => $data);
     }
 }
