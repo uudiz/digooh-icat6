@@ -10,11 +10,11 @@ if (PHP_SAPI !== 'cli') {
 
 
 $options = array(
-    'uid' =>  215,
+    'uid' =>  231,
     'path' =>  'player',
     'issuer' =>  'www.example.com',
     'secret' => 'd90b2e90fc239dceef85fd73b3a029690e6e2324379cf83a9bc99b6c67a18a32',
-    'ttl' =>  120,
+    'ttl' =>  60,
     'base-url' => 'https://cms-stage.digooh.com',
 );
 
@@ -23,7 +23,7 @@ $uid = isset($options['uid']) ? (int) $options['uid'] : 215;
 $path = isset($options['path']) ? (string) $options['path'] : 'player';
 $issuer = isset($options['issuer']) ? trim((string) $options['issuer']) : 'www.example.com';
 $secret = isset($options['secret']) ? (string) $options['secret'] : 'd90b2e90fc239dceef85fd73b3a029690e6e2324379cf83a9bc99b6c67a18a32';
-$ttl = isset($options['ttl']) ? (int) $options['ttl'] : 120;
+$ttl = isset($options['ttl']) ? (int) $options['ttl'] : 60;
 $baseUrl = isset($options['base-url']) ? trim((string) $options['base-url']) : 'http://localhost:3061';
 
 $iat = time();
