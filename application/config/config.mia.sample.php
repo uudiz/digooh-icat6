@@ -348,4 +348,5 @@ $config['sso_enabled'] = false;
 $config['sso_jwt_secret'] = '';
 $config['sso_jwt_issuers'] = array();
 $config['sso_jwt_ttl'] = 120;
+$config['sso_clock_skew'] = 60;
 $config['sso_default_redirect'] = '/';

@@ -194,7 +194,12 @@ class Login extends MY_Controller
             return;
         }
 
-        $clockSkew = 0;
+        $clockSkew = 60;
+        $clockSkew = $this->config->item('sso_clock_skew') ? ((int) $this->config->item('sso_clock_skew')) : $clockSkew;
+        if ($clockSkew < 0) {
+            $clockSkew = 60;
+        }
+
 
         $ttl = (int) $this->config->item('sso_jwt_ttl');
         if ($ttl <= 0) {
