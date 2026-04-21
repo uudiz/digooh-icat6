@@ -31,6 +31,7 @@ class Feedback extends MY_Model
 
         $recorditem = $this->get_playback($array['post_date'], $array['media_id'], $array['player_id']);
         $duration = $array['duration'];
+        $detail_rec = false;
 
         if ($recorditem) {
             //Update
