@@ -1,7 +1,5 @@
 <?php
 
-use \BlueM\Tree\Serializer\HierarchicalTreeJsonSerializer;
-
 class Folder extends MY_Controller
 {
     private $parter_root_folder_id;
@@ -28,87 +26,144 @@ class Folder extends MY_Controller
 
     public function index()
     {
-        // $this->addJs("folder.js");
         $data = $this->get_data();
-
         $data['body_file'] = 'bootstrap/folders/index';
-
         $data['tree_root'] = $this->parter_root_folder_id;
-
-
         $this->load->view('bootstrap/layout/basiclayout', $data);
     }
-    public function getTableData()
+
+    /**
+     * Determine the root folder ID and allowed folder IDs for the current user.
+     * Used by both getTableData() and getChildren() to enforce access control.
+     *
+     * @return array ['root_id' => int, 'allowed_ids' => array|null, 'noDel_id' => int|null]
+     */
+    private function get_user_folder_access()
     {
-        $name = $this->input->post('search');
-        $data = $this->get_data();
-        $offset = $this->input->post('offset');
-        $limit = $this->input->post('limit');
-        $order_item = $this->input->post('sort');
-        $order = $this->input->post('order');
-        $cid = $this->get_cid();
+        $auth = $this->get_auth();
+        $root_id = 0;
+        $allowed_ids = null;
+        $noDel_id = null;
 
+        // Partner users: root is the partner's root folder
         if ($this->parter_root_folder_id) {
-            $cid = $data['pid'];
+            $root_id = $this->parter_root_folder_id;
+            $noDel_id = $root_id;
         }
 
-        $folders = $this->material->get_folder_list($cid, $offset, $limit, $order_item, $order);
-
-        $res_folders = array();
-        $root_folderID = $this->parter_root_folder_id;
-
-        if ($this->config->item("new_campaign_user") && !$this->is_partner() && $this->get_auth() == 1) {
-            $root_folderID = $this->device->get_user_folderID($this->get_uid());;
-        }
-
-        if ($root_folderID) {
-            $mySerializer = new HierarchicalTreeJsonSerializer('inc');
-            $tree = new BlueM\Tree($folders['data'], ['jsonSerializer' => $mySerializer, 'rootId' => null, 'parent' => 'pId']);
-            $node =  $tree->getNodeById($root_folderID);
-
-            if ($node) {
-                $folderList = $node->getDescendantsAndSelf();
-                $folders_arr = array();
-                foreach ($folderList as $child) {
-                    $folders_arr[] =  $child->getId();
-                }
-            }
-            foreach ($folders['data'] as $key => $folder) {
-                if (!in_array($folder['id'], $folders_arr)) {
-                    unset($folders['data'][$key]);
-                    $folders['total'] = $folders['total'] - 1;
-                }
-                if ($folder['id'] == $root_folderID) {
-                    $folders['data'][$key]['pId'] = null;
-                    $folders['data'][$key]['noDel'] = 1;
-                }
-            }
-            $res_folders = array_values($folders['data']);
-        } else {
-            $res_folders = $folders['data'];
-            $data['root_folder'] = 0;
-        }
-        if ($res_folders) {
-            foreach ($res_folders as $f) {
-                $f['media_count'] = $this->material->get_folder_media_count($f['id']);
+        // Campaign user with new_campaign_user: root is their assigned folder
+        if ($this->config->item('new_campaign_user') && !$this->is_partner() && $auth == 1) {
+            $user_folder_id = $this->device->get_user_folderID($this->get_uid());
+            if ($user_folder_id) {
+                $root_id = $user_folder_id;
+                $noDel_id = $root_id;
             }
         }
 
-
-
-        if (!$this->config->item("new_campaign_user") && $this->get_auth() <= 2) {
-            $this->load->model('device');
+        // End user / campaign user without new_campaign_user: restricted to assigned folders
+        if (!$this->config->item('new_campaign_user') && $auth <= 2) {
             $user_folders = $this->device->get_folder_ids($this->get_uid());
             if ($user_folders) {
-                $data['user_folders'] = $user_folders;
+                $allowed_ids = $user_folders;
             }
         }
 
+        return array('root_id' => $root_id, 'allowed_ids' => $allowed_ids, 'noDel_id' => $noDel_id);
+    }
 
-        $data['total'] = count($res_folders);
-        $data['rows'] =  $res_folders;
+    /**
+     * Get the company ID to use for folder queries, respecting partner context.
+     * @return int
+     */
+    private function get_folder_cid()
+    {
+        $cid = $this->get_cid();
+        if ($this->parter_root_folder_id) {
+            $pid = $this->get_parent_company_id();
+            if ($pid) {
+                $cid = $pid;
+            }
+        }
+        return $cid;
+    }
+
+    public function getTableData()
+    {
+        $data = $this->get_data();
+        $cid = $this->get_folder_cid();
+        $access = $this->get_user_folder_access();
+
+        // For restricted users (allowed_ids set), load their assigned folders at any depth
+        // For admin/staff/partner: load only root-level folders under their root
+        if ($access['allowed_ids'] !== null && !empty($access['allowed_ids'])) {
+            $res_folders = $this->material->get_folder_children($cid, null, $access['allowed_ids']);
+            $data['user_folders'] = $access['allowed_ids'];
+        } else {
+            $res_folders = $this->material->get_folder_children($cid, $access['root_id'], null);
+        }
+
+        // Mark root folder as non-deletable
+        if ($access['noDel_id'] && is_array($res_folders)) {
+            foreach ($res_folders as $key => $folder) {
+                if (is_array($folder) && isset($folder['id']) && $folder['id'] == $access['noDel_id']) {
+                    $res_folders[$key]['pId'] = null;
+                    $res_folders[$key]['noDel'] = 1;
+                }
+            }
+        }
+
+        $data['total'] = is_array($res_folders) ? count($res_folders) : 0;
+        $data['rows'] = is_array($res_folders) ? $res_folders : array();
 
         echo json_encode($data);
+    }
+
+    /**
+     * AJAX endpoint: lazy-load children of a folder on expand.
+     * Used by bootstrap-table folder tree view.
+     */
+    public function getChildren()
+    {
+        $pId = $this->input->get('pId');
+        $cid = $this->get_folder_cid();
+
+        // Don't filter by allowed_ids here — once a user can see a folder,
+        // they should be able to expand and see its children.
+        // Access control is enforced by only showing them their assigned folders initially.
+        $children = $this->material->get_folder_children($cid, $pId, null);
+
+        echo json_encode(array('rows' => $children));
+    }
+
+    /**
+     * AJAX endpoint: lazy-load folder children for Select2 dropdowns.
+     * Returns flat list of direct children with has_children flag,
+     * suitable for Select2 AJAX mode with tree expand/collapse.
+     */
+    public function getFolderChildrenLazy()
+    {
+        $pId = $this->input->get('pId') ?: 0;
+        $cid = $this->get_folder_cid();
+        $access = $this->get_user_folder_access();
+
+        if ($pId == 0 && $access['allowed_ids'] !== null) {
+            // Restricted users: return only their assigned folders at any depth
+            $children = $this->material->get_folder_children($cid, null, $access['allowed_ids']);
+        } else {
+            // Admin/partner/expanded node: return direct children
+            $children = $this->material->get_folder_children($cid, $pId, null);
+        }
+
+        $result = array();
+        foreach ($children as $child) {
+            $result[] = array(
+                'id'         => $child['id'],
+                'text'       => $child['name'],
+                'has_children' => ($child['has_children'] ?? 0) > 0,
+            );
+        }
+
+        echo json_encode(array('results' => $result));
     }
 
     public function edit()

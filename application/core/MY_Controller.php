@@ -10,11 +10,49 @@ use \BlueM\Tree\Serializer\HierarchicalTreeJsonSerializer;
 
 class MY_Controller extends CI_Controller
 {
+    // Session key constants — single source of truth for all session keys
+    const SESSION_UID                       = 'uid';
+    const SESSION_UNAME                     = 'uname';
+    const SESSION_CID                       = 'cid';
+    const SESSION_AUTH                      = 'auth';
+    const SESSION_TIME_ZONE                 = 'time_zone';
+    const SESSION_DST                       = 'dst';
+    const SESSION_PID                       = 'pId';
+    const SESSION_LOGO                      = 'logo';
+    const SESSION_THEME_COLOR               = 'theme_color';
+    const SESSION_TOUCH                     = 'touch_function';
+    const SESSION_SSP_FEATURE               = 'sspfeature';
+    const SESSION_NX_SLOT                   = 'nxslot';
+    const SESSION_LANGUAGE                  = 'language';
+    const SESSION_MEDIA_VIEW                = 'media_view';
+    const SESSION_TFA_SECRET                = 'tfa_secret';
+    const SESSION_TFA_ENABLED               = 'tfa_enabled';
+    const SESSION_TFA_VERIFIED              = 'tfa_verified';
+    const SESSION_EMAIL                     = 'email';
+    const SESSION_PRICE_ENTRY               = 'price_entry';
+    const SESSION_DATA_ENTRY_TEXT           = 'data_entry_text';
+    const SESSION_PROMPT_FLAG               = 'prompt_flag';
+    const SESSION_REGISTER_FEATURE          = 'register_feature';
+    const SESSION_CAN_RESTART_PLAYER        = 'can_restart_player';
+    const SESSION_CAN_UPLOAD_DISPLAY_PICTURE = 'can_upload_display_picture';
+
     private $jsList = array();
     private $cssList = array();
 
     protected $cur_lang = "english";
-    //protected $cur_lang;
+
+    /**
+     * Generic session accessor with default value.
+     *
+     * @param string $key     Session key (use self::SESSION_* constants)
+     * @param mixed  $default Value returned when key is not set
+     * @return mixed
+     */
+    protected function session_get($key, $default = null)
+    {
+        $value = $this->session->userdata($key);
+        return ($value !== null) ? $value : $default;
+    }
 
 
     public function __construct($loginFiltered = true)
@@ -26,10 +64,9 @@ class MY_Controller extends CI_Controller
 
         //默认语言
         if ($this->config->item('mia_system_multi_language')) {
-            $lang = $this->session->userdata("language");
+            $lang = $this->session_get(self::SESSION_LANGUAGE);
 
             if (!$lang) {
-                //$lang =  $this->config->item('language');
                 $accept_lang = isset($_SERVER['HTTP_ACCEPT_LANGUAGE']) ? $_SERVER['HTTP_ACCEPT_LANGUAGE'] : '';
                 $browser_lang = substr($accept_lang, 0, 4);
                 if (preg_match("/de/i", $browser_lang)) {
@@ -47,7 +84,6 @@ class MY_Controller extends CI_Controller
             }
         }
 
-
         $this->config->set_item('language', $this->cur_lang);
         $this->lang->load('common');
         $this->lang->load('warn');
@@ -57,15 +93,15 @@ class MY_Controller extends CI_Controller
 
     public function _login_filter()
     {
-        $uid = $this->session->userdata("uid");
+        $uid = $this->session_get(self::SESSION_UID);
 
-        if (!isset($uid) || empty($uid)) {
+        if (!$uid) {
             redirect("/login");
             die();
         }
 
-        if ($this->config->item('tfa_enabled') == 1 && $this->session->userdata("tfa_enabled") == 1) {
-            if ($this->session->userdata('tfa_verified') != 1) {
+        if ($this->config->item('tfa_enabled') == 1 && $this->session_get(self::SESSION_TFA_ENABLED) == 1) {
+            if ($this->session_get(self::SESSION_TFA_VERIFIED) != 1) {
                 redirect("/login");
                 die();
             }
@@ -74,92 +110,57 @@ class MY_Controller extends CI_Controller
 
     public function get_session_id()
     {
-        $session_id = $this->session->userdata("session_id");
-        if (empty($session_id)) {
-            return false;
-        } else {
-            return $session_id;
-        }
+        return $this->session_get('session_id') ?: false;
     }
 
     public function get_uid()
     {
-        $uid = $this->session->userdata("uid");
-        if (!isset($uid) || empty($uid)) {
-            return 0;
-        } else {
-            return $uid;
-        }
+        return $this->session_get(self::SESSION_UID) ?: 0;
     }
+
     /**
      * 获取用户名
-     * @return
+     * @return string
      */
     public function get_name()
     {
-        $uname = $this->session->userdata("uname");
-        if (!isset($uname)) {
-            return '';
-        } else {
-            return $uname;
-        }
+        return $this->session_get(self::SESSION_UNAME, '');
     }
+
     /**
      * 获取公司ID
-     * @return
+     * @return int
      */
     public function get_cid()
     {
-        $cid = $this->session->userdata("cid");
-        if (!isset($cid)) {
-            return 0;
-        } else {
-            return $cid;
-        }
+        return $this->session_get(self::SESSION_CID) ?: 0;
     }
 
     /**
      * 获取权限信息
-     *
-     * @return
+     * @return int
      */
     public function get_auth()
     {
-        $auth = $this->session->userdata("auth");
-        if (!isset($auth)) {
-            return 0;
-        } else {
-            return $auth;
-        }
+        return $this->session_get(self::SESSION_AUTH) ?: 0;
     }
 
     /**
      * 获取当前公司的时区
-     * @return
+     * @return string|false
      */
     public function get_time_zone()
     {
-        $time_zone = $this->session->userdata("time_zone");
-        if (!isset($time_zone)) {
-            return false;
-        } else {
-            return $time_zone;
-        }
+        return $this->session_get(self::SESSION_TIME_ZONE, false);
     }
 
     /**
-     * DST是否开启，开启为TRUE，否则为FALSE
-     *
-     * @return
+     * DST是否开启
+     * @return bool
      */
     public function is_dst_on()
     {
-        $dst = $this->session->userdata("dst");
-        if ($dst == 1) {
-            return true;
-        } else {
-            return false;
-        }
+        return $this->session_get(self::SESSION_DST) == 1;
     }
     /**
      * 判断是否为超级管理员
@@ -381,15 +382,21 @@ class MY_Controller extends CI_Controller
         $data['SYSTEM'] = $this->config->item('auth_system');
         $data['date'] = intval(time() / (3600 * 24));
         $data['pid'] = $this->get_parent_company_id();
-        $data['bg_color'] = $this->session->userdata("theme_color");
-        $data['custom_logo'] = $this->session->userdata("logo");
-        $data['touch'] = $this->session->userdata("touch_function");
-        $data['ssp_feature'] = $this->session->userdata("sspfeature");
-        $data['tfa_secret'] = $this->session->userdata("tfa_secret");
-        $data['user_email'] = $this->session->userdata("email");
+        $data['bg_color'] = $this->session_get(self::SESSION_THEME_COLOR);
+        $data['custom_logo'] = $this->session_get(self::SESSION_LOGO);
+        $data['touch'] = $this->session_get(self::SESSION_TOUCH);
+        $data['ssp_feature'] = $this->session_get(self::SESSION_SSP_FEATURE);
+        $data['tfa_secret'] = $this->session_get(self::SESSION_TFA_SECRET);
+        $data['user_email'] = $this->session_get(self::SESSION_EMAIL);
+
         if ($this->get_auth() == 5 && !$this->get_parent_company_id()) {
             $this->load->model('material');
             $data['unproved_media_cnt'] = $this->material->get_unapproved_media_cnt($this->get_cid());
+        }
+
+        if ($data['auth'] == 102) {
+            $data['can_restart_player'] = $this->session_get(self::SESSION_CAN_RESTART_PLAYER, false);
+            $data['can_upload_display_picture'] = $this->session_get(self::SESSION_CAN_UPLOAD_DISPLAY_PICTURE, false);
         }
 
         return $data;
@@ -444,12 +451,7 @@ class MY_Controller extends CI_Controller
     //
     public function get_parent_company_id()
     {
-        $pid = $this->session->userdata("pId");
-        if (!isset($pid) || empty($pid)) {
-            return 0;
-        } else {
-            return $pid;
-        }
+        return $this->session_get(self::SESSION_PID) ?: 0;
     }
 
     public function get_tree_folders($cid = 0, $parent_id = 0)
@@ -465,13 +467,14 @@ class MY_Controller extends CI_Controller
         $auth = $this->get_auth();
         $user_folders = [];
 
-        if ($auth <= 1 && !$this->config->item("new_campaign_user")) {
-            $this->load->model("device");
+        if ($auth <= 2 && !$this->config->item("new_campaign_user")) {
             $user_folders = $this->device->get_folder_ids($this->get_uid());  //获取用户分配的文件夹
         }
 
-
-        $folders = $this->material->get_all_folder_list($parent_id ?: $cid, $user_folders);
+        // For restricted users: load ALL folders (no WHERE IN filter) so that
+        // BlueM\Tree can resolve every pId.  We will extract the visible subtree later.
+        // For admin/staff: load all folders as before.
+        $folders = $this->material->get_all_folder_list($parent_id ?: $cid);
 
         if (!empty($folders)) {
             if ($auth >= 4) {
@@ -521,13 +524,61 @@ class MY_Controller extends CI_Controller
                         }
                     }
                 } else {
-                    $data['folder_id'] = $user_folders;
+                    // Restricted users (auth <= 2): build subtree from their assigned folders
+                    // Strategy: load all folders → build full tree → extract ancestors + descendants
+                    //           of assigned folders → set ancestor root parent=null → rebuild tree
+                    $mySerializer = new HierarchicalTreeJsonSerializer('inc');
 
-                    foreach ($folders as $f) {
-                        $item['id'] = $f['id'];
-                        $item['text'] = $f['name'];
-                        $item['pId'] = $f['pId'];
-                        $treeFolders[] = $item;
+                    if (!empty($user_folders)) {
+                        $tree = new BlueM\Tree($folders, ['jsonSerializer' => $mySerializer, 'rootId' => null, 'parent' => 'pId']);
+
+                        // Collect all nodes that should be visible:
+                        // For each assigned folder, include its ancestors AND its descendants
+                        $visibleNodeIds = array();
+                        $rootFolderIDs = array();
+
+                        foreach ($user_folders as $fid) {
+                            $node = $tree->getNodeById($fid);
+                            if (!$node) {
+                                continue;
+                            }
+
+                            // Include all descendants
+                            foreach ($node->getDescendantsAndSelf() as $desc) {
+                                $visibleNodeIds[$desc->getId()] = true;
+                            }
+
+                            // Walk up to find the topmost ancestor — that becomes a root in our subtree
+                            $current = $node;
+                            while ($current->getParent()) {
+                                $parent = $current->getParent();
+                                $visibleNodeIds[$parent->getId()] = true;
+                                $current = $parent;
+                            }
+                            $rootFolderIDs[] = $current->getId();
+                        }
+
+                        // folder_id: all visible folder IDs (for media filtering in getTableData)
+                        // This must include descendants so that media in sub-folders are found
+                        $data['folder_id'] = array_keys($visibleNodeIds);
+
+                        // Build new data array with only visible nodes, setting root nodes' parent to null
+                        $newData = array();
+                        foreach ($folders as $f) {
+                            if (!isset($visibleNodeIds[$f['id']])) {
+                                continue;
+                            }
+                            $item = $f;
+                            if (in_array($item['id'], $rootFolderIDs)) {
+                                $item['pId'] = null;
+                            }
+                            $newData[] = $item;
+                        }
+
+                        $treeFolders = new BlueM\Tree($newData, ['jsonSerializer' => $mySerializer, 'rootId' => null, 'parent' => 'pId']);
+                    } else {
+                        // No assigned folders — show full tree (same as admin path)
+                        $treeFolders = new BlueM\Tree($folders, ['jsonSerializer' => $mySerializer, 'rootId' => null, 'parent' => 'pId']);
                     }
                 }
             }
@@ -576,17 +627,13 @@ class MY_Controller extends CI_Controller
                         $data['folder_id'] = $folders['folder_id'];
                     }
                 } else {
-                    $folders = $this->device->get_folder_ids($this->get_uid());  //获取用户分配的文件夹
-
-                    $user_folders = $this->material->get_all_folder_list($cid, $folders, false);
-
-                    $data['folder_id'] = $folders;
-
-                    foreach ($user_folders as $f) {
-                        $item['id'] = $f['id'];
-                        $item['text'] = $f['name'];
-                        $item['pId'] = $f['pId'];
-                        $treeFolders[] = $item;
+                    // Use get_tree_folders which now properly handles restricted users:
+                    // - loads all folders, builds full tree, extracts visible subtree
+                    // - returns folder_id containing all visible folder IDs (ancestors + assigned + descendants)
+                    $folders = $this->get_tree_folders($this->get_cid(), $pId);
+                    $treeFolders = $folders['tree_folders'];
+                    if (isset($folders['folder_id'])) {
+                        $data['folder_id'] = $folders['folder_id'];
                     }
                 }
             }
@@ -796,29 +843,26 @@ class MY_Controller extends CI_Controller
 
     public function get_nxslot()
     {
-        return $this->session->userdata("nxslot");
+        return $this->session_get(self::SESSION_NX_SLOT);
     }
 
     public function is_sspEnabled()
     {
-        return $this->session->userdata("sspfeature") ? true : false;
+        return $this->session_get(self::SESSION_SSP_FEATURE) ? true : false;
     }
 
     public function get_user_media_view()
     {
-        $view = $this->session->userdata("media_view");
-        if ($view !== null) {
-            return $view;
-        }
-        return 1;
+        return $this->session_get(self::SESSION_MEDIA_VIEW, 1);
     }
+
     public function set_user_media_view($view_type)
     {
-        $this->session->set_userdata('media_view', $view_type);
+        $this->session->set_userdata(self::SESSION_MEDIA_VIEW, $view_type);
     }
 
     public function get_2fw_secret()
     {
-        return $this->session->userdata("tfa_secret");
+        return $this->session_get(self::SESSION_TFA_SECRET);
     }
 }

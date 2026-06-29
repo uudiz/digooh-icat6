@@ -48,7 +48,7 @@
   </div>
   <div class="page-body">
     <div class='pb-2'>
-      <?php if ($auth >= $ADMIN && !$pid) : ?>
+      <?php if (($auth == 5 || $auth == 10) && !$pid) : ?>
         <div class="row" id="batch_operation" style="display: none;">
           <div class="col-auto">
             <button class="btn btn-primary" onclick="sendCommand(1)"><?php echo lang('restart'); ?></button>
@@ -124,7 +124,7 @@
       <table id='table' class="table table-striped table-responsive" id="table" data-toggle="table" data-url="/player/getTableData" data-sort-name="last_connect" data-sort-order="desc" data-detail-view="true">
         <thead>
           <tr>
-            <?php if ($auth >= $ADMIN && !$pid) : ?>
+            <?php if (($auth == 5 || $auth == 10)  && !$pid) : ?>
               <th data-checkbox="true"></th>
             <?php endif ?>
             <th data-field="name" data-sortable="true" data-formatter="nameFormatter"><?php echo lang('name'); ?></th>
@@ -136,7 +136,7 @@
             <th data-field="timecfg" data-sortable="true" data-formatter="timerFormatter"> <?php echo lang('timecfg'); ?></th>
             <th data-field="temperature" data-sortable="true" data-formatter="signalFormatter" data-align="center" data-width="40"> <?php echo lang('signal3g_strength'); ?></th>
             <th data-field="setupdate" data-sortable="true"> <?php echo lang('setup_date'); ?></th>
-            <?php if ($auth > $ADMIN) : ?>
+            <?php if ($auth == 10) : ?>
               <th data-field="company_name" data-sortable="true"> <?php echo lang('company'); ?></th>
             <?php endif ?>
             <?php if (!$pid) : ?>
@@ -263,7 +263,7 @@
 <script>
   function nameFormatter(value, row, index) {
     ret = "";
-    <?php if ($auth == 5 && !$pid) : ?>
+    <?php if (($auth == 5 && !$pid) || ($auth == 102 && isset($can_upload_display_picture) && $can_upload_display_picture)) : ?>
       <?php if ($this->config->item('has_sensor')) : ?>
         if (row.threshold_id) {
           $outOfRange = false;
@@ -339,13 +339,14 @@
   function operateFormatter(value, row, index) {
     var ret = ' <div class="btn-list flex-nowrap">';
 
+
     <?php if ($auth == 5 && !$pid) : ?>
       ret += `<a href="#" onclick="remove_resource('player', ${row.id})" title="<?php echo lang('delete') ?>" class="link-danger">
                 <i class="bi bi-x-square"></i>
                 </a>`;
 
     <?php endif; ?>
-    <?php if ($auth != 10 && $auth >= 4) : ?>
+    <?php if ($auth == 4 || $auth == 5) : ?>
       <?php if (!$this->config->item('with_template')) : ?>
         ret += `<a href=" #" data-bs-toggle="modal" data-bs-target="#export-report" data-bs-id="${row.id}">
           <i class="bi bi-file-earmark-spreadsheet"></i>
@@ -375,6 +376,16 @@
           <i class="bi bi-chevron-bar-expand"></i>
               </a>`;
     <?php endif; ?>
+    <?php if ($auth ==  102 && (isset($can_restart_player) && $can_restart_player)): ?>
+      ret += `<a href="#" onclick="sendCommand(1, ${row.id})" title="<?php echo lang('restart') ?>" class="link-danger">
+                <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="icon icon-tabler icons-tabler-outline icon-tabler-registered">
+                  <path stroke="none" d="M0 0h24v24H0z" fill="none" />
+                  <path d="M3 12a9 9 0 1 0 18 0a9 9 0 1 0 -18 0" />
+                  <path d="M10 15v-6h2a2 2 0 1 1 0 4h-2" />
+                  <path d="M14 15l-2 -2" />
+                </svg>
+                </a>`;
+    <?php endif; ?>
 
     ret += `</div>`;
     return ret;
@@ -387,7 +398,7 @@
     }
   });
 
-  function sendCommand(command) {
+  function sendCommand(command, inId = null) {
     var prompt_str = "<?php echo lang('warn.area.you.sure'); ?>";
     if (command == 1) {
       prompt_str = "<?php echo lang('warn.player.restart'); ?>";
@@ -406,16 +417,17 @@
     var selections = $('#table').bootstrapTable('getSelections');
 
 
-
-
     let ids = [];
-    if (selections.length) {
+    if (inId !== null) {
+      ids = [inId];
+    } else if (selections.length) {
       ids = selections.map((item) => {
         if (item.status > 1) {
           return item.id;
         }
       });
     }
+
 
     if (!ids.length || ids[0] === undefined) {
       return;

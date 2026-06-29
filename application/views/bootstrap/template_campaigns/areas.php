@@ -167,6 +167,19 @@
                                         </button>
                                     </div>
                                 <?php endif ?>
+                                <div class="col-auto" id="delete_selected_media_btn" style="display: none;">
+                                    <button class="btn btn-outline-danger" type="button" onclick="delete_selected_media()" title="<?php echo lang('delete_selected_media') ?>">
+                                        <svg xmlns="http://www.w3.org/2000/svg" class="icon icon-tabler icon-tabler-trash" width="24" height="24" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none" stroke-linecap="round" stroke-linejoin="round">
+                                            <path stroke="none" d="M0 0h24v24H0z" fill="none"></path>
+                                            <line x1="4" y1="7" x2="20" y2="7"></line>
+                                            <line x1="10" y1="11" x2="10" y2="17"></line>
+                                            <line x1="14" y1="11" x2="14" y2="17"></line>
+                                            <path d="M5 7l1 12a2 2 0 0 0 2 2h8a2 2 0 0 0 2 -2l1 -12"></path>
+                                            <path d="M9 7v-3a1 1 0 0 1 1 -1h4a1 1 0 0 1 1 1v3"></path>
+                                        </svg>
+                                        <?php echo lang('delete_selected_media') ?>
+                                    </button>
+                                </div>
                                 <div class="col-auto">
                                     <button class="btn btn-outline-primary" type="button" onclick="delete_all_media()" title="<?php echo lang('delete') ?>">
                                         <svg xmlns=" http://www.w3.org/2000/svg" class="icon icon-tabler icon-tabler-x" width="24" height="24" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none" stroke-linecap="round" stroke-linejoin="round">
@@ -181,6 +194,7 @@
                             <table id="<?php echo "area" . $area->id . "Table" ?>" data-area-id="<?php echo $area->id ?>" class="table table-responsive table-vcenter table-media" data-pagination='false' data-use-row-attr-func="true" data-reorderable-rows="true">
                                 <thead>
                                     <tr>
+                                        <th data-checkbox="true"></th>
                                         <th data-field="tiny_url" data-formatter="previewFormatter"><?php echo lang('media.image') ?></th>
                                         <?php if ($this->config->item("with_transition")) : ?>
                                             <th data-field="name" data-formatter="mediaNameFormatter"><?php echo lang('media_name'); ?></th>
@@ -564,10 +578,42 @@
     });
 
 
-    function delete_all_media() {
-
+    function delete_selected_media() {
         var activeTableId = getActiveTableId();
-        $(`${activeTableId}`).bootstrapTable('removeAll')
+        var $table = $(`${activeTableId}`);
+        var selections = $table.bootstrapTable('getSelections');
+        if (selections.length === 0) {
+            toastr.warning('<?php echo lang("delete_selected_media") ?>');
+            return;
+        }
+        $("#delete_confirm_text").html('<?php echo lang("delete_selected_media_confirm") ?>');
+        var myModal = new bootstrap.Modal(document.getElementById('delete_confirm'));
+        myModal.show();
+        $("#delete_confirm").off("click").on("click", "#delete", function(e) {
+            // Collect data-index from selected rows' <tr> elements
+            var indexes = [];
+            $table.find('tr.selected').each(function() {
+                indexes.push($(this).data('index'));
+            });
+            // Remove from highest index first to avoid index shift
+            indexes.sort(function(a, b) { return b - a; });
+            $.each(indexes, function(i, idx) {
+                $table.bootstrapTable('remove', {
+                    field: '$index',
+                    values: [idx]
+                });
+            });
+        });
+    };
+
+    function delete_all_media() {
+        $("#delete_confirm_text").html('<?php echo lang("clear_all_media_confirm") ?>');
+        var myModal = new bootstrap.Modal(document.getElementById('delete_confirm'));
+        myModal.show();
+        $("#delete_confirm").off("click").on("click", "#delete", function(e) {
+            var activeTableId = getActiveTableId();
+            $(`${activeTableId}`).bootstrapTable('removeAll');
+        });
     };
 
 
@@ -933,6 +979,12 @@
                     var bt_table = $(`#${tableId}`).bootstrapTable({
                         data: media_data,
                         uniqueId: "id",
+                        onAll: function(name, args) {
+                            if (name == 'check.bs.table' || name == 'uncheck.bs.table' || name == 'check-all.bs.table' || name == 'uncheck-all.bs.table') {
+                                var hasSelections = $(`#${tableId}`).bootstrapTable('getSelections').length > 0;
+                                $('#delete_selected_media_btn').toggle(hasSelections);
+                            }
+                        }
                     });
                 <?php elseif ($area->area_type == $this->config->item('area_type_id')) : ?>
                     <?php if ($this->config->item('with_register_feature') && isset($area->idData->type) && $area->idData->type == 4) : ?>

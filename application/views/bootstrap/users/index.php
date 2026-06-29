@@ -82,6 +82,10 @@
       role = "<?php echo lang('rule.admin'); ?>";
     } else if (value == 4) {
       role = "<?php echo lang('role.staff'); ?>";
+    } else if (value == 101) {
+      role = "<?php echo lang('role.api'); ?>";
+    } else if (value == 102) {
+      role = "<?php echo lang('role.setup'); ?>";
     } else if (value == 0) {
       role = "<?php echo lang('rule.view'); ?>";
     } else if (value == 1) {

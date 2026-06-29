@@ -70,6 +70,52 @@ class Material extends MY_Model
     }
 
     /**
+     * Get all descendant folder IDs of the given folder IDs, including the given IDs themselves.
+     * Uses iterative query to find children at any depth.
+     *
+     * @param int $cid Company ID
+     * @param array $folder_ids Root folder IDs to find descendants for
+     * @return array All folder IDs (original + descendants)
+     */
+    public function get_descendant_folder_ids($cid, $folder_ids = array())
+    {
+        if (empty($folder_ids)) {
+            return array();
+        }
+
+        $all_ids = $folder_ids;
+        $current_ids = $folder_ids;
+
+        // Iteratively find children until no more are found
+        while (!empty($current_ids)) {
+            $this->db->select('id');
+            $this->db->from('cat_media_folder');
+            $this->db->where('company_id', $cid);
+            $this->db->where_in('pId', $current_ids);
+            $query = $this->db->get();
+
+            $child_ids = array();
+            if ($query->num_rows() > 0) {
+                foreach ($query->result() as $row) {
+                    $child_ids[] = $row->id;
+                }
+            }
+            $query->free_result();
+
+            if (empty($child_ids)) {
+                break;
+            }
+
+            // Only add IDs we haven't seen yet (prevent infinite loops from bad data)
+            $new_ids = array_diff($child_ids, $all_ids);
+            $all_ids = array_merge($all_ids, $new_ids);
+            $current_ids = $new_ids;
+        }
+
+        return $all_ids;
+    }
+
+    /**
      *
      * @param object $cid
      * @param object $offset
@@ -119,6 +165,41 @@ class Material extends MY_Model
         return array('total' => $total, 'data' => $array);
     }
 
+    /**
+     * Get direct children of a folder, with has_children flag for lazy-loading.
+     *
+     * @param int   $cid         Company ID
+     * @param int   $parent_id   Parent folder ID (0 = root)
+     * @param array $allowed_ids If set, only return folders with IDs in this array
+     * @return array
+     */
+    public function get_folder_children($cid, $parent_id, $allowed_ids = null)
+    {
+        $this->db->select("mf.*, u.name as add_user,
+            (SELECT COUNT(*) FROM cat_media_folder c WHERE c.pId = mf.id AND c.company_id = mf.company_id) as has_children");
+        $this->db->from('cat_media_folder mf');
+        $this->db->join('cat_user u', 'u.id = mf.add_user_id', 'left');
+        $this->db->where('mf.company_id', $cid);
+        // parent_id = null: don't filter by pId (return all allowed folders at any depth)
+        // parent_id = 0: root folders (pId = 0 or pId IS NULL)
+        // parent_id > 0: children of a specific folder
+        if ($parent_id === null) {
+            // No pId filter — used for restricted users where we return their assigned folders at any depth
+        } elseif ($parent_id == 0) {
+            $this->db->group_start();
+            $this->db->where('mf.pId', 0);
+            $this->db->or_where('mf.pId IS NULL', null, false);
+            $this->db->group_end();
+        } else {
+            $this->db->where('mf.pId', $parent_id);
+        }
+        if ($allowed_ids !== null && !empty($allowed_ids)) {
+            $this->db->where_in('mf.id', $allowed_ids);
+        }
+        $this->db->order_by('mf.name', 'asc');
+        $query = $this->db->get();
+        return $query->result_array();
+    }
 
     public function get_folder_array($cid)
     {

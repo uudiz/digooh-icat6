@@ -349,7 +349,7 @@ class Login extends MY_Controller
     {
         $this->load->model("membership");
         if ($this->get_uid()) {
-            $this->membership->user_log($this->membership->OP_TYPE_SYSTEM, 'Logout', $this->session->userdata('uid'), $this->session->userdata('cid'));
+            $this->membership->user_log($this->membership->OP_TYPE_SYSTEM, 'Logout', $this->get_uid(), $this->get_cid());
         }
         $this->session->sess_destroy();
         redirect('/login');

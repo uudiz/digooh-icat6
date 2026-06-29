@@ -7,104 +7,157 @@ class Membership extends MY_Model
 {
 
     /**
-     * 验证登陆信息
+     * Build session data from a user object and a result code.
+     * Shared by validate_login() and validate_login_by_uid().
      *
-     * @return
+     * @param object $user  User row from cat_user
+     * @param int    $code  Result code (0 = success)
+     * @return array ['code' => int, 'data' => array]
      */
-    public function validate_login()
+    private function build_session_data($user, $code)
     {
-        $uid = 0;
-        $cid = 0;
-        $auth = 0;
-        $media_view = 1;
-        $name = $this->input->post("username");
-        $prompt_flag = 0;
-        $data_entry_text = 0;
-        $price_entry = 0;
-        $code = 1;
-        $result = array();
-        /*
-        $sql = 'select id, company_id as cid, auth,data_entry_text from cat_user where name = ? and password = ? limit 1';
-        $query = $this->db->query($sql, array($name, $this->input->post("password")));
-        if ($query->num_rows() == 1) {
-        */
-        $user = $this->get_user_pwd($name);
-        $language = $this->config->item("language");
-        if ($user) {
-
-            $uid = $user->id;
-            $cid = $user->company_id;
-            $auth = $user->auth;
-            $media_view = $user->media_view;
-            $language = isset($user->language) ? $user->language : $this->config->item("language");
-            $password = $this->input->post('password');
-            $redirect = $this->input->post('redirect');
+        $uid = $user->id ?? 0;
+        $cid = $user->company_id ?? 0;
+        $auth = $user->auth ?? 0;
+        $media_view = $user->media_view ?? 1;
+        $language = isset($user->language) ? $user->language : $this->config->item("language");
+        $data = array();
 
 
+        if ((isset($user->api_only) && $user->api_only == 1) || $user->auth == 101) {
+            $data = array(
+                'uid' => 0,
+                'cid' => 0,
+                'auth' => 0,
+                'code' => 5,
+                'uname' => $user->name,
+                'prompt_flag' => 0,
+                'language' => $this->config->item("language"),
+                'data_entry_text' => 0,
+                'media_view' => 1
+            );
+            return array('code' => 5, 'data' => $data);
+        }
 
-            $data = array();
+        if ($code == 0 && $cid != 0 && $auth != 10) {
+            $sql = 'select * from cat_company where id = ? and CURDATE() between start_date and stop_date limit 1';
+            $query = $this->db->query($sql, array($cid));
+            if ($query->num_rows() == 1) {
+                $row = $query->row();
 
-            if (($redirect && $password == $user->password) || password_verify($password, $user->password)) {
-                if ($cid != 0 && $auth != 10) {
-                    $sql = 'select * from cat_company where id = ? and CURDATE() between start_date and stop_date limit 1';
-                    $query = $this->db->query($sql, array($cid));
-                    if ($query->num_rows() == 1) {
-                        $row = $query->row();
-
-                        if ($row->flag != 0) {
-                            $code = 2;
-                        } else {
-                            $code = 0;
-                            $data['time_zone'] = $row->time_zone;
-                            $data['price_entry'] = $row->price_entry;
-                            $dst = false;
-                            if ($row->dst || $row->auto_dst == 0) {
-                                $now = date('Y-m-d');
-                                if ($now >= $row->dst_start && $now <= $row->dst_end) {
-                                    $dst = true;
-                                }
-                            }
-                            $data['dst'] = $dst;
-                            $data['logo'] = $row->logo;
-                            $data['sspfeature'] = $row->sspfeature;
-                            if ($user->logo) {
-                                $data['logo'] = $user->logo;
-                            }
-
-                            $data['nxslot'] = $row->nxslot;
-                            $data['theme_color'] = $row->theme_color;
-                            $data['touch_function'] = $row->touch_function;
-                            $data['pId'] = $row->pId;
-                        }
-                    } else {
-                        $code = 3;
-                    }
+                if ($row->flag != 0) {
+                    $code = 2;
                 } else {
-                    $code = 0;
+                    $data['time_zone'] = $row->time_zone;
+                    $data['price_entry'] = $row->price_entry;
+                    $dst = false;
+                    if ($row->dst || $row->auto_dst == 0) {
+                        $now = date('Y-m-d');
+                        if ($now >= $row->dst_start && $now <= $row->dst_end) {
+                            $dst = true;
+                        }
+                    }
+                    $data['dst'] = $dst;
+                    $data['logo'] = $row->logo;
+                    $data['sspfeature'] = $row->sspfeature;
+                    if ($user->logo) {
+                        $data['logo'] = $user->logo;
+                    }
+
+                    $data['nxslot'] = $row->nxslot;
+                    $data['theme_color'] = $row->theme_color;
+                    $data['touch_function'] = $row->touch_function;
+                    $data['pId'] = $row->pId;
+
+                    if ($this->config->item('with_register_feature')) {
+                        $data['register_feature'] = isset($row->register_feature) ? $row->register_feature : 0;
+                    }
                 }
-                if ($this->config->item('tfa_enabled') == 1) {
-                    $data['tfa_secret'] = $user->tfa_secret;
-                    $data['tfa_enabled'] = $user->tfa_enabled;
+            } else {
+                $code = 3;
+            }
+        }
+
+        if ($code == 0) {
+            if ($this->config->item('tfa_enabled') == 1) {
+                $data['tfa_secret'] = $user->tfa_secret ?? null;
+                $data['tfa_enabled'] = $user->tfa_enabled ?? 0;
+            }
+            $data['email'] = $user->email ?? '';
+
+            if ($auth == 102) {
+                if (isset($user->can_restart_player)) {
+                    $data['can_restart_player'] = $user->can_restart_player;
                 }
-                $data['email'] = $user->email;
+                if (isset($user->can_upload_display_picture)) {
+                    $data['can_upload_display_picture'] = $user->can_upload_display_picture;
+                }
             }
         }
 
         if ($code == 0 && $uid > 0) {
-            $this->user_log($this->OP_TYPE_SYSTEM, 'Login', $uid, $cid);
+            $log_action = isset($user->_log_action) ? $user->_log_action : 'Login';
+            $this->user_log($this->OP_TYPE_SYSTEM, $log_action, $uid, $cid);
         }
 
         $data['uid'] = $uid;
         $data['cid'] = $cid;
         $data['auth'] = $auth;
         $data['code'] = $code;
-        $data['uname'] = $name;
-        $data['prompt_flag'] = $prompt_flag;
+        $data['uname'] = $user->name ?? '';
+        $data['prompt_flag'] = $user->prompt_flag ?? 0;
         $data['language'] = $language;
-        $data['data_entry_text'] = $data_entry_text;
+        $data['data_entry_text'] = $user->data_entry_text ?? 0;
         $data['media_view'] = $media_view;
 
         return array('code' => $code, 'data' => $data);
+    }
+
+    /**
+     * 验证登陆信息
+     *
+     * @return array
+     */
+    public function validate_login()
+    {
+        $name = $this->input->post("username");
+        $user = $this->get_user_pwd($name);
+
+        if (!$user) {
+            $data = array(
+                'uid' => 0,
+                'cid' => 0,
+                'auth' => 0,
+                'code' => 1,
+                'uname' => $name,
+                'prompt_flag' => 0,
+                'language' => $this->config->item("language"),
+                'data_entry_text' => 0,
+                'media_view' => 1
+            );
+            return array('code' => 1, 'data' => $data);
+        }
+
+        $password = $this->input->post('password');
+        $redirect = $this->input->post('redirect');
+
+        if (!(($redirect && $password == $user->password) || password_verify($password, $user->password))) {
+            $data = array(
+                'uid' => 0,
+                'cid' => 0,
+                'auth' => 0,
+                'code' => 1,
+                'uname' => $name,
+                'prompt_flag' => 0,
+                'language' => $this->config->item("language"),
+                'data_entry_text' => 0,
+                'media_view' => 1
+            );
+            return array('code' => 1, 'data' => $data);
+        }
+
+        $code = 0;
+        return $this->build_session_data($user, $code);
     }
 
     public function get_all_partners($parent_id)
@@ -519,7 +572,8 @@ class Membership extends MY_Model
         if ($cid > 0) {
             $this->db->where('u.company_id', $cid);
         }
-        $this->db->where('u.auth <=', $this->config->item('auth_admin'));
+        //do not show super admin user
+        $this->db->where('u.auth !=', 10);
         $this->db->join('cat_company c', 'c.id = u.company_id', 'left');
 
 
@@ -533,13 +587,10 @@ class Membership extends MY_Model
             }
         }
 
-        $db = clone($this->db);
-
-        $total = $this->db->count_all_results();
+        $total = $this->db->count_all_results('', false);
 
 
         if ($total > 0) {
-            $this->db = $db;
 
             if ($order_item == 'company_id') {
                 $this->db->order_by('c.name', $order);
@@ -557,6 +608,7 @@ class Membership extends MY_Model
                 $query->free_result();
             }
         }
+        $this->db->reset_query();
 
         return array('total' => $total, 'data' => $array);
     }
@@ -1796,99 +1848,32 @@ class Membership extends MY_Model
      * Trusted login path without password verification.
      * Used by SSO and privileged user-switch flows.
      *
-     * @param string $id
-     * @param string $log_action
+     * @param int    $id         User ID
+     * @param string $log_action Action label for the audit log
      * @return array
      */
     public function validate_login_by_uid($id, $log_action = 'Login')
     {
-        $uid = 0;
-        $cid = 0;
-        $auth = 0;
-        $media_view = 1;
-        $prompt_flag = 0;
-        $data_entry_text = 0;
-        $code = 1;
-        $data = array();
-        $name = '';
-
         $user = $this->get_user($id);
-        $language = $this->config->item("language");
-        if ($user) {
-            $name = $user->name;
-            if (isset($user->api_only) && $user->api_only == 1) {
-                $code = 5;
-            } else {
-                $uid = $user->id;
-                $cid = $user->company_id;
-                $auth = $user->auth;
-                $media_view = $user->media_view;
-                $language = isset($user->language) ? $user->language : $this->config->item("language");
 
-                if ($cid != 0 && $auth != 10) {
-                    $sql = 'select * from cat_company where id = ? and CURDATE() between start_date and stop_date limit 1';
-                    $query = $this->db->query($sql, array($cid));
-                    if ($query->num_rows() == 1) {
-                        $row = $query->row();
-
-                        if ($row->flag != 0) {
-                            $code = 2;
-                        } else {
-                            $code = 0;
-                            $data['time_zone'] = $row->time_zone;
-                            $data['price_entry'] = $row->price_entry;
-                            $dst = false;
-                            if ($row->dst || $row->auto_dst == 0) {
-                                $now = date('Y-m-d');
-                                if ($now >= $row->dst_start && $now <= $row->dst_end) {
-                                    $dst = true;
-                                }
-                            }
-                            $data['dst'] = $dst;
-                            $data['logo'] = $row->logo;
-                            $data['sspfeature'] = $row->sspfeature;
-                            if ($user->logo) {
-                                $data['logo'] = $user->logo;
-                            }
-
-                            $data['nxslot'] = $row->nxslot;
-                            $data['theme_color'] = $row->theme_color;
-                            $data['touch_function'] = $row->touch_function;
-                            $data['pId'] = $row->pId;
-
-                            if ($this->config->item('with_register_feature')) {
-                                $data['register_feature'] = isset($row->register_feature) ? $row->register_feature : 0;
-                            }
-                        }
-                    } else {
-                        $code = 3;
-                    }
-                } else {
-                    $code = 0;
-                }
-
-                if ($this->config->item('tfa_enabled') == 1) {
-                    $data['tfa_secret'] = $user->tfa_secret;
-                    $data['tfa_enabled'] = $user->tfa_enabled;
-                }
-                $data['email'] = $user->email;
-            }
+        if (!$user) {
+            $data = array(
+                'uid' => 0,
+                'cid' => 0,
+                'auth' => 0,
+                'code' => 1,
+                'uname' => '',
+                'prompt_flag' => 0,
+                'language' => $this->config->item("language"),
+                'data_entry_text' => 0,
+                'media_view' => 1
+            );
+            return array('code' => 1, 'data' => $data);
         }
 
-        if ($code == 0 && $uid > 0) {
-            $this->user_log($this->OP_TYPE_SYSTEM, $log_action, $uid, $cid);
-        }
 
-        $data['uid'] = $uid;
-        $data['cid'] = $cid;
-        $data['auth'] = $auth;
-        $data['code'] = $code;
-        $data['uname'] = $name;
-        $data['prompt_flag'] = $prompt_flag;
-        $data['language'] = $language;
-        $data['data_entry_text'] = $data_entry_text;
-        $data['media_view'] = $media_view;
-
-        return array('code' => $code, 'data' => $data);
+        $user->_log_action = $log_action;
+        $code = 0;
+        return $this->build_session_data($user, $code);
     }
 }

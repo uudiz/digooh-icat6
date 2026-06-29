@@ -361,6 +361,10 @@ class User extends MY_Controller
                 case 2:
 
                     break;
+                case 101: // API User — no selections needed, like staff/admin
+                    break;
+                case 102: // Setup User — no selections needed, only switches
+                    break;
                 default:
                     break;
             }
@@ -390,6 +394,13 @@ class User extends MY_Controller
                     $data['can_publish'] = $this->input->post('can_publish') ?? 0;
                     if ($this->input->post('can_replace_main') != null) {
                         $data['can_replace_main'] = $this->input->post('can_replace_main') ?? 0;
+                    }
+                } elseif ($auth == 102) {
+                    $data['can_restart_player'] = $this->input->post('can_restart_player') ?? 0;
+                    $data['can_upload_display_picture'] = $this->input->post('can_upload_display_picture') ?? 0;
+                    $data['can_publish'] = true;
+                    if ($this->input->post('can_replace_main') != null) {
+                        $data['can_replace_main'] = false;
                     }
                 } else {
                     $data['can_publish'] = true;
@@ -449,9 +460,10 @@ class User extends MY_Controller
                 if ($id != false) {
                     if ($this->config->item('user_with_more_previlege')) {
                         $this->membership->insertOrUpdateUserPrevilege($id, $this->input->post('privilege'));
-                    }
-                    if ($auth >= 4) {
-                        $this->membership->delete_user_previlege($id);
+
+                        if ($auth >= 4) {
+                            $this->membership->delete_user_previlege($id);
+                        }
                     }
                     //check assign group/folder
                     $this->load->model('device');

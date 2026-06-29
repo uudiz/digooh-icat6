@@ -12,13 +12,13 @@
 			<form id='playerForm'>
 				<div class="card-body">
 					<div class="accordion" id="accordion-example">
-						<div class="accordion-item">
+						<div class="accordion-item <?php if ($auth == 102) echo 'd-none'; ?>">
 							<h2 class="accordion-header" id="heading-1">
-								<button class="accordion-button" id="player_name" type="button" data-bs-toggle="collapse" data-bs-target="#collapse-1" aria-expanded="true">
+								<button class="accordion-button <?php if ($auth == 102) echo 'collapsed'; ?>" id="player_name" type="button" data-bs-toggle="collapse" data-bs-target="#collapse-1" aria-expanded="<?php echo $auth == 102 ? 'false' : 'true'; ?>">
 									<?php if (isset($player)) echo $player->name; ?>
 								</button>
 							</h2>
-							<div id="collapse-1" class="accordion-collapse collapse show" data-bs-parent="#accordion-example">
+							<div id="collapse-1" class="accordion-collapse collapse <?php if ($auth != 102) echo 'show'; ?>" data-bs-parent="#accordion-example">
 								<div class="accordion-body pt-0">
 									<div class="row g-3">
 										<div class="col-md-12">
@@ -68,17 +68,7 @@
 												<?php endforeach; ?>
 											</select>
 										</div>
-										<!--
-								<div class="col-md-4">
-									<label for="deviceId"><?php echo lang('device.setup'); ?></label>
-									<select name="deviceId" class="form-select" id="deviceId">
-										<option value="0">&nbsp;</option>
-										<?php foreach ($configs as $config) : ?>
-											<option value="<?php echo $config->id; ?>" <?php if (isset($player) && $config->id == $player->config) : ?>selected="selected" <?php endif; ?>><?php echo $config->name; ?></option>
-										<?php endforeach; ?>
-									</select>
-								</div>
-											-->
+
 										<?php if ($this->config->item("with_template")) : ?>
 											<div class="col-md-2">
 												<label for="customsn2" class="col-form-label"><?php echo lang('store.id') ?></label>
@@ -261,60 +251,65 @@
 						</div>
 						<div class="accordion-item">
 							<h2 class="accordion-header" id="heading-2">
-								<button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#collapse-2" aria-expanded="false">
+								<button class="accordion-button <?php if ($auth != 102) echo 'collapsed'; ?>" type="button" data-bs-toggle="collapse" data-bs-target="#collapse-2" aria-expanded="<?php echo $auth == 102 ? 'true' : 'false'; ?>">
 									<?php echo lang('address') . " " . lang('and') . " " . lang('photos') ?>
 								</button>
 							</h2>
-							<div id="collapse-2" class="accordion-collapse collapse" data-bs-parent="#accordion-example">
+							<div id="collapse-2" class="accordion-collapse collapse <?php if ($auth == 102) echo 'show'; ?>" data-bs-parent="#accordion-example">
 								<div class="accordion-body pt-0">
 									<div class="row g-3">
-										<div class="col-md-2">
-											<label for="name"><?php echo lang('player_country'); ?></label>
-											<input type="text" class="form-control" id="country" value="<?php if (isset($extra->country)) echo $extra->country; ?>" />
-										</div>
-										<div class="col-md-2">
-											<label for="state"><?php echo lang('player_state'); ?></label>
-											<input type="text" class="form-control" id="state" value="<?php if (isset($extra->state)) echo $extra->state; ?>" />
-										</div>
-										<div class="col-md-2">
-											<label for="zipcode"><?php echo lang('player_connzipcode'); ?></label>
-											<input type="text" class="form-control" id="zipcode" value="<?php if (isset($extra->conzipcode)) echo $extra->conzipcode; ?>" />
-										</div>
-										<div class="col-md-6">
-											<label for="contown"><?php echo lang('player_contown'); ?></label>
-											<input type="text" class="form-control" id="contown" value="<?php if (isset($extra->contown)) echo $extra->contown; ?>" />
-										</div>
+										<?php if ($auth != 102) : ?>
 
-										<div class="col-md-9">
-											<label for="conaddr"><?php echo lang('player_conaddr'); ?></label>
-											<input type="text" class="form-control" id="conaddr" value="<?php if (isset($extra->conaddr)) echo $extra->conaddr; ?>" />
-										</div>
-										<div class="col-auto">
-											<label for="street_num"><?php echo lang('street_num'); ?></label>
-											<input type="text" class="form-control" id="street_num" value="<?php if (isset($extra->street_num)) echo $extra->street_num; ?>" />
-										</div>
+											<div class="col-md-2">
+												<label for="name"><?php echo lang('player_country'); ?></label>
+												<input type="text" class="form-control" id="country" value="<?php if (isset($extra->country)) echo $extra->country; ?>" />
+											</div>
+											<div class="col-md-2">
+												<label for="state"><?php echo lang('player_state'); ?></label>
+												<input type="text" class="form-control" id="state" value="<?php if (isset($extra->state)) echo $extra->state; ?>" />
+											</div>
+											<div class="col-md-2">
+												<label for="zipcode"><?php echo lang('player_connzipcode'); ?></label>
+												<input type="text" class="form-control" id="zipcode" value="<?php if (isset($extra->conzipcode)) echo $extra->conzipcode; ?>" />
+											</div>
+											<div class="col-md-6">
+												<label for="contown"><?php echo lang('player_contown'); ?></label>
+												<input type="text" class="form-control" id="contown" value="<?php if (isset($extra->contown)) echo $extra->contown; ?>" />
+											</div>
+
+											<div class="col-md-9">
+												<label for="conaddr"><?php echo lang('player_conaddr'); ?></label>
+												<input type="text" class="form-control" id="conaddr" value="<?php if (isset($extra->conaddr)) echo $extra->conaddr; ?>" />
+											</div>
+											<div class="col-auto">
+												<label for="street_num"><?php echo lang('street_num'); ?></label>
+												<input type="text" class="form-control" id="street_num" value="<?php if (isset($extra->street_num)) echo $extra->street_num; ?>" />
+											</div>
 
 
-										<div class="col-md-2">
-											<label for="geox"><?php echo lang('latitude'); ?></label>
-											<input type="number" class="form-control" id="geox" name='geox' value="<?php if (isset($extra->geox)) echo $extra->geox; ?>" />
-										</div>
-										<div class="col-md-2">
-											<label for="name"><?php echo lang('longitude'); ?></label>
-											<input type="number" class="form-control" id="geoy" name="geoy" value="<?php if (isset($extra->geoy)) echo $extra->geoy; ?>" />
-										</div>
+											<div class="col-md-2">
+												<label for="geox"><?php echo lang('latitude'); ?></label>
+												<input type="number" class="form-control" id="geox" name='geox' value="<?php if (isset($extra->geox)) echo $extra->geox; ?>" />
+											</div>
+											<div class="col-md-2">
+												<label for="name"><?php echo lang('longitude'); ?></label>
+												<input type="number" class="form-control" id="geoy" name="geoy" value="<?php if (isset($extra->geoy)) echo $extra->geoy; ?>" />
+											</div>
+										<?php endif ?>
 										<?php if (isset($player)) : ?>
-											<div class="col-12">
+
+											<div class="col-12" <?php if ($auth == 102 && !$can_upload_display_picture): ?> style="display:none;" <?php endif; ?>>
 												<label for="pictures"><?php echo lang('photos') ?></label>
 												<input type="file" id="pictures" name="pictures[]" accept="image/*" multiple>
 											</div>
+
 										<?php endif ?>
 									</div>
 								</div>
 							</div>
 						</div>
 						<?php if ($ssp_feature == 1 && $this->config->item('ssp_feature')) : ?>
-							<div class="accordion-item">
+							<div class="accordion-item <?php if ($auth == 102) echo 'd-none'; ?>">
 								<h2 class="accordion-header" id="heading-5">
 									<button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#collapse-5" aria-expanded="false">
 										SSP
@@ -473,30 +468,6 @@
 		}
 	}
 	$(document).ready(function() {
-		/*
-		var maskOptions = {
-			mask: '0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0',
-			//lazy: false,
-			placeholderChar: '__',
-			definitions: {
-				'0': /[0-1]/
-			}
-		};
-		$.each(['mon', 'tue', 'wed', 'thu', 'fri', 'sat', 'sun'], function() {
-			var element = document.getElementById(this);
-			IMask(element, maskOptions);
-		});
-		*/
-		/*
-		IMask(
-			document.getElementById('mac'), {
-				mask: '**:**:**:**:**:**',
-			}
-		)
-		*/
-
-
-
 		var validation_rules = {
 			email: {
 				email: true
@@ -668,6 +639,7 @@
 		var lang = 'de';
 	<?php endif ?>
 
+
 	const uploader = $("#pictures");
 	const player_id = $("#id").val();
 	if (player_id && player_id != '0') {
@@ -710,5 +682,5 @@
 				console.log('File Upload Error', 'ID: ' + data.fileId + ', Thumb ID: ' + data.previewId);
 			})
 		});
-	};
+	}
 </script>

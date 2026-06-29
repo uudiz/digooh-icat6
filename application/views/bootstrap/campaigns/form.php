@@ -32,42 +32,42 @@
 											<label class="col-form-label required" for="name"><?php echo lang('name'); ?></label>
 											<input type="text" class="form-control required" id="name" name="name" required minlength="3" value="<?php if (isset($data->name)) echo $data->name; ?>" />
 										</div>
+										<?php if ($auth !== 0): ?>
+											<div class="col-md-3">
+												<label class="col-form-label"> <?php echo lang('customerid'); ?></label>
+												<input type="text" class="form-control" name="customer_id" value="<?php if (isset($data->customer_id)) echo $data->customer_id; ?>">
+											</div>
+
+											<div class="col-md-3">
+												<label class="col-form-label"> <?php echo lang('contractid'); ?></label>
+												<input type="text" class="form-control" name="contract_id" value="<?php if (isset($data->contract_id)) echo $data->contract_id; ?>">
+											</div>
+
+											<div class="col-md-3">
+												<label class="col-form-label"> <?php echo lang('agencyid'); ?></label>
+												<input type="text" class="form-control" name="agency_id" value="<?php if (isset($data->agency_id)) echo $data->agency_id; ?>">
+											</div>
+
+											<div class="col-md-3">
+												<label class="col-form-label"> <?php echo lang('customername'); ?></label>
+												<input type="text" class="form-control" name="customer_name" value="<?php if (isset($data->customer_name)) echo $data->customer_name; ?>">
+											</div>
 
 
-										<div class="col-md-3">
-											<label class="col-form-label"> <?php echo lang('customerid'); ?></label>
-											<input type="text" class="form-control" name="customer_id" value="<?php if (isset($data->customer_id)) echo $data->customer_id; ?>">
-										</div>
+											<div class="col-md-6">
+												<label class="col-form-label"><?php echo $this->config->item('with_template') ? lang('categories') : lang('tag'); ?></label>
+												<select class="form-select select2 disable-for-normal-user" name="tags[]" id="tags" multiple>
+													<?php foreach ($tags as $tag) : ?>
+														<option value="<?php echo $tag->id; ?>" <?php if (isset($data->tags) && is_array($data->tags) && in_array($tag->id, $data->tags)) : ?>selected<?php endif ?>><?php echo $tag->name; ?></option>
+													<?php endforeach; ?>
+												</select>
+											</div>
 
-										<div class="col-md-3">
-											<label class="col-form-label"> <?php echo lang('contractid'); ?></label>
-											<input type="text" class="form-control" name="contract_id" value="<?php if (isset($data->contract_id)) echo $data->contract_id; ?>">
-										</div>
-
-										<div class="col-md-3">
-											<label class="col-form-label"> <?php echo lang('agencyid'); ?></label>
-											<input type="text" class="form-control" name="agency_id" value="<?php if (isset($data->agency_id)) echo $data->agency_id; ?>">
-										</div>
-
-										<div class="col-md-3">
-											<label class="col-form-label"> <?php echo lang('customername'); ?></label>
-											<input type="text" class="form-control" name="customer_name" value="<?php if (isset($data->customer_name)) echo $data->customer_name; ?>">
-										</div>
-
-
-										<div class="col-md-6">
-											<label class="col-form-label"><?php echo $this->config->item('with_template') ? lang('categories') : lang('tag'); ?></label>
-											<select class="form-select select2 disable-for-normal-user" name="tags[]" id="tags" multiple>
-												<?php foreach ($tags as $tag) : ?>
-													<option value="<?php echo $tag->id; ?>" <?php if (isset($data->tags) && is_array($data->tags) && in_array($tag->id, $data->tags)) : ?>selected<?php endif ?>><?php echo $tag->name; ?></option>
-												<?php endforeach; ?>
-											</select>
-										</div>
-
-										<div class="col-md-6">
-											<label class="col-form-label"><?php echo lang('desc'); ?></label>
-											<textarea class="form-control" name="descr"><?php if (isset($data->descr)) echo $data->descr; ?></textarea>
-										</div>
+											<div class="col-md-6">
+												<label class="col-form-label"><?php echo lang('desc'); ?></label>
+												<textarea class="form-control" name="descr"><?php if (isset($data->descr)) echo $data->descr; ?></textarea>
+											</div>
+										<?php endif ?>
 									</div>
 									<div class="accordion pt-1" id="accordionFlushExample">
 										<div class="accordion-item">
@@ -218,53 +218,53 @@
 												</div>
 											</div>
 										</div>
+										<?php if ($auth !== 0): ?>
+											<div class="accordion-item hide-for-extension">
+												<h2 class="accordion-header" id="flush-headingTwo">
+													<button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#flush-collapseTwo" aria-expanded="false" aria-controls="flush-collapseTwo">
+														<?php echo lang('dyna_dclp'); ?>
+													</button>
+												</h2>
+												<div id="flush-collapseTwo" class="accordion-collapse collapse" aria-labelledby="flush-headingTwo">
+													<div class="accordion-body">
+														<div class="row">
 
-										<div class="accordion-item hide-for-extension">
-											<h2 class="accordion-header" id="flush-headingTwo">
-												<button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#flush-collapseTwo" aria-expanded="false" aria-controls="flush-collapseTwo">
-													<?php echo lang('dyna_dclp'); ?>
-												</button>
-											</h2>
-											<div id="flush-collapseTwo" class="accordion-collapse collapse" aria-labelledby="flush-headingTwo">
-												<div class="accordion-body">
-													<div class="row">
+															<div class="col-md-4">
+																<label><?php echo lang('criteria'); ?></label>
+																<select class="form-select select2 disable-for-normal-user" id="criteria" name="criteria[]" multiple>
+																	<?php foreach ($criteria as $criterion) : ?>
+																		<option value="<?php echo $criterion->id; ?>" <?php if (isset($data) && is_array($data->criteria) && in_array($criterion->id, $data->criteria)) : ?>selected<?php endif ?>><?php echo $criterion->name; ?></option>
+																	<?php endforeach; ?>
+																</select>
+															</div>
 
-														<div class="col-md-4">
-															<label><?php echo lang('criteria'); ?></label>
-															<select class="form-select select2 disable-for-normal-user" id="criteria" name="criteria[]" multiple>
-																<?php foreach ($criteria as $criterion) : ?>
-																	<option value="<?php echo $criterion->id; ?>" <?php if (isset($data) && is_array($data->criteria) && in_array($criterion->id, $data->criteria)) : ?>selected<?php endif ?>><?php echo $criterion->name; ?></option>
-																<?php endforeach; ?>
-															</select>
-														</div>
+															<div class="col-md-4">
+																<label><?php echo lang('criteria.and'); ?></label>
+																<select class="form-select select2 disable-for-normal-user" id="and_criteria" name="and_criteria[]" multiple>
+																	<?php foreach ($criteria as $criterion) : ?>
+																		<option value="<?php echo $criterion->id; ?>" <?php if (isset($data) && is_array($data->and_criteria) && in_array($criterion->id, $data->and_criteria)) : ?>selected<?php endif ?>><?php echo $criterion->name; ?></option>
+																	<?php endforeach; ?>
+																</select>
+															</div>
+															<div class="col-md-4">
+																<label><?php echo lang('criteria.or'); ?></label>
+																<select class="form-select select2 disable-for-normal-user" id="and_criteria_or" name="and_criteria_or[]" multiple>
+																	<?php foreach ($criteria as $criterion) : ?>
+																		<option value="<?php echo $criterion->id; ?>" <?php if (isset($data) && is_array($data->and_criteria_or) && in_array($criterion->id, $data->and_criteria_or)) : ?>selected<?php endif ?>><?php echo $criterion->name; ?></option>
+																	<?php endforeach; ?>
+																</select>
+															</div>
 
-														<div class="col-md-4">
-															<label><?php echo lang('criteria.and'); ?></label>
-															<select class="form-select select2 disable-for-normal-user" id="and_criteria" name="and_criteria[]" multiple>
-																<?php foreach ($criteria as $criterion) : ?>
-																	<option value="<?php echo $criterion->id; ?>" <?php if (isset($data) && is_array($data->and_criteria) && in_array($criterion->id, $data->and_criteria)) : ?>selected<?php endif ?>><?php echo $criterion->name; ?></option>
-																<?php endforeach; ?>
-															</select>
-														</div>
-														<div class="col-md-4">
-															<label><?php echo lang('criteria.or'); ?></label>
-															<select class="form-select select2 disable-for-normal-user" id="and_criteria_or" name="and_criteria_or[]" multiple>
-																<?php foreach ($criteria as $criterion) : ?>
-																	<option value="<?php echo $criterion->id; ?>" <?php if (isset($data) && is_array($data->and_criteria_or) && in_array($criterion->id, $data->and_criteria_or)) : ?>selected<?php endif ?>><?php echo $criterion->name; ?></option>
-																<?php endforeach; ?>
-															</select>
-														</div>
+															<div class="col-md-4">
+																<label><?php echo lang('criteria.exclude'); ?></label>
+																<select class="form-select select2 disable-for-normal-user" id="ex_criteria" name="ex_criteria[]" multiple>
+																	<?php foreach ($criteria as $criterion) : ?>
+																		<option value="<?php echo $criterion->id; ?>" <?php if (isset($data) && is_array($data->ex_criteria) && in_array($criterion->id, $data->ex_criteria)) : ?>selected<?php endif ?>><?php echo $criterion->name; ?></option>
+																	<?php endforeach; ?>
+																</select>
+															</div>
 
-														<div class="col-md-4">
-															<label><?php echo lang('criteria.exclude'); ?></label>
-															<select class="form-select select2 disable-for-normal-user" id="ex_criteria" name="ex_criteria[]" multiple>
-																<?php foreach ($criteria as $criterion) : ?>
-																	<option value="<?php echo $criterion->id; ?>" <?php if (isset($data) && is_array($data->ex_criteria) && in_array($criterion->id, $data->ex_criteria)) : ?>selected<?php endif ?>><?php echo $criterion->name; ?></option>
-																<?php endforeach; ?>
-															</select>
-														</div>
-
-														<!--
+															<!--
 														<div class="col-md-2">
 															<label></label>
 															<div class="form-check form-switch">
@@ -274,112 +274,112 @@
 														</div>
 																-->
 
-													</div>
+														</div>
 
+													</div>
 												</div>
 											</div>
-										</div>
 
-										<div class="accordion-item">
-											<h2 class="accordion-header" id="flush-headingThree">
-												<button class="accordion-button collapsed " type="button" data-bs-toggle="collapse" data-bs-target="#flush-collapseThree" aria-expanded="false" aria-controls="flush-collapseThree">
-													<?php echo lang('individual_dclp'); ?>
-												</button>
-											</h2>
-											<div id="flush-collapseThree" class="accordion-collapse collapse" aria-labelledby="flush-headingThree">
-												<div class="accordion-body">
-													<div class="row">
+											<div class="accordion-item">
+												<h2 class="accordion-header" id="flush-headingThree">
+													<button class="accordion-button collapsed " type="button" data-bs-toggle="collapse" data-bs-target="#flush-collapseThree" aria-expanded="false" aria-controls="flush-collapseThree">
+														<?php echo lang('individual_dclp'); ?>
+													</button>
+												</h2>
+												<div id="flush-collapseThree" class="accordion-collapse collapse" aria-labelledby="flush-headingThree">
+													<div class="accordion-body">
+														<div class="row">
 
-														<div class="col-auto">
-															<button type="button" class="btn btn-outline-primary disable-for-normal-user" <?php if ($auth > 1) : ?> data-bs-toggle="modal" data-bs-target="#playerModal" data-target-field="players" <?php endif ?>>
-																<svg xmlns="http://www.w3.org/2000/svg" class="icon icon-tabler icon-tabler-clipboard-plus" width="24" height="24" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none" stroke-linecap="round" stroke-linejoin="round">
-																	<path stroke="none" d="M0 0h24v24H0z" fill="none"></path>
-																	<path d="M9 5h-2a2 2 0 0 0 -2 2v12a2 2 0 0 0 2 2h10a2 2 0 0 0 2 -2v-12a2 2 0 0 0 -2 -2h-2"></path>
-																	<rect x="9" y="3" width="6" height="4" rx="2"></rect>
-																	<path d="M10 14h4"></path>
-																	<path d="M12 12v4"></path>
-																</svg>
-																<?php echo lang('dest.player'); ?></button>
+															<div class="col-auto">
+																<button type="button" class="btn btn-outline-primary disable-for-normal-user" <?php if ($auth > 1) : ?> data-bs-toggle="modal" data-bs-target="#playerModal" data-target-field="players" <?php endif ?>>
+																	<svg xmlns="http://www.w3.org/2000/svg" class="icon icon-tabler icon-tabler-clipboard-plus" width="24" height="24" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none" stroke-linecap="round" stroke-linejoin="round">
+																		<path stroke="none" d="M0 0h24v24H0z" fill="none"></path>
+																		<path d="M9 5h-2a2 2 0 0 0 -2 2v12a2 2 0 0 0 2 2h10a2 2 0 0 0 2 -2v-12a2 2 0 0 0 -2 -2h-2"></path>
+																		<rect x="9" y="3" width="6" height="4" rx="2"></rect>
+																		<path d="M10 14h4"></path>
+																		<path d="M12 12v4"></path>
+																	</svg>
+																	<?php echo lang('dest.player'); ?></button>
+															</div>
+
+															<div class="col">
+																<select class="form-select select2 disable-for-normal-user" id="players" name="players[]" multiple>
+																	<?php foreach ($players as $player) : ?>
+																		<option value="<?php echo $player->id; ?>" <?php if (isset($data) && is_array($data->players) && in_array($player->id, $data->players)) : ?>selected<?php endif ?>><?php echo $player->name; ?></option>
+																	<?php endforeach; ?>
+																</select>
+															</div>
+
 														</div>
 
-														<div class="col">
-															<select class="form-select select2 disable-for-normal-user" id="players" name="players[]" multiple>
-																<?php foreach ($players as $player) : ?>
-																	<option value="<?php echo $player->id; ?>" <?php if (isset($data) && is_array($data->players) && in_array($player->id, $data->players)) : ?>selected<?php endif ?>><?php echo $player->name; ?></option>
-																<?php endforeach; ?>
-															</select>
+														<br>
+
+														<div class="row">
+
+															<div class="col-auto">
+																<button type="button" class="btn btn-outline-danger disable-for-normal-user" <?php if ($auth > 1) : ?> data-bs-toggle="modal" data-bs-target="#playerModal" data-target-field="ex_players" <?php endif ?>>
+																	<svg xmlns="http://www.w3.org/2000/svg" class="icon icon-tabler icon-tabler-clipboard-x" width="24" height="24" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none" stroke-linecap="round" stroke-linejoin="round">
+																		<path stroke="none" d="M0 0h24v24H0z" fill="none"></path>
+																		<path d="M9 5h-2a2 2 0 0 0 -2 2v12a2 2 0 0 0 2 2h10a2 2 0 0 0 2 -2v-12a2 2 0 0 0 -2 -2h-2"></path>
+																		<rect x="9" y="3" width="6" height="4" rx="2"></rect>
+																		<path d="M10 12l4 4m0 -4l-4 4"></path>
+																	</svg>
+																	<?php echo lang('exclude.players'); ?></button>
+															</div>
+
+															<div class="col">
+																<select class="form-select select2 disable-for-normal-user" id="ex_players" name="ex_players[]" multiple>
+																	<?php foreach ($players as $player) : ?>
+																		<option value="<?php echo $player->id; ?>" <?php if (isset($data) && is_array($data->ex_players) && in_array($player->id, $data->ex_players)) : ?>selected<?php endif ?>><?php echo $player->name; ?></option>
+																	<?php endforeach; ?>
+																</select>
+															</div>
+
 														</div>
+
 
 													</div>
-
-													<br>
-
-													<div class="row">
-
-														<div class="col-auto">
-															<button type="button" class="btn btn-outline-danger disable-for-normal-user" <?php if ($auth > 1) : ?> data-bs-toggle="modal" data-bs-target="#playerModal" data-target-field="ex_players" <?php endif ?>>
-																<svg xmlns="http://www.w3.org/2000/svg" class="icon icon-tabler icon-tabler-clipboard-x" width="24" height="24" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none" stroke-linecap="round" stroke-linejoin="round">
-																	<path stroke="none" d="M0 0h24v24H0z" fill="none"></path>
-																	<path d="M9 5h-2a2 2 0 0 0 -2 2v12a2 2 0 0 0 2 2h10a2 2 0 0 0 2 -2v-12a2 2 0 0 0 -2 -2h-2"></path>
-																	<rect x="9" y="3" width="6" height="4" rx="2"></rect>
-																	<path d="M10 12l4 4m0 -4l-4 4"></path>
-																</svg>
-																<?php echo lang('exclude.players'); ?></button>
-														</div>
-
-														<div class="col">
-															<select class="form-select select2 disable-for-normal-user" id="ex_players" name="ex_players[]" multiple>
-																<?php foreach ($players as $player) : ?>
-																	<option value="<?php echo $player->id; ?>" <?php if (isset($data) && is_array($data->ex_players) && in_array($player->id, $data->ex_players)) : ?>selected<?php endif ?>><?php echo $player->name; ?></option>
-																<?php endforeach; ?>
-															</select>
-														</div>
-
-													</div>
-
-
 												</div>
 											</div>
-										</div>
-										<div class="accordion-item">
-											<h2 class="accordion-header" id="flush-headingFour">
-												<button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#flush-collapseFour" aria-expanded="false" aria-controls="flush-collapseFour">
-													<?php echo lang('internal_features'); ?>
-												</button>
-											</h2>
-											<div id="flush-collapseFour" class="accordion-collapse collapse" aria-labelledby="flush-headingFour" data-bs-parent="#accordionFlushExample">
-												<div class="accordion-body">
-													<div class="row">
+											<div class="accordion-item">
+												<h2 class="accordion-header" id="flush-headingFour">
+													<button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#flush-collapseFour" aria-expanded="false" aria-controls="flush-collapseFour">
+														<?php echo lang('internal_features'); ?>
+													</button>
+												</h2>
+												<div id="flush-collapseFour" class="accordion-collapse collapse" aria-labelledby="flush-headingFour" data-bs-parent="#accordionFlushExample">
+													<div class="accordion-body">
+														<div class="row">
 
-														<div class="col-md-3">
-															<label><?php echo lang("contactname"); ?></label>
-															<input type="text" class="form-control" name="contact_name" value="<?php if (isset($data)) echo $data->contact_name; ?>">
+															<div class="col-md-3">
+																<label><?php echo lang("contactname"); ?></label>
+																<input type="text" class="form-control" name="contact_name" value="<?php if (isset($data)) echo $data->contact_name; ?>">
+															</div>
+
+															<div class="col-md-3">
+																<label><?php echo lang("customertype"); ?></label>
+																<select name="cust_type" class="form-select">
+																	<option value="0" <?php if (isset($data) && $data->cust_type == "0") : ?>selected <?php endif; ?>><?php echo lang('customertype.own'); ?></option>
+																	<option value="1" <?php if (isset($data) && $data->cust_type == "1") : ?>selected<?php endif; ?>><?php echo lang('customertype.local'); ?></option>
+																	<option value="2" <?php if (isset($data) && $data->cust_type == "2") : ?>selected<?php endif; ?>><?php echo lang('customertype.national'); ?></option>
+																	<option value="3" <?php if (isset($data) && $data->cust_type == "3") : ?>selected<?php endif; ?>><?php echo lang('customertype.external'); ?></option>
+
+																</select>
+															</div>
+
+															<div class="col-md-2">
+																<label><?php echo lang("campaignvalue"); ?></label>
+																<input type="text" class="form-control" name="cam_value" value="<?php if (isset($data)) echo $data->cam_value; ?>">
+															</div>
+
+
+
 														</div>
-
-														<div class="col-md-3">
-															<label><?php echo lang("customertype"); ?></label>
-															<select name="cust_type" class="form-select">
-																<option value="0" <?php if (isset($data) && $data->cust_type == "0") : ?>selected <?php endif; ?>><?php echo lang('customertype.own'); ?></option>
-																<option value="1" <?php if (isset($data) && $data->cust_type == "1") : ?>selected<?php endif; ?>><?php echo lang('customertype.local'); ?></option>
-																<option value="2" <?php if (isset($data) && $data->cust_type == "2") : ?>selected<?php endif; ?>><?php echo lang('customertype.national'); ?></option>
-																<option value="3" <?php if (isset($data) && $data->cust_type == "3") : ?>selected<?php endif; ?>><?php echo lang('customertype.external'); ?></option>
-
-															</select>
-														</div>
-
-														<div class="col-md-2">
-															<label><?php echo lang("campaignvalue"); ?></label>
-															<input type="text" class="form-control" name="cam_value" value="<?php if (isset($data)) echo $data->cam_value; ?>">
-														</div>
-
-
 
 													</div>
-
 												</div>
 											</div>
-										</div>
-
+										<?php endif; ?>
 									</div>
 								</div>
 
@@ -428,6 +428,7 @@
 												</button>
 											</div>
 										<?php endif ?>
+										<!--
 										<div class="col-auto">
 											<button class="btn btn-outline-primary" type="button" onclick="delete_all_media()" title="<?php echo lang('delete') ?>">
 												<svg xmlns=" http://www.w3.org/2000/svg" class="icon icon-tabler icon-tabler-x" width="24" height="24" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none" stroke-linecap="round" stroke-linejoin="round">
@@ -438,15 +439,32 @@
 												<?php echo lang('delete') ?>
 											</button>
 										</div>
+										-->
+										<div class="col-auto" id="delete_selected_media_btn" style="display: none;">
+											<button class="btn btn-outline-primary" type="button" onclick="delete_selected_media()" title="<?php echo lang('delete_selected_media') ?>">
+												<svg xmlns="http://www.w3.org/2000/svg" class="icon icon-tabler icon-tabler-trash" width="24" height="24" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none" stroke-linecap="round" stroke-linejoin="round">
+													<path stroke="none" d="M0 0h24v24H0z" fill="none"></path>
+													<line x1="4" y1="7" x2="20" y2="7"></line>
+													<line x1="10" y1="11" x2="10" y2="17"></line>
+													<line x1="14" y1="11" x2="14" y2="17"></line>
+													<path d="M5 7l1 12a2 2 0 0 0 2 2h8a2 2 0 0 0 2 -2l1 -12"></path>
+													<path d="M9 7v-3a1 1 0 0 1 1 -1h4a1 1 0 0 1 1 1v3"></path>
+												</svg>
+												<?php echo lang('delete') ?>
+											</button>
+										</div>
 									</div>
 
 									<table id="areaMediaTable" class="table table-responsive table-vcenter" data-pagination='false' data-use-row-attr-func="true" data-reorderable-rows="true">
 										<thead>
 											<tr>
+												<th data-checkbox="true"></th>
 												<th data-field="tiny_url" data-formatter="previewFormatter"><?php echo lang('media.image') ?></th>
 												<th data-field="name" data-formatter="mediaNameFormatter"><?php echo lang('media_name'); ?></th>
 												<th data-field="play_time"><?php echo lang('play_time'); ?></th>
-												<th data-field="transmode" data-formatter="transFormatter"><?php echo lang('transition_mode'); ?></th>
+												<!--
+													<th data-field="transmode" data-formatter="transFormatter"><?php echo lang('transition_mode'); ?></th>
+												-->
 												<th data-field="status" data-formatter="excludeFormatter">Exclude</th>
 												<th data-field="start_date" data-formatter="dateFormatter"><?php echo lang('start.date'); ?></th>
 												<th data-field="end_date" data-formatter="dateFormatter"><?php echo lang('end.date'); ?></th>
@@ -479,23 +497,24 @@
 								<?php if ($can_publish == 1) : ?>
 									<a class="btn btn-outline-primary" id="publish_button" href="#" onclick="doSubmit(1);">
 										<i class="bi bi-play-btn"></i>
-										<?php echo lang('button.publish'); ?>
+										<?php echo lang('activate_campaign'); ?>
 									</a>
 								<?php endif; ?>
 								<a class="btn btn-outline-primary" href="#" onclick="doSubmit(0);">
 									<i class="bi bi-cloud-arrow-up"></i>
 									<?php echo lang('button.save'); ?>
 								</a>
-
-								<a class="btn btn-outline-primary play-method-count" href="#" onclick="doCalculate();" <?php if (isset($data) && ($data->priority == '3' || $data->priority == '6')) : ?>style="display:none" <?php endif ?>>
-									<i class="bi bi-calculator"></i>
-									<?php echo lang('btn.calculate'); ?>
-								</a>
-								<?php if (isset($data)) : ?>
-									<a class="btn btn-outline-primary" onclick="exportReport()">
-										<i class="bi bi-clipboard-data"></i>
-										<?php echo lang('playback'); ?>
+								<?php if ($auth !== 0): ?>
+									<a class="btn btn-outline-primary play-method-count" href="#" onclick="doCalculate();" <?php if (isset($data) && ($data->priority == '3' || $data->priority == '6')) : ?>style="display:none" <?php endif ?>>
+										<i class="bi bi-calculator"></i>
+										<?php echo lang('btn.calculate'); ?>
 									</a>
+									<?php if (isset($data)) : ?>
+										<a class="btn btn-outline-primary" onclick="exportReport()">
+											<i class="bi bi-clipboard-data"></i>
+											<?php echo lang('playback'); ?>
+										</a>
+									<?php endif; ?>
 								<?php endif; ?>
 							<?php endif; ?>
 							<a class="btn btn-outline-primary" type='btn' href="/campaign"><i class="bi bi-x-circle"></i><?php echo lang('button.cancel'); ?></a>
@@ -670,7 +689,7 @@
 		if (row.date_flag == "1") {
 			return value;
 		}
-		return '';
+		return '--';
 	}
 
 	$("#time_flag").change(function() {
@@ -804,12 +823,22 @@
 
 	$(document).on('click', '.removeRowButton', function() {
 		let rowid = $(this).closest('tr').data('index');
-
-		var table = $('#areaMediaTable');
-		table.bootstrapTable('remove', {
+		var $table = $('#areaMediaTable');
+		$table.bootstrapTable('remove', {
 			field: '$index',
 			values: [rowid]
 		});
+		/*
+		$("#delete_confirm_text").html('<?php echo lang("remove_media_row_confirm") ?>');
+		var myModal = new bootstrap.Modal(document.getElementById('delete_confirm'));
+		myModal.show();
+		$("#delete_confirm").off("click").on("click", "#delete", function(e) {
+			$table.bootstrapTable('remove', {
+				field: '$index',
+				values: [rowid]
+			});
+		});
+	   */
 	});
 
 	$(document).on('click', '.excludeCheck', function() {
@@ -822,10 +851,43 @@
 		});
 	});
 
-	function delete_all_media() {
+	function delete_selected_media() {
+		var $table = $('#areaMediaTable');
+		var selections = $table.bootstrapTable('getSelections');
+		if (selections.length === 0) {
+			toastr.warning('<?php echo lang("delete_selected_media") ?>');
+			return;
+		}
+		$("#delete_confirm_text").html('<?php echo lang("delete_selected_media_confirm") ?>');
+		var myModal = new bootstrap.Modal(document.getElementById('delete_confirm'));
+		myModal.show();
+		$("#delete_confirm").off("click").on("click", "#delete", function(e) {
+			// Collect data-index from selected rows' <tr> elements
+			var indexes = [];
+			$table.find('tr.selected').each(function() {
+				indexes.push($(this).data('index'));
+			});
+			// Remove from highest index first to avoid index shift
+			indexes.sort(function(a, b) {
+				return b - a;
+			});
+			$.each(indexes, function(i, idx) {
+				$table.bootstrapTable('remove', {
+					field: '$index',
+					values: [idx]
+				});
+			});
+		});
+	};
 
-		var table = $('#areaMediaTable');
-		table.bootstrapTable('removeAll')
+	function delete_all_media() {
+		$("#delete_confirm_text").html('<?php echo lang("clear_all_media_confirm") ?>');
+		var myModal = new bootstrap.Modal(document.getElementById('delete_confirm'));
+		myModal.show();
+		$("#delete_confirm").off("click").on("click", "#delete", function(e) {
+			var table = $('#areaMediaTable');
+			table.bootstrapTable('removeAll');
+		});
 	};
 
 
@@ -990,6 +1052,10 @@
 				if (name == 'post-body.bs.table') {
 					var total = $('#areaMediaTable').bootstrapTable('getData').length;
 					$('#total_media').html(total);
+				}
+				if (name == 'check.bs.table' || name == 'uncheck.bs.table' || name == 'check-all.bs.table' || name == 'uncheck-all.bs.table') {
+					var hasSelections = $('#areaMediaTable').bootstrapTable('getSelections').length > 0;
+					$('#delete_selected_media_btn').toggle(hasSelections);
 				}
 			}
 		});

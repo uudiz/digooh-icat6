@@ -172,7 +172,7 @@
                                 </li>
                             <?php endif; ?>
                         <?php endif; ?>
-                    <?php else : ?>
+                    <?php elseif ($auth <= 5) : ?>
                         <li class="nav-item">
                             <a class="nav-link" href="/campaign">
                                 <span class="nav-link-icon d-md-none d-lg-inline-block">
@@ -220,7 +220,7 @@
 
                                 <div class="dropdown-menu">
 
-                                    <?php if ($auth >= $ADMIN && !$pid) : ?>
+                                    <?php if (!$pid) : ?>
                                         <a class="dropdown-item" href="/tag">
                                             <?php echo lang('tag'); ?>
                                         </a>
@@ -232,11 +232,11 @@
                                         </a>
 
                                     <?php endif ?>
-                                    <?php if ($auth >= $ADMIN || $auth == 2) : ?>
-                                        <a class=" dropdown-item" href="/folder">
-                                            <?php echo lang('folder'); ?>
-                                        </a>
-                                    <?php endif ?>
+
+                                    <a class=" dropdown-item" href="/folder">
+                                        <?php echo lang('folder'); ?>
+                                    </a>
+
 
                                     <?php if (!$pid) : ?>
                                         <a class="dropdown-item" href="/configxml">
@@ -256,6 +256,18 @@
                                     </a>
                                 </div>
                             </li>
+                        <?php elseif ($auth <= 2): ?>
+                            <li class="nav-item">
+                                <a class="nav-link " href="/folder">
+                                    <span class="nav-link-icon d-md-none d-lg-inline-block">
+                                        <h3><i class="bi bi-folder"></i></h3>
+                                    </span>
+                                    <span class="nav-link-title">
+                                        <?php echo lang('folder'); ?>
+                                    </span>
+                                </a>
+                            </li>
+
                         <?php endif; ?>
                         <?php if ($auth > 1) : ?>
                             <li class="nav-item dropdown">

@@ -20,6 +20,7 @@ $lang['login_code_1']  = 'Incorrect username or password';
 $lang['login_code_2']  = 'User not enable in current time';
 $lang['login_code_3']  = "The user's account has expired";
 $lang['login_code_4']  = 'Name can not be blank';
+$lang['login_code_5']  = 'API user can not login';
 $lang['sign_in'] = 'Sign in';
 $lang['forget_password'] = 'Forget Password';
 

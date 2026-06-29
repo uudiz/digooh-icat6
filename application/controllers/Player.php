@@ -313,7 +313,7 @@ class Player extends MY_Controller
         $cid = $this->get_cid();
         $id = $this->input->get('id');
 
-        $privilege =  $this->session->userdata("privilege");
+        $privilege = $this->session_get('privilege');
 
         if ($this->get_auth() <= 2 || $this->is_partner()) {
             if (!$id && isset($privilege->can_create_player) && $privilege->can_create_player) {

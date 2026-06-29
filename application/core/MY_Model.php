@@ -36,7 +36,9 @@ class MY_Model extends CI_Model
      */
     public function user_log($type, $detail, $uid = 0, $cid = -1, $status = 0)
     {
-        $uid ? $uid : $this->session->userdata('uid');
+        if (!$uid) {
+            $uid = $this->session->userdata('uid');
+        }
         if ($uid) {
             $data = array(
                 'user_id' => $uid,

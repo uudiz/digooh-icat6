@@ -31,6 +31,8 @@ $lang['warn.campaign.empty'] = 'At least one campaign is required to choose';
 
 
 $lang['role.staff'] = 'Adminstrativer Benutzer';
+$lang['role.api'] = 'API Benutzer';
+$lang['role.setup'] = 'Setup Benutzer';
 $lang['select.players'] = 'Display Auswählen';
 $lang['warn.player.empty'] = 'At least one player is required to choose';
 
@@ -41,3 +43,5 @@ $lang['pass.not.match'] = "Passwort stimmt nicht überein";
 $lang['logo.limit'] = "Datei auswählen < 1500 KB";
 $lang['warn.criteria.empty'] = "At least one criterion or player is required to choose";
 $lang['can_replace_main'] = 'Kann Medien der Hauptkampagne Ersetzen';
+$lang['can_restart_player'] = 'Kann Display neu starten';
+$lang['can_upload_display_picture'] = 'Kann Bild für Display hochladen';

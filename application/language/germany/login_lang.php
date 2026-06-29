@@ -19,6 +19,7 @@ $lang['login_code_1']  = 'Password oder Benutzer unbekannt';
 $lang['login_code_2']  = 'Benutzer ist derzeit nicht aktiviert';
 $lang['login_code_3']  = 'Benutzerkonto ist abgelaufen';
 $lang['login_code_4']  = 'Ungültiger Benutzername';
+$lang['login_code_5']  = 'API user can not login';
 $lang['sign_in'] = 'Anmelden';
 $lang['forget_password'] = 'Passwort vergessen';
 

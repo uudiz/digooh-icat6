@@ -85,7 +85,7 @@
 										</div>
 
 
-										<?php if ($this->config->item('medium_with_weekNtime')): ?>
+										<?php if ($this->config->item('medium_with_weekNtime') && $auth !== 0): ?>
 											<div class="mb-3 row">
 												<div class="col-auto ">
 													<label class="form-check form-switch">
@@ -148,11 +148,12 @@
 												</div>
 											</div>
 										<?php endif ?>
-
-										<div class="mb-3">
-											<label for="play_time"><?php echo lang('play_time'); ?> (MM:SS)</label>
-											<input type="text" class="form-control" id="play_time" name="play_time" <?php if ($data->media_type == 2 || $auth < 5) : ?>readonly<?php endif ?> value="<?php if (isset($data->play_time)) echo $data->play_time; ?>" />
-										</div>
+										<?php if ($auth !== 0) : ?>
+											<div class="mb-3">
+												<label for="play_time"><?php echo lang('play_time'); ?> (MM:SS)</label>
+												<input type="text" class="form-control" id="play_time" name="play_time" <?php if ($data->media_type == 2 || $auth < 5) : ?>readonly<?php endif ?> value="<?php if (isset($data->play_time)) echo $data->play_time; ?>" />
+											</div>
+										<?php endif ?>
 										<?php if (0 && $auth == 5 && !$pid) : ?>
 											<div class="mb-3">
 												<div class="col-auto ">
