@@ -765,7 +765,7 @@ class MY_Controller extends CI_Controller
                 $filter_array['pids'] = $pids;
             }
             $data['criteria'] = [];
-        } else {
+        } else if ($auth !== 10) {
             if ($parent_id) {
                 $cris = $this->device->get_paterner_criterias($partner_id);
 
