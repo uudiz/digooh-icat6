@@ -25,7 +25,7 @@
                     <?php echo lang("dimension") ?>: <strong><?php echo $medium->width . 'X' . $medium->height ?></strong>
                 </div>
                 <div class="mb-2">
-                    <?php echo lang("folder") ?>: <strong><?php echo $medium->folder_id == '0' ? lang('folder.default') : $medium->folder->name ?></strong>
+                    <?php echo lang("folder") ?>: <strong><?php echo $medium->folder_id == '0' ? lang('folder.default') : (isset($medium->folder) && $medium->folder ? $medium->folder->name : lang('folder.default')); ?></strong>
                 </div>
                 <div class="mb-2">
                     <?php echo lang("approval") ?>:
