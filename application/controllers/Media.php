@@ -107,6 +107,12 @@ class Media extends MY_Controller
             $media = $this->material->get_media($id);
 
             if ($media) {
+                if ($media->main_url && file_exists('.' . $media->main_url)) {
+                    $media->preview_url = $media->main_url;
+                } else {
+                    $media->preview_url = substr($media->full_path, 1);
+                }
+
                 $data['data'] = $media;
                 $data['tagstr'] = $this->device->get_tags_id_by_media($id);
                 if ($media->play_time) {

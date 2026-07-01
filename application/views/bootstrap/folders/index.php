@@ -27,7 +27,7 @@
     </div>
   </div>
   <div class="page-body">
-    <table id="table" class="table table-striped table-responsive" data-toggle="table" data-url="/folder/getTableData" data-pagination="false" data-height="700" data-sort-name="name" data-sort-order="asc">
+    <table id="table" class="table table-striped table-responsive" data-toggle="table" data-url="/folder/getTableData" data-pagination="false" data-sort-name="name" data-sort-order="asc">
       <thead>
         <tr>
           <th data-field="name" data-sortable="true" data-formatter="nameFormatter"><?php echo lang('name'); ?></th>
@@ -125,7 +125,9 @@
       rowData._expanded = true;
     }
 
-    $.get('/folder/getChildren', { pId: parentId }, function(response) {
+    $.get('/folder/getChildren', {
+      pId: parentId
+    }, function(response) {
       if (!response.rows || response.rows.length === 0) return;
 
       var $insertAfter = $row;

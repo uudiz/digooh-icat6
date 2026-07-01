@@ -22,7 +22,9 @@
 						<div class="row row-0 flex-fill">
 							<div class="col-md-4">
 								<?php if ($data->media_type == 1) : ?>
-									<img src="<?php if (isset($data->full_path)) echo substr($data->full_path, 1); ?>" class="w-100 h-100 object-contain" alt="Card side image" onerror="javascript:this.remove()" />
+									<?php if (isset($data->preview_url) && $data->preview_url) : ?>
+										<img src="<?php echo $data->preview_url ?>" class="w-100 h-100 object-contain" alt="Card side image" onerror="javascript:this.remove()" />
+									<?php endif ?>
 								<?php elseif ($data->media_type == 2) : ?>
 									<video autoplay controls class="w-100 h-100 object-contain">
 										<source src="<?php echo substr($data->full_path, 1); ?>" type='video/mp4'>
@@ -219,11 +221,13 @@
 </div>
 <script>
 	var element = document.getElementById('play_time');
-	var maskOptions = {
-		mask: '00:00',
+	if (element) {
+		var maskOptions = {
+			mask: '00:00',
 
-	};
-	var mask = IMask(element, maskOptions);
+		};
+		IMask(element, maskOptions);
+	}
 
 	$.validator.addMethod("greaterThanStartTime", function(value, element) {
 		// Only validate if time_flag is checked
