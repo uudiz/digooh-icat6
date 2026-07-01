@@ -460,7 +460,7 @@
 											<tr>
 												<th data-checkbox="true"></th>
 												<th data-field="tiny_url" data-formatter="previewFormatter"><?php echo lang('media.image') ?></th>
-												<th data-field="name" data-formatter="mediaNameFormatter"><?php echo lang('media_name'); ?></th>
+												<th data-field="name"><?php echo lang('media_name'); ?></th>
 												<th data-field="play_time"><?php echo lang('play_time'); ?></th>
 												<!--
 													<th data-field="transmode" data-formatter="transFormatter"><?php echo lang('transition_mode'); ?></th>
@@ -646,11 +646,13 @@
 		</span>`;
 	}
 
+	/*
 	function mediaNameFormatter(value, row) {
 		return `<a href="#" class="link-primary" onclick="editAreaMedia('${row.id}','${row.transmode}');">
 				${value}
 			</a>`;
 	}
+	*/
 
 	function operateFormatter(value, row) {
 
