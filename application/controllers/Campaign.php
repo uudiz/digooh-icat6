@@ -2810,7 +2810,11 @@ class Campaign extends MY_Controller
         //$ex_players = $this->input->post('ex_players');
         $ex_players = $this->get_ob_players();
 
-
+        // When editing an existing campaign, determine if players/criteria were
+        // actually submitted. If they were not (e.g. user didn't modify those
+        // fields or the form elements were disabled), keep the existing data
+        // instead of detaching everything.
+        $is_updating = $this->input->post('id') ? true : false;
 
         $this->load->model('program');
 
@@ -2821,44 +2825,45 @@ class Campaign extends MY_Controller
             } else {
                 $this->program->sync_tags($id, $tag, 'App\Campaign');
             }
-        } else {
+        } else if (!$is_updating) {
+            // Only detach tags when creating a new campaign without tags
             $this->program->detach_tags($id, 'App\Campaign');
         }
 
         if ($players) {
             $this->program->sync_players($id, $players);
-        } else {
+        } else if (!$is_updating) {
             $this->program->detach_players($id);
         }
 
         if ($ex_players) {
 
             $this->program->sync_players($id, $ex_players, 1);
-        } else {
+        } else if (!$is_updating) {
             $this->program->detach_players($id, 1);
         }
 
         if ($criteria) {
             $this->program->sync_criteria($id, $criteria, 'App\Campaign');
-        } else {
+        } else if (!$is_updating) {
             $this->program->detach_criteria($id, 'App\Campaign', 0);
         }
         if ($and_criteria) {
             $this->program->sync_criteria($id, $and_criteria, 'App\Campaign', 1);
-        } else {
+        } else if (!$is_updating) {
             $this->program->detach_criteria($id, 'App\Campaign', 1);
         }
 
         if ($and_criteria_or) {
             $this->program->sync_criteria($id, $and_criteria_or, 'App\Campaign', 3);
-        } else {
+        } else if (!$is_updating) {
             $this->program->detach_criteria($id, 'App\Campaign', 3);
         }
 
 
         if ($criteria_ex) {
             $this->program->sync_criteria($id, $criteria_ex, 'App\Campaign', 2);
-        } else {
+        } else if (!$is_updating) {
             $this->program->detach_criteria($id, 'App\Campaign', 2);
         }
         $this->db->trans_complete();
@@ -3101,15 +3106,28 @@ class Campaign extends MY_Controller
 
         $ex_players =  $this->get_ob_players();
 
+        $post_criteria = $this->input->post('criteria');
+        $post_players = $this->input->post('players');
+
         $players = $this->program->get_player_by_criterias(
-            $this->input->post('criteria'),
+            $post_criteria,
             $bind_criteria,
             $this->input->post('ex_criteria'),
-            $this->input->post('players'),
+            $post_players,
             $this->input->post('tags'),
             $ex_players,
             $this->input->post('and_criteria_or')
         );
+
+        // When editing an existing campaign and no criteria/players were submitted
+        // (e.g. user didn't modify player/criteria selections, or form fields were
+        // disabled), fall back to the players already saved in the database.
+        if (!$players) {
+            $playlist_id = $this->input->post('id');
+            if ($playlist_id) {
+                $players = $this->program->get_player_by_campaign($playlist_id);
+            }
+        }
 
         return $players;
     }

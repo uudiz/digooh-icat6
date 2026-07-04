@@ -5008,7 +5008,7 @@ class Program extends MY_Model
     public function get_player_by_campaign($camid, $detail = true)
     {
         if ($detail) {
-            $this->db->select("p.id,p.name,p.timer_config_id,p.company_id,pe.custom_sn1,pe.custom_sn2,t.offweekdays");
+            $this->db->select("p.id,p.name,p.timer_config_id,p.company_id,p.video_playback,pe.custom_sn1,pe.custom_sn2,t.offweekdays");
             $this->db->join("cat_player_extra pe", 'pe.player_id = p.id', 'left');
             $this->db->join("cat_timer_config t", 't.id = p.timer_config_id', 'left');
         } else {
