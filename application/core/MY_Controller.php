@@ -498,29 +498,54 @@ class MY_Controller extends CI_Controller
                     }
                 }
             } else {
-                if ($this->config->item("new_campaign_user")) {
+                // Restricted users (auth < 4)
+                $mySerializer = new HierarchicalTreeJsonSerializer('inc');
 
-                    $mySerializer = new HierarchicalTreeJsonSerializer('inc');
+                // When parent_id != 0 (user belongs to a partner company),
+                // we need to restrict visibility to folders under the partner's root folder
+                $partnerRootFolderID = null;
+                if ($parent_id) {
+                    $partnerRootFolderID = $this->material->get_partner_rootFolder($cid);
+                }
+
+                if ($this->config->item("new_campaign_user")) {
                     $rootFolderID = $this->device->get_user_folderID($this->get_uid());
                     $tree = new BlueM\Tree($folders, ['jsonSerializer' => $mySerializer, 'rootId' => null, 'parent' => 'pId']);
 
                     if ($rootFolderID) {
-                        $node = $tree->getNodeById($rootFolderID);
-                        if ($node) {
-                            $rootNode = $node->getDescendantsAndSelf();
-                            $newData = array();
-                            foreach ($rootNode as $child) {
-                                $nodeId =  $child->getId();
-                                $item = $child->toArray();
-                                if ($nodeId == $rootFolderID) {
-                                    $item['parent'] = null;
+                        // If partner has a root folder, intersect: user folder must be under partner root
+                        if ($partnerRootFolderID) {
+                            $partnerNode = $tree->getNodeById($partnerRootFolderID);
+                            if ($partnerNode) {
+                                $partnerVisibleIds = array();
+                                foreach ($partnerNode->getDescendantsAndSelf() as $desc) {
+                                    $partnerVisibleIds[$desc->getId()] = true;
                                 }
-                                $newData[] = $item;
-                                $folders_arr[] = $nodeId;
+                                // If user's assigned folder is NOT under partner root, don't show anything
+                                if (!isset($partnerVisibleIds[$rootFolderID])) {
+                                    $rootFolderID = null;
+                                }
                             }
-                            $newTree = new BlueM\Tree($newData, ['jsonSerializer' => $mySerializer, 'rootId' => null, 'parent' => 'parent']);
-                            $treeFolders = $newTree;
-                            $data['folder_id'] = $folders_arr;
+                        }
+
+                        if ($rootFolderID) {
+                            $node = $tree->getNodeById($rootFolderID);
+                            if ($node) {
+                                $rootNode = $node->getDescendantsAndSelf();
+                                $newData = array();
+                                foreach ($rootNode as $child) {
+                                    $nodeId =  $child->getId();
+                                    $item = $child->toArray();
+                                    if ($nodeId == $rootFolderID) {
+                                        $item['parent'] = null;
+                                    }
+                                    $newData[] = $item;
+                                    $folders_arr[] = $nodeId;
+                                }
+                                $newTree = new BlueM\Tree($newData, ['jsonSerializer' => $mySerializer, 'rootId' => null, 'parent' => 'parent']);
+                                $treeFolders = $newTree;
+                                $data['folder_id'] = $folders_arr;
+                            }
                         }
                     }
                 } else {
@@ -528,7 +553,6 @@ class MY_Controller extends CI_Controller
                     // Strategy: load all folders → build full tree → extract only assigned folders
                     //           and their descendants → set assigned folders' parent=null → rebuild tree
                     // This matches the new_campaign_user path: only show assigned folder + children, NOT ancestors
-                    $mySerializer = new HierarchicalTreeJsonSerializer('inc');
 
                     if (!empty($user_folders)) {
                         $tree = new BlueM\Tree($folders, ['jsonSerializer' => $mySerializer, 'rootId' => null, 'parent' => 'pId']);
@@ -546,6 +570,20 @@ class MY_Controller extends CI_Controller
                             // Include the assigned folder and all its descendants
                             foreach ($node->getDescendantsAndSelf() as $desc) {
                                 $visibleNodeIds[$desc->getId()] = true;
+                            }
+                        }
+
+                        // When parent_id != 0: intersect with partner's root folder subtree
+                        // so that restricted users under a partner only see folders within that partner's scope
+                        if ($partnerRootFolderID) {
+                            $partnerNode = $tree->getNodeById($partnerRootFolderID);
+                            if ($partnerNode) {
+                                $partnerVisibleIds = array();
+                                foreach ($partnerNode->getDescendantsAndSelf() as $desc) {
+                                    $partnerVisibleIds[$desc->getId()] = true;
+                                }
+                                // Remove any visible nodes that are NOT under the partner's root folder
+                                $visibleNodeIds = array_intersect_key($visibleNodeIds, $partnerVisibleIds);
                             }
                         }
 
