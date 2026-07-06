@@ -185,26 +185,56 @@
 
 	// Role-based UI visibility map: { role: { section: visible } }
 	var roleVisibility = {
-		'0': { 'can-publish': true,  'sel-setup': false, 'sel-folder': true,  'sel-player': true,  'sel-criteria': true,  'sel-cam': true,  'sel-template': false },
+		'0': {
+			'can-publish': true,
+			'sel-setup': false,
+			'sel-folder': true,
+			'sel-player': true,
+			'sel-criteria': true,
+			'sel-cam': true,
+			'sel-template': false
+		},
 		'1': {
 			'can-publish': false,
-			'sel-setup':   false,
-			'sel-folder':  true,
-			<?php if ($this->config->item('new_campaign_user')) : ?>
-				'sel-player':   true,
+			'sel-setup': false,
+			'sel-folder': true,
+			<?php if ($this->config->item('new_campaign_user')) : ?> 'sel-player': true,
 				'sel-criteria': true,
-				'sel-cam':      false,
+				'sel-cam': false,
 				'sel-template': true,
-			<?php else : ?>
-				'sel-player':   false,
+			<?php else : ?> 'sel-player': false,
 				'sel-criteria': false,
-				'sel-cam':      true,
+				'sel-cam': true,
 				'sel-template': false,
 			<?php endif ?>
 		},
-		'101': { 'can-publish': false, 'sel-setup': false, 'sel-folder': false, 'sel-player': false, 'sel-criteria': false, 'sel-cam': false, 'sel-template': false },
-		'102': { 'can-publish': false, 'sel-setup': true,  'sel-folder': false, 'sel-player': false, 'sel-criteria': false, 'sel-cam': false, 'sel-template': false },
-		'default': { 'can-publish': false, 'sel-setup': false, 'sel-folder': false, 'sel-player': false, 'sel-criteria': false, 'sel-cam': false, 'sel-template': false }
+		'101': {
+			'can-publish': false,
+			'sel-setup': false,
+			'sel-folder': false,
+			'sel-player': false,
+			'sel-criteria': false,
+			'sel-cam': false,
+			'sel-template': false
+		},
+		'102': {
+			'can-publish': false,
+			'sel-setup': true,
+			'sel-folder': false,
+			'sel-player': false,
+			'sel-criteria': false,
+			'sel-cam': false,
+			'sel-template': false
+		},
+		'default': {
+			'can-publish': false,
+			'sel-setup': false,
+			'sel-folder': false,
+			'sel-player': false,
+			'sel-criteria': false,
+			'sel-cam': false,
+			'sel-template': false
+		}
 	};
 
 	function switch_ui(role) {
@@ -227,7 +257,9 @@
 		if (id > 0) {
 			$.ajax({
 				url: '/user/reset_logo',
-				data: { id: id },
+				data: {
+					id: id
+				},
 				dataType: 'json',
 				success: function(data) {
 					$('#defaultLogo').attr('src', data.logo);
@@ -277,9 +309,12 @@
 			url: '/player/getNestedFolders?company_id=' + $('#cid').val(),
 			dataType: 'json',
 			success: function(res) {
+				console.log(res.data);
 				$('#folder-select-options').select2ToTree({
 					width: '100%',
-					treeData: { dataArr: res.data }
+					treeData: {
+						dataArr: res.data
+					}
 				});
 				<?php if (isset($data->folders)) : ?>
 					setSelect2Values('#folder-select-options', <?php echo json_encode($data->folders); ?>);
@@ -333,8 +368,12 @@
 					remote: {
 						url: '/user/checkName',
 						data: {
-							name: function() { return $('#name').val(); },
-							id: function() { return $('#id').val(); }
+							name: function() {
+								return $('#name').val();
+							},
+							id: function() {
+								return $('#id').val();
+							}
 						}
 					}
 				},

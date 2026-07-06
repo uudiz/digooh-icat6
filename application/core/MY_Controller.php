@@ -456,6 +456,8 @@ class MY_Controller extends CI_Controller
 
     public function get_tree_folders($cid = 0, $parent_id = 0)
     {
+        $this->load->helper('chrome_logger');
+        chrome_log("get_tree_folders: cid=$cid, parent_id=$parent_id");
         $cid = $cid ? $cid : $this->get_cid();
         $parent_id = $parent_id ? $parent_id : $this->get_parent_company_id();
 
@@ -477,43 +479,52 @@ class MY_Controller extends CI_Controller
         $folders = $this->material->get_all_folder_list($parent_id ?: $cid);
 
         if (!empty($folders)) {
-            if ($auth >= 4) {
-                $mySerializer = new HierarchicalTreeJsonSerializer('inc');
+            $mySerializer = new HierarchicalTreeJsonSerializer('inc');
 
+            // When parent_id != 0 (user belongs to a partner company),
+            // get the partner's root folder to scope visibility
+            $partnerRootFolderID = null;
+            if ($parent_id) {
+                $partnerRootFolderID = $this->material->get_partner_rootFolder($cid);
+            }
+
+            if ($auth >= 4) {
+                // Admin/partner: show full tree, or partner's root subtree when parent_id != 0
                 $tree = new BlueM\Tree($folders, ['jsonSerializer' => $mySerializer, 'rootId' => null, 'parent' => 'pId']);
 
                 if (!$parent_id) {
                     $treeFolders = $tree;
                 } else {
-                    $rootFolderID = $this->material->get_partner_rootFolder($cid);
-                    if ($rootFolderID) {
-                        $node = $tree->getNodeById($rootFolderID);
+                    // parent_id != 0: scope to partner's root folder and its descendants
+                    // Build a new Tree with partner root as the root node (pId=null)
+                    // so that json_encode produces proper nested tree format
+                    if ($partnerRootFolderID) {
+                        $node = $tree->getNodeById($partnerRootFolderID);
                         if ($node) {
-                            $treeFolders = $node->getDescendantsAndSelf();
+                            $newData = array();
+                            $folders_arr = array();
                             foreach ($node->getDescendantsAndSelf() as $child) {
-                                $folders_arr[] =  $child->getId();
+                                $nodeId = $child->getId();
+                                $item = $child->toArray();
+                                if ($nodeId == $partnerRootFolderID) {
+                                    $item['parent'] = null;
+                                }
+                                $newData[] = $item;
+                                $folders_arr[] = $nodeId;
                             }
+                            $treeFolders = new BlueM\Tree($newData, ['jsonSerializer' => $mySerializer, 'rootId' => null, 'parent' => 'parent']);
                             $data['folder_id'] = $folders_arr;
                         }
                     }
                 }
             } else {
                 // Restricted users (auth < 4)
-                $mySerializer = new HierarchicalTreeJsonSerializer('inc');
-
-                // When parent_id != 0 (user belongs to a partner company),
-                // we need to restrict visibility to folders under the partner's root folder
-                $partnerRootFolderID = null;
-                if ($parent_id) {
-                    $partnerRootFolderID = $this->material->get_partner_rootFolder($cid);
-                }
-
                 if ($this->config->item("new_campaign_user")) {
                     $rootFolderID = $this->device->get_user_folderID($this->get_uid());
                     $tree = new BlueM\Tree($folders, ['jsonSerializer' => $mySerializer, 'rootId' => null, 'parent' => 'pId']);
 
                     if ($rootFolderID) {
-                        // If partner has a root folder, intersect: user folder must be under partner root
+                        // When parent_id != 0: user's assigned folder must be under partner root
                         if ($partnerRootFolderID) {
                             $partnerNode = $tree->getNodeById($partnerRootFolderID);
                             if ($partnerNode) {
@@ -533,6 +544,7 @@ class MY_Controller extends CI_Controller
                             if ($node) {
                                 $rootNode = $node->getDescendantsAndSelf();
                                 $newData = array();
+                                $folders_arr = array();
                                 foreach ($rootNode as $child) {
                                     $nodeId =  $child->getId();
                                     $item = $child->toArray();
@@ -842,26 +854,22 @@ class MY_Controller extends CI_Controller
         $cid = $this->get_cid();
         $parent_id = $this->get_parent_company_id();
 
-        if ($this->config->item("with_template")) {
-            if ($cid == 0) {
-                $company_id = $this->input->get('company_id');
-                $this->load->model('membership');
-                $company = $this->membership->get_company($company_id);
-                if ($company) {
-                    $cid =  $company->id;
-                    $parent_id = $company->pId;
-                } else {
-                    $data['success'] = false;
-                    $data['data'] = [];
-                    echo json_encode($data);
-                    return;
-                }
+        if ($cid == 0 || !$cid) {
+            $company_id = $this->input->get('company_id');
+            $this->load->model('membership');
+            $company = $this->membership->get_company($company_id);
+            if ($company) {
+                $cid =  $company->id;
+                $parent_id = $company->pId;
+            } else {
+                $data['success'] = false;
+                $data['data'] = [];
+                echo json_encode($data);
+                return;
             }
         }
 
-
         $this->load->model('material');
-        $treeFolders = array();
         $data = array();
 
         $ret = $this->get_tree_folders($cid, $parent_id);
