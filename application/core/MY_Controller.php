@@ -456,8 +456,6 @@ class MY_Controller extends CI_Controller
 
     public function get_tree_folders($cid = 0, $parent_id = 0)
     {
-        $this->load->helper('chrome_logger');
-        chrome_log("get_tree_folders: cid=$cid, parent_id=$parent_id");
         $cid = $cid ? $cid : $this->get_cid();
         $parent_id = $parent_id ? $parent_id : $this->get_parent_company_id();
 

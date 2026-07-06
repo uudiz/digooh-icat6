@@ -309,7 +309,6 @@
 			url: '/player/getNestedFolders?company_id=' + $('#cid').val(),
 			dataType: 'json',
 			success: function(res) {
-				console.log(res.data);
 				$('#folder-select-options').select2ToTree({
 					width: '100%',
 					treeData: {
