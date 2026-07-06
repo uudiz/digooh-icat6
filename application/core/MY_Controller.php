@@ -525,17 +525,17 @@ class MY_Controller extends CI_Controller
                     }
                 } else {
                     // Restricted users (auth <= 2): build subtree from their assigned folders
-                    // Strategy: load all folders → build full tree → extract ancestors + descendants
-                    //           of assigned folders → set ancestor root parent=null → rebuild tree
+                    // Strategy: load all folders → build full tree → extract only assigned folders
+                    //           and their descendants → set assigned folders' parent=null → rebuild tree
+                    // This matches the new_campaign_user path: only show assigned folder + children, NOT ancestors
                     $mySerializer = new HierarchicalTreeJsonSerializer('inc');
 
                     if (!empty($user_folders)) {
                         $tree = new BlueM\Tree($folders, ['jsonSerializer' => $mySerializer, 'rootId' => null, 'parent' => 'pId']);
 
                         // Collect all nodes that should be visible:
-                        // For each assigned folder, include its ancestors AND its descendants
+                        // For each assigned folder, include it and its descendants only (no ancestors)
                         $visibleNodeIds = array();
-                        $rootFolderIDs = array();
 
                         foreach ($user_folders as $fid) {
                             $node = $tree->getNodeById($fid);
@@ -543,33 +543,25 @@ class MY_Controller extends CI_Controller
                                 continue;
                             }
 
-                            // Include all descendants
+                            // Include the assigned folder and all its descendants
                             foreach ($node->getDescendantsAndSelf() as $desc) {
                                 $visibleNodeIds[$desc->getId()] = true;
                             }
-
-                            // Walk up to find the topmost ancestor — that becomes a root in our subtree
-                            $current = $node;
-                            while ($current->getParent()) {
-                                $parent = $current->getParent();
-                                $visibleNodeIds[$parent->getId()] = true;
-                                $current = $parent;
-                            }
-                            $rootFolderIDs[] = $current->getId();
                         }
 
                         // folder_id: all visible folder IDs (for media filtering in getTableData)
                         // This must include descendants so that media in sub-folders are found
                         $data['folder_id'] = array_keys($visibleNodeIds);
 
-                        // Build new data array with only visible nodes, setting root nodes' parent to null
+                        // Build new data array with only visible nodes, setting assigned folders' parent to null
+                        // so they become root nodes in the subtree
                         $newData = array();
                         foreach ($folders as $f) {
                             if (!isset($visibleNodeIds[$f['id']])) {
                                 continue;
                             }
                             $item = $f;
-                            if (in_array($item['id'], $rootFolderIDs)) {
+                            if (in_array($item['id'], $user_folders)) {
                                 $item['pId'] = null;
                             }
                             $newData[] = $item;
