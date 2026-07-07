@@ -454,6 +454,35 @@ class MY_Controller extends CI_Controller
         return $this->session_get(self::SESSION_PID) ?: 0;
     }
 
+    /**
+     * Create BlueM tree instance compatible with v3 and v4 APIs.
+     *
+     * @param array $nodes
+     * @param HierarchicalTreeJsonSerializer $serializer
+     * @param mixed $rootId
+     * @param string $parentField
+     * @return BlueM\Tree
+     */
+    protected function createBlueMTree(array $nodes, $serializer, $rootId = null, $parentField = 'parent')
+    {
+        if (class_exists('\\BlueM\\Tree\\Options')) {
+            if ($rootId === null) {
+                $rootId = '__root__';
+                foreach ($nodes as &$node) {
+                    if (!array_key_exists($parentField, $node) || $node[$parentField] === null) {
+                        $node[$parentField] = $rootId;
+                    }
+                }
+                unset($node);
+            }
+
+            $options = new \BlueM\Tree\Options($rootId, 'id', $parentField, $serializer);
+            return new \BlueM\Tree($nodes, $options);
+        }
+
+        return new \BlueM\Tree($nodes, ['jsonSerializer' => $serializer, 'rootId' => $rootId, 'parent' => $parentField]);
+    }
+
     public function get_tree_folders($cid = 0, $parent_id = 0)
     {
         $cid = $cid ? $cid : $this->get_cid();
@@ -488,7 +517,8 @@ class MY_Controller extends CI_Controller
 
             if ($auth >= 4) {
                 // Admin/partner: show full tree, or partner's root subtree when parent_id != 0
-                $tree = new BlueM\Tree($folders, ['jsonSerializer' => $mySerializer, 'rootId' => null, 'parent' => 'pId']);
+                //$tree = new BlueM\Tree($folders, ['jsonSerializer' => $mySerializer, 'rootId' => null, 'parent' => 'pId']);
+                $tree = $this->createBlueMTree($folders, $mySerializer, null, 'pId');
 
                 if (!$parent_id) {
                     $treeFolders = $tree;
@@ -510,7 +540,8 @@ class MY_Controller extends CI_Controller
                                 $newData[] = $item;
                                 $folders_arr[] = $nodeId;
                             }
-                            $treeFolders = new BlueM\Tree($newData, ['jsonSerializer' => $mySerializer, 'rootId' => null, 'parent' => 'parent']);
+                            //$treeFolders = new BlueM\Tree($newData, ['jsonSerializer' => $mySerializer, 'rootId' => null, 'parent' => 'parent']);
+                            $treeFolders = $this->createBlueMTree($newData, $mySerializer, null, 'parent');
                             $data['folder_id'] = $folders_arr;
                         }
                     }
@@ -519,7 +550,9 @@ class MY_Controller extends CI_Controller
                 // Restricted users (auth < 4)
                 if ($this->config->item("new_campaign_user")) {
                     $rootFolderID = $this->device->get_user_folderID($this->get_uid());
-                    $tree = new BlueM\Tree($folders, ['jsonSerializer' => $mySerializer, 'rootId' => null, 'parent' => 'pId']);
+                    //$tree = new BlueM\Tree($folders, ['jsonSerializer' => $mySerializer, 'rootId' => null, 'parent' => 'pId']);
+                    $tree = $this->createBlueMTree($folders, $mySerializer, null, 'pId');
+
 
                     if ($rootFolderID) {
                         // When parent_id != 0: user's assigned folder must be under partner root
@@ -552,7 +585,8 @@ class MY_Controller extends CI_Controller
                                     $newData[] = $item;
                                     $folders_arr[] = $nodeId;
                                 }
-                                $newTree = new BlueM\Tree($newData, ['jsonSerializer' => $mySerializer, 'rootId' => null, 'parent' => 'parent']);
+                                // $newTree = new BlueM\Tree($newData, ['jsonSerializer' => $mySerializer, 'rootId' => null, 'parent' => 'parent']);
+                                $newTree = $this->createBlueMTree($newData, $mySerializer, null, 'parent');
                                 $treeFolders = $newTree;
                                 $data['folder_id'] = $folders_arr;
                             }
@@ -565,8 +599,8 @@ class MY_Controller extends CI_Controller
                     // This matches the new_campaign_user path: only show assigned folder + children, NOT ancestors
 
                     if (!empty($user_folders)) {
-                        $tree = new BlueM\Tree($folders, ['jsonSerializer' => $mySerializer, 'rootId' => null, 'parent' => 'pId']);
-
+                        // $tree = new BlueM\Tree($folders, ['jsonSerializer' => $mySerializer, 'rootId' => null, 'parent' => 'pId']);
+                        $tree = $this->createBlueMTree($folders, $mySerializer, null, 'pId');
                         // Collect all nodes that should be visible:
                         // For each assigned folder, include it and its descendants only (no ancestors)
                         $visibleNodeIds = array();
@@ -615,10 +649,12 @@ class MY_Controller extends CI_Controller
                             $newData[] = $item;
                         }
 
-                        $treeFolders = new BlueM\Tree($newData, ['jsonSerializer' => $mySerializer, 'rootId' => null, 'parent' => 'pId']);
+                        //$treeFolders = new BlueM\Tree($newData, ['jsonSerializer' => $mySerializer, 'rootId' => null, 'parent' => 'pId']);
+                        $treeFolders = $this->createBlueMTree($newData, $mySerializer, null, 'pId');
                     } else {
                         // No assigned folders — show full tree (same as admin path)
-                        $treeFolders = new BlueM\Tree($folders, ['jsonSerializer' => $mySerializer, 'rootId' => null, 'parent' => 'pId']);
+                        //$treeFolders = new BlueM\Tree($folders, ['jsonSerializer' => $mySerializer, 'rootId' => null, 'parent' => 'pId']);
+                        $treeFolders = $this->createBlueMTree($folders, $mySerializer, null, 'pId');
                     }
                 }
             }
