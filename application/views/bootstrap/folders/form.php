@@ -38,6 +38,7 @@
 								<?php endforeach; ?>
 							</select>
 						</div>
+						<!--
 						<div class="col-12 row">
 							<div class="col-auto ">
 								<label></label>
@@ -62,6 +63,7 @@
 							<label for="play_time"><?php echo lang('playtime'); ?> (MM:SS) </label>
 							<input type="text" class="form-control" required id="play_time" name="play_time" value="<?php echo isset($data->play_time) ? $data->play_time : "00:10"; ?>" />
 						</div>
+							-->
 						<input type="hidden" id="id" name="id" value="<?php echo isset($data->id) ? $data->id : 0; ?>" />
 						<input type="hidden" name="parent_id" value="<?php if (isset($parent_id)) echo $parent_id; ?>" />
 					</div>
