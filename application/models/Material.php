@@ -317,6 +317,24 @@ class Material extends MY_Model
                 $tags = is_array($array['tags']) ? $array['tags'] : explode(',', $array['tags']);
             }
             unset($array['tags']);
+            if ($tags) {
+                $sql = "select id from cat_media where folder_id = '$id'";
+                $query = $this->db->query($sql);
+                if ($query->num_rows() > 0) {
+                    $mediaary = $query->result_array();
+                    foreach ($mediaary as $mid) {
+                        $this->db->query("delete from cat_tag_media where media_id=" . $mid['id']);
+                        foreach ($tags as $tag) {
+                            $tmpary = array('tag_id' => $tag, 'media_id' => $mid['id']);
+                            $this->db->insert('cat_tag_media', $tmpary);
+                        }
+                    }
+                }
+
+                $this->sync_tags($id, $tags, 'App\Folder');
+            } else {
+                $this->detach_tags($id, 'App\Folder');
+            }
         }
 
         $this->db->trans_begin();
@@ -325,25 +343,6 @@ class Material extends MY_Model
         if (!$this->db->update('cat_media_folder', $array)) {
             $this->db->trans_rollback();
             return false;
-        }
-
-        if ($tags) {
-            $sql = "select id from cat_media where folder_id = '$id'";
-            $query = $this->db->query($sql);
-            if ($query->num_rows() > 0) {
-                $mediaary = $query->result_array();
-                foreach ($mediaary as $mid) {
-                    $this->db->query("delete from cat_tag_media where media_id=" . $mid['id']);
-                    foreach ($tags as $tag) {
-                        $tmpary = array('tag_id' => $tag, 'media_id' => $mid['id']);
-                        $this->db->insert('cat_tag_media', $tmpary);
-                    }
-                }
-            }
-
-            $this->sync_tags($id, $tags, 'App\Folder');
-        } else {
-            $this->detach_tags($id, 'App\Folder');
         }
 
         if (isset($array['date_flag'])) {

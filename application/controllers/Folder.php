@@ -311,9 +311,7 @@ class Folder extends MY_Controller
                 }
             }
 
-
             $tags = $this->input->post('tags_select');
-
 
             if ($id == 0 && $this->material->get_company_folder($cid, $name, $id) && !$this->config->item('with_sub_folders')) {
                 $result = array('code' => 1, 'msg' => sprintf($this->lang->line('folder.exists'), $name));
@@ -321,9 +319,10 @@ class Folder extends MY_Controller
                 $f = array(
                     'name' => $name,
                     'descr' => $descr,
-                    //'play_count'=> $play_count,
-                    'date_flag' => $date_flag,
                 );
+                if ($this->input->post('date_flag')) {
+                    $f['date_flag'] = $date_flag;
+                }
 
                 if ($tags) {
                     $f['tags'] = $tags;
@@ -347,6 +346,7 @@ class Folder extends MY_Controller
                         }
                     }
                 }
+
 
 
                 if ($id) {
