@@ -628,8 +628,9 @@ class Receive extends CI_Controller
 								sw110Signature="%s" transmode="%d" startdate="%s" enddate="%s" duration="00:%s"
 								transittime="0.5" mode="%d" reload="%d"  replacable="1"',
                         $media->id,
-                        //htmlspecialchars($media->name, ENT_XML1, 'UTF-8'),
-                        $this->safInputs($media->name),
+
+                        //$this->safInputs($media->name),
+                        $this->sanitizeFileName($media->name, $media->full_path),
                         $media->id,
                         $media->file_size,
                         $media->signature,
@@ -2577,8 +2578,9 @@ class Receive extends CI_Controller
 								sw110Signature="%s" transmode="%d" startdate="%s" enddate="%s" duration="00:%s"
 								transittime="0.5" mode="%d" reload="%d" replacable="%d">',
                 $media->id,
-                //htmlspecialchars($media->name, ENT_XML1, 'UTF-8'),
-                $this->safInputs($media->name),
+                htmlspecialchars($media->name, ENT_XML1, 'UTF-8'),
+                //$this->safInputs($media->name),
+                $this->sanitizeFileName($media->name, $media->full_path),
                 $media->id,
                 $media->file_size,
                 $media->signature,
@@ -2830,6 +2832,7 @@ class Receive extends CI_Controller
 
     private function safInputs($string)
     {
+
         return preg_replace('/[^\w\-_. ]/', '_', $string);
     }
 
@@ -2993,5 +2996,40 @@ class Receive extends CI_Controller
 
 
         set_status_header(404, 'target firmware [' . $version . '], current version [' . $ver . ']!');
+    }
+
+
+
+    /**
+     * 根据 full_path 的后缀补全/修正 name，并确保结果可安全写入 XML
+     *
+     * @param string $name      原始名称（可能带后缀也可能不带）
+     * @param string $fullPath  full_path 
+     * @return string           净化后可安全嵌入 XML 文本节点的字符串
+     */
+    function sanitizeFileName(string $name, string $fullPath): string
+    {
+        $ext = pathinfo($fullPath, PATHINFO_EXTENSION);
+        $ext = ($ext !== '') ? '.' . strtolower($ext) : '';
+
+        $nameExt = pathinfo($name, PATHINFO_EXTENSION);
+        $baseName = pathinfo($name, PATHINFO_FILENAME);
+
+        if ($nameExt === '') {
+            // name 无后缀 → 直接拼接 full_path 的后缀
+            $result = $baseName . $ext;
+        } else {
+            // name 有后缀 → 以 full_path 为准
+            if (strtolower('.' . $nameExt) !== $ext) {
+                $result = $baseName . $ext;
+            } else {
+                // 后缀一致，保持原样
+                $result = $name;
+            }
+        }
+        // ENT_XML1 确保生成合法的 XML 实体（&amp; &lt; &gt; &quot; &apos;）
+        $result = htmlspecialchars($result, ENT_XML1 | ENT_QUOTES, 'UTF-8');
+
+        return $result;
     }
 }
