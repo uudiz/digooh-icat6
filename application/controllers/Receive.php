@@ -628,8 +628,6 @@ class Receive extends CI_Controller
 								sw110Signature="%s" transmode="%d" startdate="%s" enddate="%s" duration="00:%s"
 								transittime="0.5" mode="%d" reload="%d"  replacable="1"',
                         $media->id,
-
-                        //$this->safInputs($media->name),
                         $this->sanitizeFileName($media->name, $media->full_path),
                         $media->id,
                         $media->file_size,
@@ -701,6 +699,7 @@ class Receive extends CI_Controller
                     return;
                 }
 
+                $this->load->helper('chrome_logger');
 
                 foreach ($timeslots as $slot) {
                     //FIXEME 可能需要知道player的方向
@@ -2578,8 +2577,6 @@ class Receive extends CI_Controller
 								sw110Signature="%s" transmode="%d" startdate="%s" enddate="%s" duration="00:%s"
 								transittime="0.5" mode="%d" reload="%d" replacable="%d">',
                 $media->id,
-                htmlspecialchars($media->name, ENT_XML1, 'UTF-8'),
-                //$this->safInputs($media->name),
                 $this->sanitizeFileName($media->name, $media->full_path),
                 $media->id,
                 $media->file_size,
