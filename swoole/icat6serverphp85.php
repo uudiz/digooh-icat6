@@ -3,6 +3,9 @@
 use Swoole\Database\MysqliConfig;
 use Swoole\Database\MysqliPool;
 
+/** @var int $server_port Defined in swoole_config.php */
+/** @var array $db_server Defined in swoole_config.php */
+
 require_once('utils.php');
 require_once('swoole_config.php');
 
@@ -224,15 +227,12 @@ function onHeartBeat($serv, $fd, $data, $length)
     $crc = crc16($msg);   //CRC校验
     $loginmsg = $msg . pack('C2', (($crc & 0xff00) >> 8), ($crc & 0xff));  //拼装数据包
 
-    $output = $length + 3;
-
     $serv->send($fd, $loginmsg);
     //sendMsg($serv, $fd, $loginmsg);
 
     if ($respval == 1) {
         return;
     }
-
 
     $status = $loginpara['status'];       //状态
     $voltage = $loginpara['voltage'];     //电压
@@ -565,8 +565,7 @@ function onLogin($serv, $fd, $data, $input)
             $temp_mac1 = str_replace(":", "-", $loginpara['mac'] ?? '');
             $temp_mac2 = $loginpara['mac'] ?? '';
             $mac_sql = "SELECT sn FROM cat_player WHERE sn!='0010010013' and batch_registration=1 and (mac='" . $temp_mac1 . "' or mac='" . $temp_mac2 . "') limit 0,1;";
-            $mysqli->query($sql);
-            $result = $mysqli->query($sql);
+            $result = $mysqli->query($mac_sql);
             if ($result && $result->num_rows) {
                 $rec = $result->fetch_object();;
 
@@ -660,6 +659,8 @@ function onActivate($serv, $fd, $data, $commn)
 
     $type = 0x2;
     $days = 0;
+    $time_arr = array_fill(0, 8, 0); // Default to clean 0s to prevent Undefined Variable notice
+
     //NP201
     $mysqli = $serv->dbPool->get();
     $activateModel = $activatePara['model'] ?? 0;
@@ -698,7 +699,6 @@ function onActivate($serv, $fd, $data, $commn)
             $days = 15;
         }
         //计算当前时间和过期时间差
-        $now = strtotime("Y-m-d");
         if ($days >= 0) {
             echo "days=" . $days . "\n";
             $time_arr = array();
@@ -725,8 +725,7 @@ function onActivate($serv, $fd, $data, $commn)
     }
     //计算16位MD5   hid、mac、固定值(Sj9TiH4u)、随机数
     $eSign = md5($activatePara['sn'] . $activatePara['mac'] . $defaultFixedValue . $rand_str, true);
-    $eSign_arr = array();
-    $eSign_arr = getBytes($eSign); //转换一个String字符串为byte数组
+    $eSign_arr = getBytes($eSign);
 
     $data = pack('Ca4Ca10CC4C16C8', 0x00, $activatePara['netid'], 0x08, $activatePara['sn'], $type, $rand_arr[0], $rand_arr[1], $rand_arr[2], $rand_arr[3], $eSign_arr[0], $eSign_arr[1], $eSign_arr[2], $eSign_arr[3], $eSign_arr[4], $eSign_arr[5], $eSign_arr[6], $eSign_arr[7], $eSign_arr[8], $eSign_arr[9], $eSign_arr[10], $eSign_arr[11], $eSign_arr[12], $eSign_arr[13], $eSign_arr[14], $eSign_arr[15], $time_arr[7], $time_arr[6], $time_arr[5], $time_arr[4], $time_arr[3], $time_arr[2], $time_arr[1], $time_arr[0]);
     $encdata = blowfish_enc($data);  //blowfish 加密DATA数据
@@ -741,9 +740,8 @@ function onActivate($serv, $fd, $data, $commn)
 
 /**
  * 将字节数组转化为String类型的数据
- * @param $bytes 字节数组
- * @param $str 目标字符串
- * @return 一个String类型的数据
+ * @param array $bytes 字节数组
+ * @return string 一个String类型的数据
  */
 function toStr($bytes)
 {
@@ -756,8 +754,8 @@ function toStr($bytes)
 
 /**
  * 转换一个String字符串为byte数组
- * @param $str 需要转换的字符串
- * @param $bytes 目标byte数组
+ * @param string $string 需要转换的字符串
+ * @return array 目标byte数组
  */
 function getBytes($string)
 {
