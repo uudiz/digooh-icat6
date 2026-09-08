@@ -19,7 +19,7 @@ class Player extends MY_Controller
         $this->lang->load('template');
         $this->lang->load('warn');
         $this->lang->load('software');
-        //$this->lang->load('region');
+        $this->lang->load('ssp');
         $this->load->helper('serial');
         $this->filter_array = false;
     }
@@ -407,6 +407,11 @@ class Player extends MY_Controller
             if ($ssptags['total']) {
                 $data['ssptags'] = $ssptags['data'];
             }
+
+            // SSP priority profile bindings of this player
+            $this->load->model('Ssp_server_model');
+            $data['ssp_profile_names'] = $this->Ssp_server_model->get_profile_names();
+            $data['ssp_player_bindings'] = $id ? $this->Ssp_server_model->get_bindings_by_player($id) : array();
         }
         $data['criteria'] = $criteria['data'];
         $data['tags'] = $tags['data'];
@@ -729,6 +734,17 @@ class Player extends MY_Controller
                 'sun' => $sun,
             );
             $this->device->update_player_amc($id, $amc);
+
+            // SSP priority profile bindings (only when the form submitted them and the save succeeded)
+            $ssp_profile_bindings = $this->input->post('ssp_profile_bindings');
+            if ($ssp_profile_bindings !== null && $ssp_profile_bindings !== false
+                && isset($result['code']) && $result['code'] == 0) {
+                $bindings = json_decode($ssp_profile_bindings, true);
+                if (is_array($bindings)) {
+                    $this->load->model('Ssp_server_model');
+                    $this->Ssp_server_model->sync_player_bindings($id, $bindings);
+                }
+            }
         }
 
 

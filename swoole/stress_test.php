@@ -301,31 +301,32 @@ Swoole\Coroutine\run(function () use ($players, $serverHost, $serverPort, $inter
                         throw new Exception("TCP Connection Timeout/Failure");
                     }
 
-                    // Login handshake
-                    $loginMsg = buildLoginPacket($sn);
-                    StressMetrics::$loginsSent++;
-                    if ($verbose) {
-                        echo "[" . date("H:i:s") . "] [{$sn}] Sending Login packet...\n";
-                    }
-
-                    $client->send($loginMsg);
-
-                    // Handle login reply
-                    $reply = $client->recv(5.0);
-                    if (!$reply) {
-                        throw new Exception("No reply received for Login");
-                    }
-
-                    StressMetrics::$loginsReceived++;
-                    if ($verbose) {
-                        echo "[" . date("H:i:s") . "] [{$sn}] Login success response received (len: " . strlen($reply) . ")\n";
-                    }
-
-                    // Mark as connected/online
+                    // Mark as connected/online (bypassing login handshake, going straight to heartbeat)
                     if (!$online) {
                         StressMetrics::$connecting--;
                         StressMetrics::$running++;
                         $online = true;
+                    }
+
+                    // Send initial heartbeat immediately upon connection
+                    $hbMsg = buildHeartbeatPacket($sn);
+                    StressMetrics::$heartbeatsSent++;
+                    if ($verbose) {
+                        echo "[" . date("H:i:s") . "] [{$sn}] Sending Initial Heartbeat...\n";
+                    }
+
+                    if (!$client->send($hbMsg)) {
+                        throw new Exception("Send failed during Initial Heartbeat");
+                    }
+
+                    $reply = $client->recv(5.0);
+                    if (!$reply) {
+                        throw new Exception("No response received for Initial Heartbeat");
+                    }
+
+                    StressMetrics::$heartbeatsReceived++;
+                    if ($verbose) {
+                        echo "[" . date("H:i:s") . "] [{$sn}] Initial Heartbeat ack received\n";
                     }
 
                     // Sustained heartbeat loop

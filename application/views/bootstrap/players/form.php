@@ -406,6 +406,67 @@
 											<input type="text" class="form-control amc" id="sun" value="<?php if (isset($amc->sun)) echo $amc->sun; ?>" />
 										</div>
 
+										<div class="col-12">
+											<label><?php echo lang('ssp.profiles'); ?></label>
+											<style>
+												#ssp_profile_bindings_table tbody tr {
+													cursor: pointer;
+												}
+
+												#ssp_profile_bindings_table tbody tr.ssp-bind-selected {
+													background-color: #fff3cd;
+												}
+											</style>
+											<div class="table-responsive">
+												<table class="table table-sm table-bordered" id="ssp_profile_bindings_table">
+													<thead>
+														<tr>
+															<th><?php echo lang('name'); ?></th>
+															<th><?php echo lang('date.range'); ?></th>
+															<th><?php echo lang('weekday'); ?></th>
+															<th></th>
+														</tr>
+													</thead>
+													<tbody></tbody>
+												</table>
+											</div>
+											<div class="mt-2" id="ssp_binding_form_header">
+												<strong id="ssp_binding_form_title"><?php echo lang('ssp.add.assignment'); ?></strong>
+											</div>
+											<div class="row g-2 align-items-end" id="ssp_binding_add">
+												<div class="col-md-3">
+													<label><?php echo lang('ssp.profile'); ?></label>
+													<select class="form-select" id="ssp_bind_profile">
+														<option value=""></option>
+														<?php foreach ((isset($ssp_profile_names) ? $ssp_profile_names : array()) as $pname) : ?>
+															<option value="<?php echo htmlspecialchars($pname); ?>"><?php echo htmlspecialchars($pname); ?></option>
+														<?php endforeach; ?>
+													</select>
+												</div>
+												<div class="col-md-1">
+													<label class="form-check form-switch">
+														<input type="checkbox" class="form-check-input" id="ssp_bind_daterange">
+														<span class="form-check-label"><?php echo lang('ssp.date.range'); ?></span>
+													</label>
+												</div>
+												<div class="col-md-2">
+													<label><?php echo lang('start.date'); ?></label>
+													<input type="date" class="form-control" id="ssp_bind_start" disabled />
+												</div>
+												<div class="col-md-2">
+													<label><?php echo lang('end.date'); ?></label>
+													<input type="date" class="form-control" id="ssp_bind_end" disabled />
+												</div>
+												<div class="col-md-2">
+													<div class="d-flex">
+														<button type="button" class="btn btn-outline-primary" id="ssp_bind_add_btn"><i class="bi bi-plus"></i></button>
+														<button type="button" class="btn btn-outline-secondary ms-2 d-none" id="ssp_bind_cancel"><?php echo lang('button.cancel'); ?></button>
+													</div>
+												</div>
+												<div class="col-12" id="ssp_bind_weekdays"></div>
+											</div>
+										</div>
+
 									</div>
 
 								</div>
@@ -583,7 +644,8 @@
 					street_num: $("#street_num").val(),
 					last_maintenance: $("#last_maintenance").val(),
 					video_playback: $("#video_playback").is(':checked') ? "1" : "0",
-					threshold_id: $('#threshold_id').val()
+					threshold_id: $('#threshold_id').val(),
+					ssp_profile_bindings: (typeof collectSspBindings === 'function') ? JSON.stringify(collectSspBindings()) : undefined
 				};
 
 				$.post(
@@ -684,3 +746,254 @@
 		});
 	}
 </script>
+<?php if ($ssp_feature == 1 && $this->config->item('ssp_feature')) : ?>
+	<script type="text/javascript">
+		var sspPlayerBindings = <?php echo json_encode(isset($ssp_player_bindings) ? $ssp_player_bindings : array()); ?>;
+		var sspWeekdayLabels = ['<?php echo lang('mon'); ?>', '<?php echo lang('tue'); ?>', '<?php echo lang('wed'); ?>', '<?php echo lang('thu'); ?>', '<?php echo lang('fri'); ?>', '<?php echo lang('sat'); ?>', '<?php echo lang('sun'); ?>'];
+		var SSP_NO_LIMIT_START = '1970-01-01';
+		var SSP_NO_LIMIT_END = '2099-12-31';
+
+		function sspWeekdayText(mask) {
+			var names = [];
+			for (var d = 0; d < 7; d++) {
+				if (mask & (1 << d)) {
+					names.push(sspWeekdayLabels[d]);
+				}
+			}
+			return names.join(', ');
+		}
+
+		function sspValidityText(start, end) {
+			if (!sspHasDateRange(start, end)) {
+				return '-';
+			}
+			return (start || '...') + ' ~ ' + (end || '...');
+		}
+
+		// the placeholders below all mean "no limit" (no date range)
+		function sspHasDateRange(start, end) {
+			var placeholders = ['', SSP_NO_LIMIT_START, SSP_NO_LIMIT_END, '9999-12-31', '0000-00-00'];
+			if (!start || placeholders.indexOf(start) >= 0) {
+				return false;
+			}
+			if (!end || placeholders.indexOf(end) >= 0) {
+				return false;
+			}
+			return true;
+		}
+
+		var sspEditingRow = null; // the table row currently loaded into the form for editing
+
+		function addSspBindingRow(b) {
+			var $tr = $('<tr>')
+				.attr('data-profile', b.profile_name)
+				.attr('data-start', b.effective_date_start || '')
+				.attr('data-end', b.effective_date_end || '')
+				.attr('data-weekday', b.weekday);
+			$tr.append($('<td>').append(
+				$('<a href="#" class="link-primary ssp_bind_name">').text(b.profile_name).on('click', function(e) {
+					e.preventDefault(); // row click handler (via bubbling) does the selection
+				})
+			));
+			$tr.append($('<td>').text(sspValidityText(b.effective_date_start, b.effective_date_end)));
+			$tr.append($('<td>').text(sspWeekdayText(b.weekday)));
+			$tr.append($('<td>').append(
+				$('<a href="#" class="link-danger ssp_bind_remove"><i class="bi bi-trash"></i></a>').on('click', function(e) {
+					e.preventDefault();
+					e.stopPropagation();
+					if (sspEditingRow === $tr) {
+						sspResetForm();
+					}
+					$tr.remove();
+				})
+			));
+			$tr.on('click', function() {
+				sspEnterEditMode($tr);
+			});
+			$('#ssp_profile_bindings_table tbody').append($tr);
+		}
+
+		function updateSspBindingRow($tr, b) {
+			$tr.attr('data-profile', b.profile_name)
+				.attr('data-start', b.effective_date_start || '')
+				.attr('data-end', b.effective_date_end || '')
+				.attr('data-weekday', b.weekday);
+			$tr.find('td').eq(0).find('a.ssp_bind_name').text(b.profile_name);
+			$tr.find('td').eq(1).text(sspValidityText(b.effective_date_start, b.effective_date_end));
+			$tr.find('td').eq(2).text(sspWeekdayText(b.weekday));
+		}
+
+		// load one row into the form below the table
+		function sspEnterEditMode($tr) {
+			sspEditingRow = $tr;
+			$('#ssp_profile_bindings_table tbody tr').removeClass('ssp-bind-selected');
+			$tr.addClass('ssp-bind-selected');
+
+			var start = $tr.attr('data-start') || '';
+			var end = $tr.attr('data-end') || '';
+			var weekday = Number($tr.attr('data-weekday'));
+			$('#ssp_bind_profile').val($tr.attr('data-profile')).prop('disabled', true);
+			var hasRange = sspHasDateRange(start, end);
+			$('#ssp_bind_daterange').prop('checked', hasRange);
+			$('#ssp_bind_start').prop('disabled', !hasRange).val(hasRange ? start : '');
+			$('#ssp_bind_end').prop('disabled', !hasRange).val(hasRange ? end : '');
+			$('.ssp_bind_weekday').each(function() {
+				$(this).prop('checked', (weekday & (1 << Number($(this).attr('data-day')))) > 0);
+			});
+
+			$('#ssp_bind_add_btn').html('<i class="bi bi-check"></i><?php echo lang('button.save'); ?>');
+			$('#ssp_binding_form_title').text('<?php echo lang('ssp.edit.assignment'); ?>');
+			$('#ssp_bind_cancel').removeClass('d-none');
+		}
+
+		// back to "add binding" mode with a cleared form
+		function sspResetForm() {
+			sspEditingRow = null;
+			$('#ssp_profile_bindings_table tbody tr').removeClass('ssp-bind-selected');
+			$('#ssp_bind_profile').val('').prop('disabled', false);
+			$('#ssp_bind_daterange').prop('checked', false);
+			$('#ssp_bind_start, #ssp_bind_end').prop('disabled', true).val('');
+			$('.ssp_bind_weekday').prop('checked', true);
+			$('#ssp_bind_add_btn').html('<i class="bi bi-plus"></i>');
+			$('#ssp_binding_form_title').text('<?php echo lang('ssp.add.assignment'); ?>');
+			$('#ssp_bind_cancel').addClass('d-none');
+		}
+
+		function collectSspBindings() {
+			var bindings = [];
+			if (!$('#ssp_profile_bindings_table').length) {
+				return bindings;
+			}
+			$('#ssp_profile_bindings_table tbody tr').each(function() {
+				var $tr = $(this);
+				bindings.push({
+					profile_name: $tr.attr('data-profile'),
+					effective_date_start: $tr.attr('data-start'),
+					effective_date_end: $tr.attr('data-end'),
+					weekday: Number($tr.attr('data-weekday'))
+				});
+			});
+			return bindings;
+		}
+
+		/**
+		 * A new assignment with a real date range conflicts with another row of
+		 * this player when that row also has a real range, the ranges overlap
+		 * AND the weekday masks intersect. Additionally a player may have at
+		 * most ONE assignment without a date range. The row currently being
+		 * edited is skipped. Returns {type: 'overlap'|'nolimit', profile} or null.
+		 */
+		function sspAssignmentConflicts(hasRange, start, end, weekday) {
+			var conflict = null;
+			$('#ssp_profile_bindings_table tbody tr').each(function() {
+				var $tr = $(this);
+				if (sspEditingRow && $tr[0] === sspEditingRow[0]) {
+					return; // continue
+				}
+				var bStart = $tr.attr('data-start') || '';
+				var bEnd = $tr.attr('data-end') || '';
+				var bReal = sspHasDateRange(bStart, bEnd);
+				if (!hasRange) {
+					// a player may have at most one assignment without date range
+					if (!bReal) {
+						conflict = {type: 'nolimit', profile: $tr.attr('data-profile')};
+						return false; // break
+					}
+					return; // continue
+				}
+				if (!bReal) {
+					return; // continue
+				}
+				if (start <= bEnd && bStart <= end && (weekday & Number($tr.attr('data-weekday')))) {
+					conflict = {type: 'overlap', profile: $tr.attr('data-profile')};
+					return false; // break
+				}
+			});
+			return conflict;
+		}
+
+		$(document).ready(function() {
+			if (!$('#ssp_profile_bindings_table').length) {
+				return;
+			}
+
+			// weekday checkboxes for the add-binding form (Mon=bit0 ... Sun=bit6)
+			var $weekDiv = $('#ssp_bind_weekdays');
+			for (var d = 0; d < 7; d++) {
+				$weekDiv.append(
+					$('<label class="form-check form-check-inline">').append(
+						$('<input type="checkbox" class="form-check-input ssp_bind_weekday me-1" checked>').attr('data-day', d),
+						$('<span class="form-check-label">').text(sspWeekdayLabels[d])
+					)
+				);
+			}
+
+			$('#ssp_bind_daterange').on('change', function() {
+				var enabled = $(this).is(':checked');
+				$('#ssp_bind_start, #ssp_bind_end').prop('disabled', !enabled);
+				if (!enabled) {
+					$('#ssp_bind_start, #ssp_bind_end').val('');
+				}
+			});
+
+			$('#ssp_bind_cancel').on('click', function(e) {
+				e.preventDefault();
+				sspResetForm();
+			});
+
+			$('#ssp_bind_add_btn').on('click', function() {
+				var profile = $('#ssp_bind_profile').val();
+				if (!profile) {
+					toastr.error('<?php echo lang('ssp.select.profile'); ?>');
+					return;
+				}
+				var weekday = 0;
+				$('.ssp_bind_weekday:checked').each(function() {
+					weekday |= (1 << Number($(this).attr('data-day')));
+				});
+				if (!weekday) {
+					toastr.error('<?php echo lang('ssp.weekday.required'); ?>');
+					return;
+				}
+				var hasRange = $('#ssp_bind_daterange').is(':checked');
+				var start = hasRange ? $('#ssp_bind_start').val() : '';
+				var end = hasRange ? $('#ssp_bind_end').val() : '';
+				if (hasRange && (!start || !end)) {
+					toastr.error('<?php echo lang('ssp.date.required'); ?>');
+					return;
+				}
+				if (hasRange && start > end) {
+					toastr.error('<?php echo lang('ssp.date.order'); ?>');
+					return;
+				}
+				var sspConflict = sspAssignmentConflicts(hasRange, start, end, weekday);
+				if (sspConflict) {
+					if (sspConflict.type === 'nolimit') {
+						toastr.error('<?php echo lang('ssp.assignment.nolimit.self'); ?>'.replace('%s', sspConflict.profile));
+					} else {
+						toastr.error('<?php echo lang('ssp.assignment.overlap'); ?>'.replace('%s', sspConflict.profile));
+					}
+					return;
+				}
+
+				var binding = {
+					profile_name: profile,
+					effective_date_start: start,
+					effective_date_end: end,
+					weekday: weekday
+				};
+				if (sspEditingRow) {
+					updateSspBindingRow(sspEditingRow, binding);
+					sspResetForm();
+				} else {
+					addSspBindingRow(binding);
+				}
+			});
+
+			// restore current bindings
+			$.each(sspPlayerBindings, function(i, b) {
+				addSspBindingRow(b);
+			});
+		});
+	</script>
+<?php endif; ?>

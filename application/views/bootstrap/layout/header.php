@@ -170,6 +170,16 @@
                                         <?php echo lang('ssp_status'); ?>
                                     </a>
                                 </li>
+                                <li class="nav-item">
+                                    <a class="nav-link" href="/sspServers">
+                                        <?php echo lang('ssp.servers'); ?>
+                                    </a>
+                                </li>
+                                <li class="nav-item">
+                                    <a class="nav-link" href="/sspProfile">
+                                        <?php echo lang('ssp.profiles'); ?>
+                                    </a>
+                                </li>
                             <?php endif; ?>
                         <?php endif; ?>
                     <?php elseif ($auth <= 5) : ?>
@@ -249,6 +259,7 @@
                                             <a class="dropdown-item" href="/tagSSP">
                                                 <?php echo lang('ssp.tags'); ?>
                                             </a>
+ 
                                         <?php endif ?>
                                     <?php endif ?>
                                     <a class="dropdown-item" href="/user">
