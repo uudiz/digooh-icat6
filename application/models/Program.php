@@ -5129,7 +5129,9 @@ class Program extends MY_Model
             $cams = $query->result();
 
             foreach ($cams as $cam) {
-                $this->fill_campaign_media_info($cam);
+                // $day 为真实日期时，让 total_time/media_cnt 也按当日媒体有效期统计（与生成口径一致）；
+                // $day == -1（加载全部、不按日期）时传 null，保持不做日期过滤。
+                $this->fill_campaign_media_info($cam, $day != -1 ? $day : null);
                 if ($day != -1 && $cam->media) {
                     $cam->media = array_filter($cam->media, function ($medium) use ($day) {
                         if ($medium['date_flag'] == 0 || ($medium['date_flag'] == 1 && $day >= $medium['start_date'] && $day <= $medium['end_date'])) {
@@ -5592,6 +5594,7 @@ class Program extends MY_Model
 
 
                 if ($this->config->item('campaign_with_tags') && $trail_campaigns) {
+                
                     foreach ($trail_campaigns as $trail) {
                         if ($this->config->item('xslot_on')) {
                             $trail->nxslot = $player->nxslot;
@@ -7131,7 +7134,7 @@ class Program extends MY_Model
         $player->campaigns = $this->get_published_campaign_by_player($player->id, -1, 9);
     }
 
-    public function fill_campaign_media_info($cam)
+    public function fill_campaign_media_info($cam, $today = null)
     {
         if ($this->config->item('with_template')) {
             return;
@@ -7140,6 +7143,25 @@ class Program extends MY_Model
         $this->db->from('cat_media m');
         $this->db->join("cat_playlist_area_media pm", "pm.media_id = m.id");
         $this->db->where('pm.playlist_id', $cam->id);
+        // 让“填充/排期”口径与“生成 PLS”口径保持一致：只统计视频时间线区域(area_video)、
+        // 且未被排除(status=0)的媒体。否则其它媒体区(图片区等)或被排除(status=1)的媒体
+        // 会虚高 total_time / media_cnt，导致 add_campagin 把 slot 的 used_time 提前顶满，
+        // 进而使 priority-3 的 fill-in 算到的剩余空余≈0 而被跳过（整点列表只填到一半）。
+        $this->db->where('pm.area_id', $this->config->item('area_video'));
+        $this->db->where('pm.status', 0);
+        // 传入 $today 时再按媒体有效期过滤（与 get_playlist_area_media_list_noexclude 的 check_date 口径一致），
+        // 让 total_time / media_cnt 也排除“已过期/未开始”的媒体；$today 为空则不做日期过滤，
+        // 兼容无日期上下文的调用方（如后台展示、按 -1 加载全部 campaign 的场景）。
+        if ($today) {
+            $this->db->group_start();
+            $this->db->group_start();
+            $this->db->where('m.date_flag', 1);
+            $this->db->where('m.end_date>=', $today);
+            $this->db->where('m.start_date<=', $today);
+            $this->db->group_end();
+            $this->db->or_where('m.date_flag', 0);
+            $this->db->group_end();
+        }
         $query = $this->db->get();
 
         if ($query->num_rows()) {
