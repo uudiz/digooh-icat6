@@ -7,7 +7,7 @@ defined('BASEPATH') or exit('No direct script access allowed');
  * ============================================================================
  *  用途：在真实数据上 dump 某 player 今天每个 time slot 的排期，定位"整点只填半小时"。
  *        覆盖维度：partner/quota 前提、账面 used_time、真实生成秒数、
- *                  campaign 三口径(all / video+status0 / video+status0+当日有效)、
+ *                  campaign 四口径(all / video+status0 / +当日有效 / +当日工作日)、
  *                  媒体 week/time/date 限制、fill-in 候选 campaign。
  *
  *  运行（项目根目录，建议在装有真实库的服务器上）：
@@ -149,20 +149,25 @@ class Diag extends CI_Controller
             $grand_real  += $real_seconds;
         }
 
-        // ---- 三口径对比 + 媒体限制 ----
+        // ---- 四口径对比 + 媒体限制 ----
         echo "\n" . str_repeat('=', 104) . "\n";
         echo "campaign 媒体口径对比 (针对 slot 内出现的 campaign):\n";
-        echo "  all=旧填充口径(不分area/status/date) | video=area{$area}+status0 | video_indate=再叠加当日有效\n";
+        echo "  all=旧填充口径(不分area/status/date) | video=area{$area}+status0 | video_indate=再叠加当日有效 | +weekday=再叠加当日工作日(isDayEnabled)\n";
+        echo "  对照: video_indate≈修复前计算侧; +weekday=修复后计算侧(get_campaign_media_info_by_date)=生成侧(不含slot级time_flag)\n";
         echo str_repeat('=', 104) . "\n";
+        $this->load->helper('week');
+        $dow_today = (int) date('w', strtotime($today)); // 0(周日)~6(周六)
         foreach ($slot_cams as $cid => $c) {
             list($all, $vid, $vidd) = $this->media_measure3($cid, $today, $area);
+            $viddwk = $this->media_measure_weekday($cid, $today, $area, $dow_today);
             printf(
-                "  cid=%-6d prio=%-2d grouped=%-2d | all:cnt=%-3d t=%-7s | video:cnt=%-3d t=%-7s | video_indate:cnt=%-3d t=%-7s | %s%s%s\n",
+                "  cid=%-6d prio=%-2d grouped=%-2d | all:cnt=%-3d t=%-7s | video:cnt=%-3d t=%-7s | video_indate:cnt=%-3d t=%-7s | +weekday:cnt=%-3d t=%-7s | %s%s%s%s\n",
                 $cid, $c['priority'], $c['is_grouped'],
-                $all->cnt, $all->t, $vid->cnt, $vid->t, $vidd->cnt, $vidd->t,
+                $all->cnt, $all->t, $vid->cnt, $vid->t, $vidd->cnt, $vidd->t, $viddwk->cnt, $viddwk->t,
                 $c['name'],
                 ((int) $all->cnt !== (int) $vid->cnt) ? '  [area/status膨胀]' : '',
-                ((int) $vid->cnt !== (int) $vidd->cnt) ? '  [有过期媒体->日期gap]' : ''
+                ((int) $vid->cnt !== (int) $vidd->cnt) ? '  [有过期媒体->日期gap]' : '',
+                ((int) $vidd->cnt !== (int) $viddwk->cnt) ? '  [有非当日工作日媒体->工作日gap]' : ''
             );
 
             // 媒体 week/time/date 限制（生成阶段会据此过滤）
@@ -170,10 +175,11 @@ class Diag extends CI_Controller
             foreach ($rows as $r) {
                 $flags = array();
                 if ($r->week_flag && $r->weekday != 127) {
-                    $flags[] = "week:weekday={$r->weekday}";
+                    $wk_ok = isDayEnabled($r->weekday, $dow_today);
+                    $flags[] = "week:weekday={$r->weekday}" . ($wk_ok ? '(今日✓)' : '(今日✗->计算/生成都剔除)');
                 }
                 if ($r->time_flag) {
-                    $flags[] = "time:{$r->start_time}-{$r->end_time}";
+                    $flags[] = "time:{$r->start_time}-{$r->end_time}(slot级,计算侧不对齐)";
                 }
                 if ($r->date_flag) {
                     $flags[] = "date:{$r->start_date}~{$r->end_date}";
@@ -227,6 +233,47 @@ class Diag extends CI_Controller
         $vidd = $this->db->get()->row();
 
         return array($all, $vid, $vidd);
+    }
+
+    /**
+     * 第4口径：video+status0+当日有效 再叠加"当日工作日"(isDayEnabled)。
+     * 与修复后的计算侧 get_campaign_media_info_by_date / fill_campaign_media_info、
+     * 以及生成侧 get_sorted_timeslot_medias 的工作日判定完全一致（不含 slot 级 time_flag）。
+     */
+    private function media_measure_weekday($cam_id, $today, $area, $dow)
+    {
+        $this->load->helper('week');
+        $this->db->select('m.play_time, m.week_flag, m.weekday');
+        $this->db->from('cat_media m');
+        $this->db->join('cat_playlist_area_media pm', 'pm.media_id = m.id');
+        $this->db->where('pm.playlist_id', $cam_id);
+        $this->db->where('pm.area_id', $area);
+        $this->db->where('pm.status', 0);
+        // 与 media_measure3 的 vidd 完全相同的日期口径
+        $this->db->group_start();
+        $this->db->where('m.date_flag', 0);
+        $this->db->or_group_start();
+        $this->db->where('m.date_flag', 1);
+        $this->db->where('m.start_date <=', $today);
+        $this->db->where('m.end_date >=', $today);
+        $this->db->group_end();
+        $this->db->group_end();
+        $rows = $this->db->get()->result();
+
+        $cnt = 0;
+        $t   = 0;
+        foreach ($rows as $r) {
+            // 镜像生成侧：week_flag 且 weekday!=127 时用 isDayEnabled 判定当日是否启用
+            if ($r->week_flag && $r->weekday != 127 && !isDayEnabled($r->weekday, $dow)) {
+                continue;
+            }
+            $cnt++;
+            $t += $r->play_time;
+        }
+        $o      = new stdClass();
+        $o->cnt = $cnt;
+        $o->t   = number_format($t, 2, '.', '');
+        return $o;
     }
 
     /** 视频区有效媒体的 week/time/date 限制 */

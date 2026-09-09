@@ -5562,6 +5562,14 @@ class Program extends MY_Model
                             $cur_cam->has_replace_main = $has_replace_main;
                         }
                     }
+                    // 与发布路径(do_publish_time_slot 用 get_campaign_media_info_by_date)对齐：运行时整点路径
+                    // 此前直接用“未按日重算”的 total_time/media_cnt 计费（campaign 经 fill_player_details 以
+                    // day=-1 加载，只做 area/status 过滤），会把过期或“非当日工作日”的媒体也计入 used_time，
+                    // 导致虚高、挤掉 priority-3 fill-in。这里按当日(日期+工作日)重算后再计费。
+                    // 注：时间范围(time_flag)是 slot 级过滤，计算侧无 slot 上下文，本轮不处理。
+                    $recalc = $this->get_campaign_media_info_by_date($cur_cam, $today);
+                    $cur_cam->media_cnt = $recalc['media_cnt'];
+                    $cur_cam->total_time = $recalc['total_time'];
                     $ret = $this->try_allocate_campaign($time_slots, $cur_cam);
                 }
             }
@@ -5608,11 +5616,29 @@ class Program extends MY_Model
                             }
                         }
 
+                        // trail(priority 4) 同样按当日(日期+工作日)重算 total_time/media_cnt，与生成口径保持一致；
+                        // 若当日无有效媒体，media_cnt=0，try_allocate_campaign 会自行跳过。
+                        $tminfo = $this->get_campaign_media_info_by_date($trail, $today);
+                        $trail->media_cnt = $tminfo['media_cnt'];
+                        $trail->total_time = $tminfo['total_time'];
                         $this->try_allocate_campaign($time_slots, $trail);
                     }
                 }
 
 
+                if ($fillin_campaigns) {
+                    // fill-in 的 total_time/media_cnt 同样按当日(日期+工作日)重算，与生成口径对齐；
+                    // 当日无有效媒体的 fill-in 直接剔除，避免 fill_with_campaigns 里 total_time/media_cnt 除零。
+                    foreach ($fillin_campaigns as $fkey => $fcam) {
+                        $fminfo = $this->get_campaign_media_info_by_date($fcam, $today);
+                        if (!$fminfo['media_cnt']) {
+                            unset($fillin_campaigns[$fkey]);
+                            continue;
+                        }
+                        $fcam->media_cnt = $fminfo['media_cnt'];
+                        $fcam->total_time = $fminfo['total_time'];
+                    }
+                }
                 if ($fillin_campaigns) {
                     $ret = $this->try_fill_slots($time_slots, $fillin_campaigns, $player);
                 }
@@ -7140,6 +7166,10 @@ class Program extends MY_Model
             return;
         }
         $this->db->select("m.id,m.play_time,m.date_flag,m.start_date,m.end_date, pm.id as area_media_id");
+        // 选出工作日字段，供 $today 非空时按“当日工作日”过滤（与生成侧 get_sorted_timeslot_medias 对齐）。
+        if ($this->config->item('medium_with_weekNtime')) {
+            $this->db->select("m.week_flag,m.weekday");
+        }
         $this->db->from('cat_media m');
         $this->db->join("cat_playlist_area_media pm", "pm.media_id = m.id");
         $this->db->where('pm.playlist_id', $cam->id);
@@ -7163,9 +7193,23 @@ class Program extends MY_Model
             $this->db->group_end();
         }
         $query = $this->db->get();
+        $media = $query->num_rows() ? $query->result_array() : array();
 
-        if ($query->num_rows()) {
-            $media = $query->result_array();
+        // 与生成口径 get_sorted_timeslot_medias 对齐：$today 非空时，剔除“当日工作日不匹配”的媒体
+        //（week_flag=1 且 weekday!=127 且 isDayEnabled 为假）。时间范围(time_flag)属 slot 级过滤，
+        // 计算侧无 slot 上下文，本轮不处理（仅做日期+工作日这类“日级”对齐）。
+        if ($media && $today && $this->config->item('medium_with_weekNtime')) {
+            $this->load->helper('week');
+            $current_weekday = date('w', strtotime($today));
+            $media = array_values(array_filter($media, function ($medium) use ($current_weekday) {
+                if (!empty($medium['week_flag']) && $medium['weekday'] != 127) {
+                    return isDayEnabled($medium['weekday'], $current_weekday);
+                }
+                return true;
+            }));
+        }
+
+        if ($media) {
             $cam->media = $media;
             $cam->media_cnt = count($media);
             $cam->total_time = array_sum(array_column($media, 'play_time'));
@@ -7187,12 +7231,23 @@ class Program extends MY_Model
             $media_cnt = 0;
             $total_time = 0;
             $media = $cam->media;
+            // 与生成侧 get_sorted_timeslot_medias 对齐：除日期外，再按“当日工作日”过滤媒体。
+            // 时间范围(time_flag)属 slot 级过滤，此处无 slot 上下文，不处理（本轮仅做日期+工作日对齐）。
+            $with_weekNtime = $this->config->item('medium_with_weekNtime');
+            $current_weekday = 0;
+            if ($with_weekNtime) {
+                $this->load->helper('week');
+                $current_weekday = date('w', strtotime($today));
+            }
             if ($media) {
-                $today_media = array_filter($media, function ($medium) use ($today) {
-                    if ($medium['date_flag'] == 0 || ($medium['date_flag'] == 1 && $today >= $medium['start_date'] && $today <= $medium['end_date'])) {
-                        return true;
+                $today_media = array_filter($media, function ($medium) use ($today, $with_weekNtime, $current_weekday) {
+                    if (!($medium['date_flag'] == 0 || ($medium['date_flag'] == 1 && $today >= $medium['start_date'] && $today <= $medium['end_date']))) {
+                        return false;
                     }
-                    return false;
+                    if ($with_weekNtime && !empty($medium['week_flag']) && $medium['weekday'] != 127 && !isDayEnabled($medium['weekday'], $current_weekday)) {
+                        return false;
+                    }
+                    return true;
                 });
                 if ($today_media) {
                     $media_cnt = count($today_media);
