@@ -2748,19 +2748,19 @@ class Receive extends CI_Controller
                     $find_media = true;
                     $mid = md5($medium->src);
                     $impressions = array();
-                    if ($current->impression && is_array($current->impression)) {
+                    if (isset($current->impression) && is_array($current->impression)) {
                         foreach ($current->impression as $imp) {
                             $impressions[] = ['_cdata' => $imp];
                         }
                     }
                     $starts = array();
-                    if ($current->tracking->start && is_array($current->tracking->start)) {
+                    if (isset($current->tracking->start) && is_array($current->tracking->start)) {
                         foreach ($current->tracking->start as $start) {
-                            $starts[] =  ['_cdata' => $start];;
+                            $starts[] =  ['_cdata' => $start];
                         }
                     }
                     $completes = array();
-                    if ($current->tracking->complete && is_array($current->tracking->complete)) {
+                    if (isset($current->tracking->complete) && is_array($current->tracking->complete)) {
                         foreach ($current->tracking->complete as $com) {
                             $completes[] =  ['_cdata' => $com];
                         }
