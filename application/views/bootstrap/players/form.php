@@ -784,11 +784,19 @@
 
 		var sspEditingRow = null; // the table row currently loaded into the form for editing
 
+		// effective range flag: date_flag=1 OR real dates (legacy rows saved
+		// before the date_flag column existed are detected by their real dates)
+		function sspRowFlag(b) {
+			return (Number(b.date_flag) === 1
+				|| sspHasDateRange(b.effective_date_start, b.effective_date_end)) ? 1 : 0;
+		}
+
 		function addSspBindingRow(b) {
 			var $tr = $('<tr>')
 				.attr('data-profile', b.profile_name)
 				.attr('data-start', b.effective_date_start || '')
 				.attr('data-end', b.effective_date_end || '')
+				.attr('data-flag', sspRowFlag(b))
 				.attr('data-weekday', b.weekday);
 			$tr.append($('<td>').append(
 				$('<a href="#" class="link-primary ssp_bind_name">').text(b.profile_name).on('click', function(e) {
@@ -817,6 +825,7 @@
 			$tr.attr('data-profile', b.profile_name)
 				.attr('data-start', b.effective_date_start || '')
 				.attr('data-end', b.effective_date_end || '')
+				.attr('data-flag', sspRowFlag(b))
 				.attr('data-weekday', b.weekday);
 			$tr.find('td').eq(0).find('a.ssp_bind_name').text(b.profile_name);
 			$tr.find('td').eq(1).text(sspValidityText(b.effective_date_start, b.effective_date_end));
@@ -833,7 +842,7 @@
 			var end = $tr.attr('data-end') || '';
 			var weekday = Number($tr.attr('data-weekday'));
 			$('#ssp_bind_profile').val($tr.attr('data-profile')).prop('disabled', true);
-			var hasRange = sspHasDateRange(start, end);
+			var hasRange = Number($tr.attr('data-flag')) === 1;
 			$('#ssp_bind_daterange').prop('checked', hasRange);
 			$('#ssp_bind_start').prop('disabled', !hasRange).val(hasRange ? start : '');
 			$('#ssp_bind_end').prop('disabled', !hasRange).val(hasRange ? end : '');
@@ -870,7 +879,8 @@
 					profile_name: $tr.attr('data-profile'),
 					effective_date_start: $tr.attr('data-start'),
 					effective_date_end: $tr.attr('data-end'),
-					weekday: Number($tr.attr('data-weekday'))
+					weekday: Number($tr.attr('data-weekday')),
+					date_flag: Number($tr.attr('data-flag')) || 0
 				});
 			});
 			return bindings;
@@ -980,7 +990,8 @@
 					profile_name: profile,
 					effective_date_start: start,
 					effective_date_end: end,
-					weekday: weekday
+					weekday: weekday,
+					date_flag: hasRange ? 1 : 0
 				};
 				if (sspEditingRow) {
 					updateSspBindingRow(sspEditingRow, binding);

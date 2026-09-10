@@ -277,6 +277,7 @@ class SspProfile extends MY_Controller
                 'effective_date_start' => isset($group['effective_date_start']) ? $group['effective_date_start'] : '',
                 'effective_date_end' => isset($group['effective_date_end']) ? $group['effective_date_end'] : '',
                 'weekday' => isset($group['weekday']) ? (int)$group['weekday'] : 127,
+                'date_flag' => isset($group['date_flag']) ? (int)$group['date_flag'] : (!empty($group['effective_date_start']) ? 1 : 0),
                 'match_priority' => isset($group['match_priority']) ? (int)$group['match_priority'] : 0,
                 'is_active' => isset($group['is_active']) ? (int)$group['is_active'] : 1,
             );

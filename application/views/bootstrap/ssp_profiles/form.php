@@ -375,8 +375,10 @@ $this->load->view("bootstrap/players/player_map");
 		));
 
 		// row 2: date range switch + dates + weekday checkboxes in one row
-		// switch stays unchecked (no date range) unless a real range was saved
-		var hasRange = hasDateRange(group.effective_date_start, group.effective_date_end);
+		// switch is on when date_flag=1; legacy rows saved before date_flag
+		// existed are detected by their real dates so nothing gets lost
+		var hasRange = Number(group.date_flag) === 1
+			|| hasDateRange(group.effective_date_start, group.effective_date_end);
 		var $row2 = $('<div class="row g-2 mb-2 align-items-end">');
 		$row2.append($('<div class="col-auto">').append(
 			$('<label class="form-check form-switch">').append(
@@ -485,7 +487,8 @@ $this->load->view("bootstrap/players/player_map");
 			player_ids: playerIds,
 			effective_date_start: start,
 			effective_date_end: end,
-			weekday: weekday
+			weekday: weekday,
+			date_flag: hasRange ? 1 : 0
 		};
 	}
 

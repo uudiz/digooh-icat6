@@ -297,11 +297,11 @@ class Ssp_server_model extends CI_Model
     /**
      * Bindings of one player, grouped by profile name + schedule.
      * match_priority / is_active are not editable in the UI and are ignored here.
-     * Returns: array of ['profile_name','effective_date_start','effective_date_end','weekday']
+     * Returns: array of ['profile_name','effective_date_start','effective_date_end','weekday','date_flag']
      */
     public function get_bindings_by_player($player_id)
     {
-        $this->db->select('spp.name AS profile_name, psp.effective_date_start, psp.effective_date_end, psp.weekday');
+        $this->db->select('spp.name AS profile_name, psp.effective_date_start, psp.effective_date_end, psp.weekday, psp.date_flag');
         $this->db->from('player_ssp_profile psp');
         $this->db->join('ssp_priority_profile spp', 'spp.id = psp.ssp_profile_id');
         $this->db->where('psp.player_id', $player_id);
@@ -317,6 +317,7 @@ class Ssp_server_model extends CI_Model
                     'effective_date_start' => $row->effective_date_start,
                     'effective_date_end' => $row->effective_date_end,
                     'weekday' => (int)$row->weekday,
+                    'date_flag' => (int)$row->date_flag,
                 );
             }
         }
@@ -327,11 +328,11 @@ class Ssp_server_model extends CI_Model
      * Binding rule groups of one profile (by name).
      * Aggregated by schedule (dates + weekday) only: match_priority / is_active
      * are not editable in the UI and always saved with default values.
-     * Returns: array of ['effective_date_start','effective_date_end','weekday','player_ids' => []]
+     * Returns: array of ['effective_date_start','effective_date_end','weekday','date_flag','player_ids' => []]
      */
     public function get_bindings_by_profile_name($name)
     {
-        $this->db->select('psp.player_id, psp.effective_date_start, psp.effective_date_end, psp.weekday');
+        $this->db->select('psp.player_id, psp.effective_date_start, psp.effective_date_end, psp.weekday, psp.date_flag');
         $this->db->from('player_ssp_profile psp');
         $this->db->join('ssp_priority_profile spp', 'spp.id = psp.ssp_profile_id');
         $this->db->where('spp.name', $name);
@@ -346,6 +347,7 @@ class Ssp_server_model extends CI_Model
                         'effective_date_start' => $row->effective_date_start,
                         'effective_date_end' => $row->effective_date_end,
                         'weekday' => (int)$row->weekday,
+                        'date_flag' => (int)$row->date_flag,
                         'player_ids' => array(),
                     );
                 }
@@ -537,6 +539,8 @@ class Ssp_server_model extends CI_Model
         return array(
             'player_id' => (int)$player_id,
             'ssp_profile_id' => (int)$profile_id,
+            // date_flag: 1 = a real date range is set, 0 = no limit (placeholders)
+            'date_flag' => isset($binding['date_flag']) ? (int)$binding['date_flag'] : (!empty($binding['effective_date_start']) ? 1 : 0),
             'effective_date_start' => !empty($binding['effective_date_start']) ? $binding['effective_date_start'] : self::DATE_NO_LIMIT_START,
             'effective_date_end' => !empty($binding['effective_date_end']) ? $binding['effective_date_end'] : self::DATE_NO_LIMIT_END,
             'weekday' => isset($binding['weekday']) ? (int)$binding['weekday'] : 127,
