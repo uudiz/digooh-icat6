@@ -27,6 +27,7 @@ $lang['ssp.edit.profile'] = 'Edit SSP profile';
 $lang['ssp.name.exists'] = 'The name "%s" already exists!';
 $lang['ssp.server.count'] = 'Servers';
 $lang['ssp.player.count'] = 'Bound players';
+$lang['ssp.profile.rows.dropped'] = 'Some servers of this profile are inactive and were removed from the selection. Please adjust the hourly priorities and save!';
 $lang['ssp.server'] = 'Server';
 $lang['ssp.profile'] = 'Profile';
 $lang['ssp.sum'] = 'Sum';

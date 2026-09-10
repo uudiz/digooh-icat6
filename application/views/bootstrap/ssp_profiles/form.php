@@ -147,24 +147,20 @@ $this->load->view("bootstrap/players/player_map");
 	var weekdayLabels = ['<?php echo lang('mon'); ?>', '<?php echo lang('tue'); ?>', '<?php echo lang('wed'); ?>', '<?php echo lang('thu'); ?>', '<?php echo lang('fri'); ?>', '<?php echo lang('sat'); ?>', '<?php echo lang('sun'); ?>'];
 
 	$(document).ready(function() {
-		// fill server select options; inactive servers cannot be newly added,
-		// but ones already used by this profile stay selectable so they can
-		// still be removed
-		var usedIds = profileRows.map(function(r) {
-			return Number(r.ssp_server_id);
-		});
+		// fill server select options (the controller only passes active servers)
 		var $serverSelect = $('#server-select-options');
 		$.each(allServers, function(i, s) {
-			var label = s.name + ' (' + s.priority + ')';
-			var $opt = $('<option>').val(s.id).text(label);
-			if (!s.is_active) {
-				$opt.text(label + ' - <?php echo lang('ssp.inactive'); ?>');
-				if (usedIds.indexOf(Number(s.id)) < 0) {
-					$opt.prop('disabled', true);
-				}
-			}
-			$serverSelect.append($opt);
+			$serverSelect.append($('<option>').val(s.id).text(s.name + ' (' + s.priority + ')'));
 		});
+
+		// drop saved rows whose server is no longer available (inactive/deleted)
+		var availableRows = profileRows.filter(function(r) {
+			return !!serverById(r.ssp_server_id);
+		});
+		if (availableRows.length < profileRows.length) {
+			toastr.warning('<?php echo lang('ssp.profile.rows.dropped'); ?>');
+			profileRows = availableRows;
+		}
 
 		// restore saved rows
 		$.each(profileRows, function(i, row) {
@@ -227,11 +223,7 @@ $this->load->view("bootstrap/players/player_map");
 	}
 
 	function selectedServerIds() {
-		// NOTE: .val() skips disabled (inactive) options while :selected does
-		// not - inactive servers already in this profile must stay counted
-		return $('#server-select-options option:selected').map(function() {
-			return Number(this.value);
-		}).get();
+		return ($('#server-select-options').val() || []).map(Number);
 	}
 
 	function rebuildGrid() {
@@ -245,11 +237,7 @@ $this->load->view("bootstrap/players/player_map");
 			}
 			var server = serverById(sid);
 			var $tr = $('<tr>').attr('data-sid', sid);
-			var serverLabel = server ? server.name : sid;
-			if (server && !server.is_active) {
-				serverLabel += ' (<?php echo lang('ssp.inactive'); ?>)';
-			}
-			$tr.append($('<td>').text(serverLabel));
+			$tr.append($('<td>').text(server ? server.name : sid));
 			for (var h = 0; h < 24; h++) {
 				var $input = $('<input type="number" min="0" max="' + HOUR_TARGET + '" class="form-control form-control-sm hour-input" />')
 					.attr('data-hour', h)

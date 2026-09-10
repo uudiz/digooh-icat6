@@ -160,12 +160,13 @@ class Ssp_server_model extends CI_Model
 
     /**
      * Profile list grouped by name, with related server count and bound player count.
+     * DISTINCT is required: the LEFT JOIN multiplies rows per player binding.
      */
     public function get_profile_list($offset = 0, $limit = -1, $order = 'asc', $search = '')
     {
         $order = strtolower($order) == 'desc' ? 'DESC' : 'ASC';
 
-        $sql = "SELECT spp.name, COUNT(spp.id) AS server_cnt, COUNT(DISTINCT psp.player_id) AS player_cnt
+        $sql = "SELECT spp.name, COUNT(DISTINCT spp.ssp_server_id) AS server_cnt, COUNT(DISTINCT psp.player_id) AS player_cnt
                 FROM ssp_priority_profile spp
                 LEFT JOIN player_ssp_profile psp ON psp.ssp_profile_id = spp.id";
         $params = array();

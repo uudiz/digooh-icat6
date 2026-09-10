@@ -80,11 +80,13 @@ class SspProfile extends MY_Controller
         // all servers for the multi-select (with priority for auto calculation)
         $servers = array();
         foreach ($this->Ssp_server_model->get_all_servers() as $s) {
+            if (!(int)$s->is_active) {
+                continue; // inactive servers are not selectable in a profile
+            }
             $servers[] = array(
                 'id' => (int)$s->id,
                 'name' => $s->name,
                 'priority' => (int)$s->priority,
-                'is_active' => (int)$s->is_active,
             );
         }
 
