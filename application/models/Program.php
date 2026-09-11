@@ -5371,7 +5371,8 @@ class Program extends MY_Model
 
                     $success_flag++;
                 } else {
-                    return array('status' => false);
+                    // 携带该 slot 的 OB 诊断明细（add_campagin 已写入 $slot->last_ob），供上层报错文案使用。
+                    return array('status' => false, 'ob' => $slot->last_ob);
                 }
             }
         }
@@ -6627,6 +6628,19 @@ class Program extends MY_Model
                     } else {
                         //no media on that day
                         //$today = strtotime("+1 days", $today);
+                        // 该天 playlist 无有效媒体（如工作日排除日），但共存 campaign 已在上面(L6571-6613)分配进
+                        // $time_slots。若直接 continue 不收集，结尾的整段删除(L6727/L6735)会把该天的 least_free
+                        // （及 promatic booking）行删掉却不补回，连带丢失共存 campaign 在该天的数据。故仍按当前
+                        // $time_slots（仅含共存占用，playlist 自身当天不参与）收集该天，保证重插能覆盖到它。
+                        if (!$company->pId) {
+                            $least_arrays[] = $this->get_least_from_timeslot($player->id,  $today, $time_slots);
+                            if ($playlist->priority == 7) {
+                                $promatic_booking_data = $this->get_promatic_booking_from_timeslot($player->id, $today, $time_slots);
+                                if ($promatic_booking_data) {
+                                    $promatic_booking_array[] = $promatic_booking_data;
+                                }
+                            }
+                        }
                         continue;
                     }
 
@@ -6635,6 +6649,13 @@ class Program extends MY_Model
                     if ($ret['status'] == false) {
 
                         $msg = sprintf($this->lang->line('campaign.ob.comon'),  $today, $playlist->name, $player->name, $today);
+                        // 追加该时段的秒数明细诊断（仅本 campaign 自身 OB；共存 OB(L6607)不加）。
+                        // 数据来源：try_allocate_campaign 失败返回的 'ob'（由 TimeSlot::add_campagin 记录）。
+                        if (!empty($ret['ob'])) {
+                            $ob = $ret['ob'];
+                            $msg = $msg . sprintf($this->lang->line('campaign.ob.slot.detail'),
+                                $ob['start'], $ob['stop'], $ob['total'], $ob['used'], $ob['free'], $playlist->name, $ob['needed'], $ob['gap']);
+                        }
                         $msg = $msg . $this->lang->line('campaign.ob.opiton1') . $this->lang->line('campaign.ob.opiton2') . $this->lang->line('campaign.ob.opiton3');
                         $msg = $msg . "<p>&nbsp</p>";
                         return array('code' => 1, 'msg' => $msg);

@@ -571,7 +571,11 @@ class Campaign extends MY_Controller
 
         if ($is_updating) {
             $pls = $this->program->get_playlist($playlist_id);
-            if ($pls && $pls->published) {
+            // 仅在「保存为草稿(不发布)」时在此回收该 campaign 的 least_free / planed / programmatic 占用。
+            // 发布路径($publish==true)统一交给 do_publish_time_slot 处理：成功时其结尾会删整段并重算
+            // (Program.php L6727/L6730)，OB 失败时提前 return 不做任何删除，从而保留原有占用，
+            // 避免「OB 时把该 campaign 从各天抹掉且不恢复」。与下方扩展 campaign 的守卫(L686)保持一致。
+            if ($pls && $pls->published && $publish == false) {
                 $this->program->reset_player_least_while_update_campaign($pls);
                 $this->program->delete_planed_records($playlist_id, date("Y-m-d"));
 
@@ -2219,6 +2223,10 @@ class Campaign extends MY_Controller
 
 
         $result = array();
+        // refresh 采用「尽力重算 + OB 仅告警」语义：$all_done 标记是否全部成功，
+        // $ob_msgs 汇总所有 OB 的 campaign 详情。两者在 if 外初始化，兼容「无 campaign」情形。
+        $all_done = true;
+        $ob_msgs = array();
 
         if ($campaigns && $campaigns['total'] > 0) {
             // $data['campaigns'] = $campaigns['data'];
@@ -2279,8 +2287,6 @@ class Campaign extends MY_Controller
                 */
             }
 
-            $all_done = true;
-
             foreach ($campaigns['data'] as $campaign) {
                 if (strtotime($campaign->end_date) < $today) {
                     continue;
@@ -2294,23 +2300,29 @@ class Campaign extends MY_Controller
                     $updates = array('published' => $this->config->item('playlist.status.published'), 'update_time' => date('Y-m-d H:i:s'));
                     $this->program->update_playlist($updates, $campaign->id);
                 }
-                //if anyone failed then break & return error code
+                //if anyone failed (OB)
                 else {
-                    /*
-                    foreach ($campaigns['data'] as $cam) {
-                        if ($cam->id != $campaign->id) {
-                            $this->program->update_playlist(array('published' => 1), $cam->id);
-                        }
-                    }
-                    */
+                    // Option A: OB 时把该 campaign 恢复为 published=1，保持在营。
+                    // 否则它会停在 L2293 设的 published=0，被 get_published_campaign_by_player(L5104)
+                    // 排除出运行时播放与共存 —— 即一次批量刷新会把一个原本在线的 campaign 误停播。
+                    // 恢复后：该 campaign 继续在线，且会被后续 campaign 当作共存正常计入。
+                    $this->program->update_playlist(array('published' => $this->config->item('playlist.status.published'), 'update_time' => date('Y-m-d H:i:s')), $campaign->id);
                     $all_done = false;
-                    break;
+                    $ob_msgs[] = $result['msg'];
+                    // Option B: 用 continue 取代 break，继续重发布其余 campaign，
+                    // 消除「阶段1已改绑定、阶段2未重算预订」的残留不一致。
+                    continue;
                 }
             }
         }
         if ($all_done) {
             $result['code'] = 0;
             $result['msg'] =  $this->lang->line('campaign.refresh.success');
+        } else {
+            // 汇总所有 OB 告警：这些 campaign 已保持在营(published=1)，但本次未能重新排期，需人工调整。
+            // 逐条 OB 详情本身已是本地化文案(campaign.ob.*)，直接合并展示。
+            $result['code'] = 1;
+            $result['msg'] = implode('<br/>', $ob_msgs);
         }
         echo json_encode($result);
     }

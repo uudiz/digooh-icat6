@@ -136,6 +136,7 @@ $lang['campaign.ob.opiton1'] = "<p style='text-align:left'>1) Decrease Percentag
 $lang['campaign.ob.opiton2'] = "<p style='text-align:left'>2) Increase campaign time range and/or increase Criteria’s(players) timer range.</p>";
 $lang['campaign.ob.opiton3'] = "<p style='text-align:left'>3) Add more players to the selected criteria.</p>";
 $lang['campaign.ob.opiton4'] = "<p style='text-align:left'>4) De-select conflicted campaign(%s).</p>";
+$lang['campaign.ob.slot.detail'] = "<p style='text-align:left'>Slot %s-%s: total %d s, already used %d s, free %d s. [%s] needs %d s here, over by %d s.</p>";
 $lang['campaign.total.too.small'] = "The total view number of [%s] is too small for all players to share. Minimum should be %d. ";
 $lang['campaign.ob.not.match'] = "The campaign[%s]'s time range and player[%s]'s timer have no overlapping on %s, Please check player's timer and set right time range.";
 $lang['campaign.refresh.msg'] = '<p style="text-align:left">"Refresh" will re-publish all campaigns to update their playlists when add, delete or change to criteria(player) or timer. It will take time to do till "Refresh Success" appears.</p></br>';

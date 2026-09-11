@@ -13,6 +13,9 @@ class TimeSlot
     public $fulled = false;
     public $quota = 100;
     public $promatic_booking_time = 0;
+    // OB 诊断：add_campagin 因超额(OB)返回 false 时，在此记录该 slot 的容量/已用/剩余/本次需要/超出秒数，
+    // 供上层拼进 OB 报错文案。仅诊断用途，不参与任何分配判定；不改变 add_campagin 的返回契约(仍返回 false)。
+    public $last_ob = null;
 
     public function __construct($para = array())
     {
@@ -72,6 +75,20 @@ class TimeSlot
             $total = ceil($this->total_time * ($this->quota / 100));
 
             if ($cam_used > ($total - $this->used_time) || !$campaign) {
+                // 记录 OB 诊断（秒）。free/gap 用取整后的值计算，保证 total-used=free、needed-free=gap 自洽。
+                $ob_total = (int) round($total);
+                $ob_used  = (int) round($this->used_time);
+                $ob_free  = $ob_total - $ob_used;
+                $ob_need  = (int) round($cam_used);
+                $this->last_ob = array(
+                    'start'  => $this->get_startTime(),
+                    'stop'   => $this->get_stopTime(),
+                    'total'  => $ob_total,
+                    'used'   => $ob_used,
+                    'free'   => $ob_free,
+                    'needed' => $ob_need,
+                    'gap'    => $ob_need - $ob_free,
+                );
                 return false;
             }
         }
