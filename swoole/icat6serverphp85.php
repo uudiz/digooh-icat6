@@ -16,15 +16,14 @@ const CHEARTBEAT = 0x02;
 const CCONTROL = 0x03;
 const CINSTANTSCH = 0x04;
 const CLOGINNEW = 0x05;
-const SActivate = 0x06;
 const ConsumerCode = 0x07;
-const IActivate = 0x08;
 const SERVERCONTRL = 0x0f;
 const REFRESHPL = 0x0e;
 
 class IcatServer extends Swoole\Server
 {
-    public array $fdlist = [];
+    /** fd -> 该连接最近一次登录/心跳上报的 player SN（Swoole\Table 跨 worker 共享，用于 close 时精确清理 socket_fd） */
+    public ?Swoole\Table $fdsn = null;
     public ?MysqliPool $dbPool = null;
 }
 
@@ -32,7 +31,12 @@ $server = new IcatServer('0.0.0.0', $server_port, SWOOLE_PROCESS, SWOOLE_SOCK_TC
 
 $server->addlistener("0.0.0.0", $server_port, SWOOLE_SOCK_UDP); // UDP
 
-$server->fdlist = [];
+// fd -> SN 映射表：Swoole\Table 是进程共享内存，保证 receive（可能落在任意 worker）写入后，
+// close 事件无论分发到哪个 worker 都能读到，避免普通 PHP 数组的跨 worker 不可见问题。
+$server->fdsn = new Swoole\Table(4096);
+$server->fdsn->column('sn', Swoole\Table::TYPE_STRING, 32);
+$server->fdsn->create();
+
 $server->dbPool = new MysqliPool((new MysqliConfig)
         ->withHost($db_server['host'])
         ->withPort($db_server['port'])
@@ -56,8 +60,8 @@ $server->set([
     'package_length_type' => 'C',      //see php pack()
     'package_length_offset' => 3,
     'package_body_offset' => 6,
-    'heartbeat_check_interval' => 1800, //设置心跳检测间隔
-    'heartbeat_idle_time' => 3600, //5分钟无数据断开
+    'heartbeat_check_interval' => 1800, //心跳检测间隔：每 30 分钟扫描一次空闲连接
+    'heartbeat_idle_time' => 3600, //连接空闲超过 60 分钟无任何数据则强制关闭
     //'log_level' => SWOOLE_LOG_ERROR,
     'log_date_format' => '%Y-%m-%d %H:%M:%S',
     'enable_coroutine' => true,
@@ -84,21 +88,20 @@ $server->on('receive', function ($serv, $fd, $reactor_id, $data) {
 
     if ($crc1 != $crc2) {
         echo "[" . date("Y-m-d H:i:s") . "]  [Receive] Crc check fail!\n";
+        logNotice('Receive', "CRC check fail, fd=$fd len=" . strlen($data));
         return;
     }
 
     $package = unpack('Cstart1/Cstart2/Ccomm/Clenth', $data);
     if (empty($package)) {
         echo "[" . date("Y-m-d H:i:s") . "]  [Receive] Failed to unpack package!\n";
+        logNotice('Receive', "Failed to unpack package, fd=$fd");
         return;
     }
     if ($package['start1'] != 0xec && $package['start1'] != 0xeb) {
         echo "[" . date("Y-m-d H:i:s") . "]  [Receive] Illegal package!\n";
+        logNotice('Receive', "Illegal package, fd=$fd start1=" . $package['start1']);
         return;
-    }
-
-    if (!isset($serv->fdlist[$fd])) {
-        $serv->fdlist[$fd] = $fd;
     }
 
     $datastream = blowfish_dec(substr($data, 4, -2));
@@ -119,10 +122,6 @@ $server->on('receive', function ($serv, $fd, $reactor_id, $data) {
             break;
         case ConsumerCode:
             break;
-        case SActivate: //标准终端激活
-        case IActivate: //互动终端激活
-            onActivate($serv, $fd,  $datastream, $package['comm']);
-            break;
         default:
             break;
     }
@@ -130,48 +129,73 @@ $server->on('receive', function ($serv, $fd, $reactor_id, $data) {
 
 //UDP Control command from ICAT 
 $server->on('packet', function ($serv, $data, $clientInfo) {
-    $recv = json_decode($data, true);
+    try {
+        $recv = json_decode($data, true);
 
-    if (!$recv || !isset($recv['command'])) {
-        return;
-    }
-    $command = $recv['command'];
-    //echo "[" . date("Y-m-d H:i:s") . "]  [onPacket] command=" . $command . "\n";
-    switch ($command) {
-        case 0x3:
-            $value = isset($recv['value']) ? $recv['value'] : 0;
-            //echo "Control command: type=" . $recv['type'] . ", value=" . $value . "\n";
-            // echo "original value: " . $recv['value'] . "\n";
-            $data = pack('Ca4Ca10CC', 0x00, '1234', 10, $recv['sn'] ?? '', $recv['type'] ?? 0, $value);
-            break;
-        case 0x4:
-            $data = pack('Ca4Ca10', 0x00, '1234', 10, $recv['sn'] ?? '');
-            break;
-    }
+        if (!$recv || !isset($recv['command'])) {
+            return;
+        }
+        $command = $recv['command'];
 
-    $encdata = blowfish_enc($data);  //blowfish 加密DATA数据
-    $length = strlen($encdata);
+        // 仅处理已知控制命令，其它一律忽略，避免 $payloadData 未定义 / 发送垃圾包
+        if ($command !== 0x3 && $command !== 0x4) {
+            return;
+        }
 
-    $header = pack('CCCC', 0xec, 0xeb, $command, $length);
+        // 目标 fd 必须存在且为合法正整数
+        if (!isset($recv['fd']) || !is_numeric($recv['fd']) || intval($recv['fd']) <= 0) {
+            logNotice('onPacket', "invalid fd in control command, command=$command");
+            return;
+        }
+        $targetFd = intval($recv['fd']);
 
-    $msg = $header . $encdata;
-    $crc = crc16($msg); //CRC校验
-    $controlMsg = $msg . pack('C2', (($crc & 0xff00) >> 8), ($crc & 0xff)); //拼装数据包
+        if ($command === 0x3) {
+            $value = isset($recv['value']) ? intval($recv['value']) : 0;
+            $payloadData = pack('Ca4Ca10CC', 0x00, '1234', 10, $recv['sn'] ?? '', intval($recv['type'] ?? 0), $value);
+        } else {
+            $payloadData = pack('Ca4Ca10', 0x00, '1234', 10, $recv['sn'] ?? '');
+        }
 
-    $ret = $serv->send($recv['fd'], $controlMsg);
-    if ($ret === false) {
-        echo "[" . date("Y-m-d H:i:s") . "]  [onControl] send failed! command=$command\n";
+        $encdata = blowfish_enc($payloadData);  //blowfish 加密DATA数据
+        $length = strlen($encdata);
+
+        $header = pack('CCCC', 0xec, 0xeb, $command, $length);
+
+        $msg = $header . $encdata;
+        $crc = crc16($msg); //CRC校验
+        $controlMsg = $msg . pack('C2', (($crc & 0xff00) >> 8), ($crc & 0xff)); //拼装数据包
+
+        if ($serv->send($targetFd, $controlMsg) === false) {
+            echo "[" . date("Y-m-d H:i:s") . "]  [onPacket] send failed! fd=$targetFd command=$command\n";
+            logNotice('onPacket', "send failed fd=$targetFd command=$command");
+        }
+    } catch (\Throwable $e) {
+        echo "[" . date("Y-m-d H:i:s") . "]  [onPacket] error: " . $e->getMessage() . "\n";
+        logNotice('onPacket', "unexpected error: " . $e->getMessage());
     }
 });
 $server->on('close', function ($server, $fd) {
-    unset($server->fdlist[$fd]);
-    // 关闭时清理 DB 中的 socket_fd：避免其他模块（如 UDP 控制/刷新命令）通过失效 fd 发送
-    // WHERE socket_fd=? 保证只有当前连接仍然匹配时才清零，防止误伤重连后的新连接
+    // 取回该 fd 对应连接的 player SN（由登录/心跳写入 Swoole\Table，跨 worker 可见）
+    $row = $server->fdsn ? $server->fdsn->get((string)$fd) : null;
+    $sn = $row['sn'] ?? '';
+    $server->fdsn?->del((string)$fd);
+
+    if ($sn === '') {
+        // 该连接从未成功登录/心跳过，DB 里没有它的 fd，无需清理
+        return;
+    }
+
+    // 关闭时按 SN + 当前 fd 精确清零：
+    //   WHERE socket_fd=$fd 保证只清“仍指向本 fd”的行；
+    //   若该 player 已用新 fd 重连（socket_fd 已变）则不误伤，也不会波及复用了同一 fd 号的其它 player。
     $mysqli = null;
     try {
         $mysqli = $server->dbPool->get();
-        safeQuery($mysqli, "UPDATE cat_player SET socket_fd=0 WHERE socket_fd=" . intval($fd), 'close.clear_fd');
+        safeQuery($mysqli,
+            "UPDATE cat_player SET socket_fd=0 WHERE SN='" . sqlStr($mysqli, $sn) . "' AND socket_fd=" . intval($fd),
+            'close.clear_fd');
     } catch (\Throwable $e) {
+        logDbError('close', null, $e);
         echo "[" . date("Y-m-d H:i:s") . "] [close] DB error: " . $e->getMessage() . "\n";
     } finally {
         if ($mysqli !== null) {
@@ -247,10 +271,6 @@ function onHeartBeat($serv, $fd, $data, $length)
     $serv->send($fd, $loginmsg);
     //sendMsg($serv, $fd, $loginmsg);
 
-    if ($respval == 1) {
-        return;
-    }
-
     $status = $loginpara['status'];       //状态
     $voltage = $loginpara['voltage'];     //电压
     $elec = $loginpara['elec'];           //电流
@@ -302,6 +322,11 @@ function onHeartBeat($serv, $fd, $data, $length)
             . ", last_connect='" . date('Y-m-d H:i:s') . "'"
             . " WHERE SN='" . $snEsc . "'";
         safeQuery($mysqli, $sqlCritical, 'heartbeat.critical');
+
+        // 记录 fd -> SN（跨 worker 共享），供 close 精确清理 socket_fd
+        if ($loginpara['sn'] !== '' && $serv->fdsn) {
+            $serv->fdsn->set((string)$fd, ['sn' => substr((string)$loginpara['sn'], 0, 32)]);
+        }
 
         // 2) 状态日志（非关键）
         if ($status != 1011 && $status != 1012 && $status != 1013 && $status != 1014 && $status != 1016) {
@@ -368,6 +393,7 @@ function onHeartBeat($serv, $fd, $data, $length)
         $sqlInfo = "UPDATE cat_player SET " . implode(', ', $updates) . " WHERE SN='" . $snEsc . "'";
         safeQuery($mysqli, $sqlInfo, 'heartbeat.info');
     } catch (\Throwable $e) {
+        logDbError('heartbeat', null, $e);
         echo "[" . date("Y-m-d H:i:s") . "] [Heartbeat] unexpected DB error: " . $e->getMessage() . "\n";
     } finally {
         if ($mysqli !== null) {
@@ -517,6 +543,11 @@ function onLogin($serv, $fd, $data, $input)
                     . " WHERE SN='" . $snEsc . "'";
                 safeQuery($mysqli, $sqlCritical, 'login.critical');
 
+                // 记录 fd -> SN（跨 worker 共享），供 close 精确清理 socket_fd
+                if ($snRaw !== '' && $serv->fdsn) {
+                    $serv->fdsn->set((string)$fd, ['sn' => substr($snRaw, 0, 32)]);
+                }
+
                 // 2) 非关键更新：设备属性字段（数组拼接，int 列用 sqlInt，varchar 列用 sqlStr）
                 $updates = [];
                 $updates[] = "reboot_flag=0";
@@ -596,6 +627,14 @@ function onLogin($serv, $fd, $data, $input)
                     safeQuery($mysqli,
                         "INSERT INTO cat_player(sn,company_id) VALUES('" . $snEsc . "'," . $companyid . ")",
                         'login.auto_register');
+                    // 新注册终端立即写入 socket_fd/status，注册后即可被控制，无需等下一次心跳
+                    safeQuery($mysqli,
+                        "UPDATE cat_player SET socket_fd=" . intval($fd) . ", status=5, last_connect='" . date('Y-m-d H:i:s') . "'"
+                        . " WHERE SN='" . $snEsc . "'",
+                        'login.register_fd');
+                    if ($serv->fdsn) {
+                        $serv->fdsn->set((string)$fd, ['sn' => substr($snRaw, 0, 32)]);
+                    }
                     $respval = 0;
                 } else {
                     $respval = 1;
@@ -617,6 +656,7 @@ function onLogin($serv, $fd, $data, $input)
                 }
             }
         } catch (\Throwable $e) {
+            logDbError('login', null, $e);
             echo "[" . date("Y-m-d H:i:s") . "] [Login] unexpected DB error: " . $e->getMessage() . "\n";
         } finally {
             if ($mysqli !== null) {
@@ -680,145 +720,69 @@ function onControl($serv, $datastram)
         $ret = $serv->send($player_fd, $controlMsg);
         if ($ret === false) {
             echo "[" . date("Y-m-d H:i:s") . "]  [onControl] send failed! command=$command\n";
+            logNotice('onControl', "send failed! fd=$player_fd command=$command sn=$player_sn");
         }
         // sendMsg($serv, $player_fd, $controlMsg);
     }
 }
-function onConsumerCode($serv, $fd, $from_id, $data)
-{
-    echo 'ConsumerCode command\n';
-}
 
 /**
- * 终端激活处理
+ * 返回可用的错误日志目录：优先 socket server 同级 errorlog/，不存在则尝试创建，
+ * 仍不可写则回退系统临时目录。结果按 worker 进程缓存一次。
  */
-function onActivate($serv, $fd, $data, $commn)
+function errorLogDir(): string
 {
-    echo "[" . date("Y-m-d H:i:s") . "] [Activate] Get Activate command!\n";
-    $param1 = unpack('Cstype/a4netid/Csnlen/a10sn/Ctype/Cidlen', $data);
-    if (empty($param1)) return;
-    $activatePara = unpack('Cstype/a4netid/Csnlen/a10sn/Ctype/Cidlen/a' . $param1['idlen'] . 'id/Cmodel/a17mac/CipLength', $data);
-    if (empty($activatePara)) return;
-
-    $defaultFixedValue = "Sj9TiH4u";
-    $rand_arr = array();  //4字节随机数
-    $rand_arr[0] = rand(0, 255);
-    $rand_arr[1] = rand(0, 255);
-    $rand_arr[2] = rand(0, 255);
-    $rand_arr[3] = rand(0, 255);
-    $rand_str = toStr($rand_arr);  //随机数转换成string字符串
-
-    $type = 0x2;
-    $days = 0;
-    $time_arr = array_fill(0, 8, 0); // Default to clean 0s to prevent Undefined Variable notice
-
-    //NP201
-    $mysqli = $serv->dbPool->get();
-    $activateModel = $activatePara['model'] ?? 0;
-    if ($activateModel == 0x9) {
-        $activateMac = $activatePara['mac'] ?? '';
-        $sqlstr = 'SELECT * FROM cat_player_activation where mac="' . $activateMac . '"';
-        $result = $mysqli->query($sqlstr);
-
-        if ($result && $result->num_rows) {
-
-            $activation = $result->fetch_object();
-
-
-            if ($activation->is_active == 0) {
-                $type = 0; //激活失败
-            } else {
-                $expire_date = $activation->expire_at;
-                $expire_time = strtotime($expire_date);
-                $now = strtotime(date("Y-m-d", time()));
-                if ($now >= $expire_time) {
-                    $type = 0;
-                } else {
-                    $type = 2;
-                    $days = intval(($expire_time - $now) / 86400);
-                }
-            }
-        } else {
-            //如果没有记录,入库并激活15天
-            $type = 0x1;
-            $expire_date = strtotime("+15 days");
-            $datestr = date("Y-m-d", $expire_date);
-            $sqlstr = "INSERT INTO  cat_player_activation" .
-                " (mac,is_active,expire_at)" .
-                ' VALUES ("' . $activatePara['mac'] . '"' . ",1,'$datestr')";
-            $mysqli->query($sqlstr);
-            $days = 15;
+    static $dir = null;
+    if ($dir === null) {
+        $candidate = __DIR__ . '/errorlog';
+        if (!is_dir($candidate)) {
+            @mkdir($candidate, 0775, true);
         }
-        //计算当前时间和过期时间差
-        if ($days >= 0) {
-            echo "days=" . $days . "\n";
-            $time_arr = array();
-            $time_arr[0] = $days & 0xff;
-            $time_arr[1] = $days >> 8 & 0xff;
-            $time_arr[2] = $days >> 16 & 0xff;
-            $time_arr[3] = $days >> 24 & 0xff;
-            $time_arr[4] = $days >> 32 & 0xff;
-            $time_arr[5] = $days >> 40 & 0xff;
-            $time_arr[6] = $days >> 48 & 0xff;
-            $time_arr[7] = $days >> 56 & 0xff;
-        }
-    } else {
-        $time = 10 * 365 * 24 * 60;  //默认授权期限10年
-        $time_arr = array();
-        $time_arr[0] = $time & 0xff;
-        $time_arr[1] = $time >> 8 & 0xff;
-        $time_arr[2] = $time >> 16 & 0xff;
-        $time_arr[3] = $time >> 24 & 0xff;
-        $time_arr[4] = $time >> 32 & 0xff;
-        $time_arr[5] = $time >> 40 & 0xff;
-        $time_arr[6] = $time >> 48 & 0xff;
-        $time_arr[7] = $time >> 56 & 0xff;
+        $dir = (is_dir($candidate) && is_writable($candidate)) ? $candidate : sys_get_temp_dir();
     }
-    //计算16位MD5   hid、mac、固定值(Sj9TiH4u)、随机数
-    $eSign = md5($activatePara['sn'] . $activatePara['mac'] . $defaultFixedValue . $rand_str, true);
-    $eSign_arr = getBytes($eSign);
-
-    $data = pack('Ca4Ca10CC4C16C8', 0x00, $activatePara['netid'], 0x08, $activatePara['sn'], $type, $rand_arr[0], $rand_arr[1], $rand_arr[2], $rand_arr[3], $eSign_arr[0], $eSign_arr[1], $eSign_arr[2], $eSign_arr[3], $eSign_arr[4], $eSign_arr[5], $eSign_arr[6], $eSign_arr[7], $eSign_arr[8], $eSign_arr[9], $eSign_arr[10], $eSign_arr[11], $eSign_arr[12], $eSign_arr[13], $eSign_arr[14], $eSign_arr[15], $time_arr[7], $time_arr[6], $time_arr[5], $time_arr[4], $time_arr[3], $time_arr[2], $time_arr[1], $time_arr[0]);
-    $encdata = blowfish_enc($data);  //blowfish 加密DATA数据
-    $length = strlen($encdata);
-    $header = pack('CCCC', 0xec, 0xeb, $commn, $length);
-    $msg = $header . $encdata;
-    $crc = crc16($msg);  //CRC校验
-    $activateMsg = $msg . pack('C2', (($crc & 0xff00) >> 8), ($crc & 0xff)); //拼装数据包
-    $serv->send($fd, $activateMsg);
-    //sendMsg($serv, $fd, $activateMsg);
+    return $dir;
 }
 
 /**
- * 将字节数组转化为String类型的数据
- * @param array $bytes 字节数组
- * @return string 一个String类型的数据
+ * 记录一条 DB 错误日志到独立文件，便于事后排查。
+ * 内容包含：发生时间、上下文标签、异常信息、出错的完整 SQL（若有）以及异常位置。
+ * 默认写入 socket server 同级的 errorlog/db_error.YYYY-MM-DD.log，
+ * 若该目录不存在或不可写则回退到系统临时目录。
+ *
+ * @param string      $context 日志上下文标签（如 heartbeat.critical）
+ * @param string|null $sql     出错的 SQL 语句，外层 catch 无法拿到时传 null
+ * @param \Throwable  $e       捕获到的异常
  */
-function toStr($bytes)
+function logDbError(string $context, ?string $sql, \Throwable $e): void
 {
-    $str = '';
-    foreach ($bytes as $ch) {
-        $str .= chr($ch);
-    }
-    return $str;
+    $file = errorLogDir() . '/db_error.' . date('Y-m-d') . '.log';
+    $line = sprintf(
+        "[%s] [DB_ERROR] ctx=%s err=%s at %s:%d\nSQL: %s\n%s\n",
+        date('Y-m-d H:i:s'),
+        $context,
+        $e->getMessage(),
+        $e->getFile(),
+        $e->getLine(),
+        $sql === null ? '(unavailable)' : $sql,
+        str_repeat('-', 72)
+    );
+
+    @file_put_contents($file, $line, FILE_APPEND | LOCK_EX);
 }
 
 /**
- * 转换一个String字符串为byte数组
- * @param string $string 需要转换的字符串
- * @return array 目标byte数组
+ * 记录一条连接层诊断日志（CRC 失败 / 非法包 / 发送失败等），
+ * 写入 errorlog/notice.YYYY-MM-DD.log，便于生产环境排查（worker 的 echo 在 daemonize 下易丢）。
  */
-function getBytes($string)
+function logNotice(string $tag, string $msg): void
 {
-    $bytes = array();
-    for ($i = 0; $i < strlen($string); $i++) {
-        $bytes[] = ord($string[$i]);
-    }
-    return $bytes;
+    $line = "[" . date('Y-m-d H:i:s') . "] [$tag] $msg\n";
+    @file_put_contents(errorLogDir() . '/notice.' . date('Y-m-d') . '.log', $line, FILE_APPEND | LOCK_EX);
 }
 
 /**
- * 安全执行 SQL：捕获 MySQL/Mysqli 异常，防止 worker 因单条 SQL 失败而崩溃
+ * 安全执行 SQL：捕获 MySQL/Mysqli 异常，防止 worker 因单条 SQL 失败而崩溃。
+ * 异常时会连同出错的 SQL 语句、发生时间一起落盘到 DB 错误日志。
  * @param mixed  $mysqli  Swoole\Database\MysqliProxy
  * @param string $sql     待执行的 SQL
  * @param string $context 日志上下文标签
@@ -829,6 +793,7 @@ function safeQuery($mysqli, string $sql, string $context = '')
     try {
         return $mysqli->query($sql);
     } catch (\Throwable $e) {
+        logDbError($context, $sql, $e);
         echo "[" . date("Y-m-d H:i:s") . "] [DB_ERROR] ctx=$context err=" . $e->getMessage() . "\n";
         return false;
     }
