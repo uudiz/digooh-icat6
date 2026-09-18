@@ -165,6 +165,23 @@ $server->on('packet', function ($serv, $data, $clientInfo) {
 });
 $server->on('close', function ($server, $fd) {
     unset($server->fdlist[$fd]);
+    // 关闭时清理 DB 中的 socket_fd：避免其他模块（如 UDP 控制/刷新命令）通过失效 fd 发送
+    // WHERE socket_fd=? 保证只有当前连接仍然匹配时才清零，防止误伤重连后的新连接
+    $mysqli = null;
+    try {
+        $mysqli = $server->dbPool->get();
+        safeQuery($mysqli, "UPDATE cat_player SET socket_fd=0 WHERE socket_fd=" . intval($fd), 'close.clear_fd');
+    } catch (\Throwable $e) {
+        echo "[" . date("Y-m-d H:i:s") . "] [close] DB error: " . $e->getMessage() . "\n";
+    } finally {
+        if ($mysqli !== null) {
+            try {
+                $server->dbPool->put($mysqli);
+            } catch (\Throwable $e) {
+                // ignore pool put failure
+            }
+        }
+    }
 });
 
 
@@ -274,118 +291,116 @@ function onHeartBeat($serv, $fd, $data, $length)
 
     //终端状态写入cat_player_log
 
-    $mysqli = $serv->dbPool->get();
-    if ($status != 1011 && $status != 1012 && $status != 1013 && $status != 1014 && $status != 1016) {
-        $sql_player = "select id, name, status from cat_player where sn = '" . $loginpara['sn'] . "'";
+    $mysqli = null;
+    try {
+        $mysqli = $serv->dbPool->get();
+        $snEsc = sqlStr($mysqli, $loginpara['sn']);
 
+        // 1) 关键更新：socket_fd + last_connect 拆到独立小 SQL，几乎不可能失败
+        //    即使后面的传感器/状态 SQL 出错，重连后的 fd 也已落库，不会拖垮控制链路
+        $sqlCritical = "UPDATE cat_player SET socket_fd=" . intval($fd)
+            . ", last_connect='" . date('Y-m-d H:i:s') . "'"
+            . " WHERE SN='" . $snEsc . "'";
+        safeQuery($mysqli, $sqlCritical, 'heartbeat.critical');
 
-        $result = $mysqli->query($sql_player);
+        // 2) 状态日志（非关键）
+        if ($status != 1011 && $status != 1012 && $status != 1013 && $status != 1014 && $status != 1016) {
+            $sql_player = "SELECT id, name, status FROM cat_player WHERE sn='" . $snEsc . "'";
+            $result = safeQuery($mysqli, $sql_player, 'heartbeat.select_player');
 
-        if ($result && $result->num_rows) {
+            if ($result && $result->num_rows) {
+                $player = $result->fetch_object();
+                $pls = ' ';
 
-            $player = $result->fetch_object();
-            $pls = ' ';
+                if ($status != $player->status || ($status == 2 || $status == 6)) {
+                    if ($plsName == 'NULL' || $plsName == 'null') {
+                        $plsName = '';
+                    }
+                    if ($plsName != '' && ($status == 2 || $status == 6)) {
+                        $pls = ' playlist [' . $plsName . ']';
+                    }
 
-            if ($status != $player->status || ($status == 2 || $status == 6/*&&$plsName!='null'&&$plsName != 'NULL'*/)) {
-                if ($plsName == 'NULL' || $plsName == 'null') {
-                    $plsName = '';
+                    $status_str = heartbeatStatusStr($status);
+                    $p_str = "Player[" . $player->name . "] Status: " . $status_str . $pls;
+                    $utf8_str = sqlStr($mysqli, mb_convert_encoding($p_str, "UTF-8"));
+                    $sql_log = "INSERT INTO `cat_player_log`(`player_id`,`event_type`,`detail`,`add_time`) VALUES ("
+                        . intval($player->id) . ", 2, '" . $utf8_str . "', '" . date('Y-m-d H:i:s') . "')";
+                    safeQuery($mysqli, $sql_log, 'heartbeat.log_insert');
                 }
-                if ($plsName != '' && ($status == 2 || $status == 6)) {
-                    $pls = ' playlist [' . $plsName . ']';
-                }
+            }
+        }
 
-                $status_str = "unkonwn";
-                switch ($status) {
-                    case 1:
-                        $status_str = "Offline";
-                        break;
-                    case 2:
-                        $status_str = "Playing";
-                        break;
-                    case 3:
-                        $status_str = "Downloading";
-                        break;
-                    case 4:
-                        $status_str = "Stop";
-                        break;
-                    case 5:
-                        $status_str = "Online";
-                        break;
-                    case 6:
-                        $status_str = "Playing";
-                        break;
-                    case 7:
-                        $status_str = "Exception";
-                        break;
-                    case 8:
-                        $status_str = "Upgrade in progress";
-                        break;
-                    case 9:
-                        $status_str = "Login";
-                        break;
-                    case 10:
-                        $status_str = "Sign out";
-                        break;
-                    case 20:
-                        $status_str = " HDMI-Input starts...";
-                        break;
-                    case 21:
-                        $status_str = " HDMI-Input end";
-                        break;
-                    case 127:
-                        $status_str = "Idle(Sleep Mode)";
-                        break;
-                    default:
-                        $status_str = "Unknown(code:" . $status . ")";
-                        break;
-                }
+        // 3) 非关键更新：传感器 / 状态字段（数组拼接，int 列走 sqlInt，varchar 列走 sqlStr）
+        $updates = [];
+        $updates[] = "model=" . intval($pmodel);
+        $updates[] = "status=" . intval($status);
+        $updates[] = "voltage='" . sqlStr($mysqli, $voltage) . "'";
+        $updates[] = "electric='" . sqlStr($mysqli, $elec) . "'";
+        $updates[] = "fan=" . intval($fan);
+        $updates[] = "disk_free=" . sqlInt($discspace);
+        $updates[] = "humidity=" . intval($wet);
+        $updates[] = "temperature=" . intval($temp);
+        $updates[] = "downloaddnum=" . intval($downnum);
+        $updates[] = "offstate=" . intval($offstate);
 
-                $p_str = "Player[" . $player->name . "] Status: " . $status_str . $pls;
-                $utf8_str = mb_convert_encoding($p_str, "UTF-8");
-                $sql_log = "INSERT INTO `cat_player_log`(`player_id` ,`event_type` ,`detail`, `add_time`)VALUES (" . $player->id . ", 2, '" . $utf8_str . "', '" . date('Y-m-d H:i:s') . "')";
-                $mysqli->query($sql_log);
+        if (isset($loginpara['wetnew'])) {
+            $tempwet = sqlInt($loginpara['wetnew']);
+            if ($tempwet != 0) {
+                $updates[] = "dampness='" . round($tempwet / 1000, 2) . "'";
+            }
+        }
+        if (isset($loginpara['tempnew'])) {
+            $tempint = sqlInt($loginpara['tempnew']);
+            if ($tempint != 0) {
+                $updates[] = "temp='" . round($tempint / 1000, 2) . "'";
+            }
+        }
+        if (isset($loginpara['brightnew'])) {
+            $updates[] = "brightness=" . sqlInt($loginpara['brightnew']);
+        }
+        if (isset($loginpara['vol'])) {
+            $volume = intval($loginpara['vol']);
+            if ($volume >= 0 && $volume <= 100) {
+                $updates[] = "volume=" . $volume;
+            }
+        }
+
+        $sqlInfo = "UPDATE cat_player SET " . implode(', ', $updates) . " WHERE SN='" . $snEsc . "'";
+        safeQuery($mysqli, $sqlInfo, 'heartbeat.info');
+    } catch (\Throwable $e) {
+        echo "[" . date("Y-m-d H:i:s") . "] [Heartbeat] unexpected DB error: " . $e->getMessage() . "\n";
+    } finally {
+        if ($mysqli !== null) {
+            try {
+                $serv->dbPool->put($mysqli);
+            } catch (\Throwable $e) {
+                // ignore pool put failure
             }
         }
     }
-    //更新Player状态
+}
 
-    $sql = "UPDATE cat_player 
-            SET model=" . $pmodel . ", status=" . $status . ", voltage='" . $voltage . "', electric='" . $elec . "', fan=" . $fan . ", disk_free='" . $discspace .
-        "', humidity=" . $wet . ", temperature='" . $temp . "', downloaddnum='" . $downnum . "', offstate='" . $offstate .
-        "', last_connect='" . date('Y-m-d H:i:s') . "',socket_fd='" . $fd;
-
-    if (isset($loginpara['wetnew'])) {
-        $tempwet = intval($loginpara['wetnew']);
-        if ($tempwet != 0) {
-            //$realvalue = -6 + 125 * ($tempwet / 65536);
-            $realvalue = $tempwet / 1000;
-            $sql .= "', dampness='" .  round($realvalue, 2);
-        }
+/**
+ * 将心跳 status 代码映射为可读字符串（抽离自 onHeartBeat，降低主函数复杂度）
+ */
+function heartbeatStatusStr(int $status): string
+{
+    switch ($status) {
+        case 1:  return "Offline";
+        case 2:
+        case 6:  return "Playing";
+        case 3:  return "Downloading";
+        case 4:  return "Stop";
+        case 5:  return "Online";
+        case 7:  return "Exception";
+        case 8:  return "Upgrade in progress";
+        case 9:  return "Login";
+        case 10: return "Sign out";
+        case 20: return " HDMI-Input starts...";
+        case 21: return " HDMI-Input end";
+        case 127: return "Idle(Sleep Mode)";
+        default: return "Unknown(code:" . $status . ")";
     }
-    if (isset($loginpara['tempnew'])) {
-        $tempint = intval($loginpara['tempnew']);
-        if ($tempint != 0) {
-            $realvalue = $tempint / 1000;
-            $sql .= "', temp='" . round($realvalue, 2);
-        }
-    }
-    if (isset($loginpara['brightnew'])) {
-        $sql .= "', brightness='" .  $loginpara['brightnew'];
-    }
-
-    if (isset($loginpara['vol'])) {
-        $volume = $loginpara['vol'];
-        // echo "sn:" . $loginpara['sn'] . " Volume received hex: " . $loginpara['vol'] . ", dec:" . $volume . "\n";
-        if ($volume >= 0 && $volume <= 100) {
-            $sql .= "', volume='" .  $volume;
-        }
-    }
-
-
-    $sql .= "' WHERE SN = '" . $loginpara['sn'] . "';";
-
-    $mysqli->query($sql);
-    $serv->dbPool->put($mysqli);
 }
 
 function onLogin($serv, $fd, $data, $input)
@@ -463,119 +478,155 @@ function onLogin($serv, $fd, $data, $input)
     unset($loginpara['payload']);
 
     if ($loginpara) {
-        $mysqli = $serv->dbPool->get();
-        $sql = "SELECT id,name,upgrade_version FROM cat_player WHERE SN = '" . $loginpara['sn'] . "';";
+        $mysqli = null;
+        try {
+            $mysqli = $serv->dbPool->get();
+            $snRaw = (string) ($loginpara['sn'] ?? '');
+            $snEsc = sqlStr($mysqli, $snRaw);
 
-        $result = $mysqli->query($sql);
+            $sql = "SELECT id,name,upgrade_version FROM cat_player WHERE SN = '" . $snEsc . "';";
+            $result = safeQuery($mysqli, $sql, 'login.select_player');
 
-        if ($result && $result->num_rows) {
-
-            $player = $result->fetch_object();
-
-            if (isset($loginpara['gmt'])) {
-                $gmt = preg_replace('/^0+/', '', $loginpara['gmt'] ?? '');
-            } else {
-                $gmt = 1;
-            }
-            $availableSpace = preg_replace('/^0+/', '', $loginpara['availableSpace'] ?? '');
-            $disckspace = preg_replace('/^0+/', '', $loginpara['disckspace'] ?? '');
-            $space = $availableSpace . ',' . $disckspace;
-            $mpegCore = 1;
-            if (isset($loginpara['mpegcore'])) {
-                if ($loginpara['mpegcore'] == '5166') {
-                    $mpegCore = 2;
-                } elseif ($loginpara['mpegcore'] == '5186') {
-                    $mpegCore = 3;
-                } else if ($loginpara['mpegcore'] == '3568') {
-                    $mpegCore = 4;
-                }
-            }
-
-
-            $sql = "UPDATE cat_player SET status=5, reboot_flag=0, batch_reg_status=0, mpeg_core='"
-                . $mpegCore . "', mac='" . $loginpara['mac'] . "', version_length=" . $loginpara['verlen']
-                . ", version='" . $loginpara['ver'] . "',firmver_length=" . $loginpara['firmverlen']
-                . ", firmver='" . $loginpara['firmver'] . "', time_zone=" . $gmt . ", space='" . $space
-                . "', disk_free='" . $availableSpace . "', disk_total='" . $disckspace . "', storage=" . $loginpara['vol'] . ",last_connect='"
-                . date('Y-m-d H:i:s') . "', socket_fd=" . $fd;
-
-            if ($extraPara) {
-                $sql .= ", resolution='" . $extraPara['resolution'] . "',angel=" . $extraPara['angel'];
-                if (isset($extraPara['extra'])) {
-                    if ($extraPara['exLen']) {
-                        $extraPara['extra'] = substr($extraPara['extra'], 0, $extraPara['exLen']);
-                    }
-                    $exPara = json_decode($extraPara['extra'], true);
-                    if ($exPara) {
-                        $simICCID = '';
-                        foreach ($exPara as $key => $value) {
-                            if ($key == 'simICCID') {
-                                // Remove any non-digit characters from the value
-                                $simICCID = preg_replace('/\D/', '', $value ?? '');
-                                continue;
-                            }
-                            $sql .= ", " . $key . "=" . '"' . $value . '"';
-                        }
-                        if ($simICCID != '') {
-                            $mysqli->query("update cat_player_extra set simno = " . '"' . $simICCID . '"' .  " where player_id = " . $player->id);
-                        }
-                    }
-                }
-            }
-
-            $sql .= " WHERE SN = '" . $loginpara['sn'] . "';";
-
-            // echo $sql . PHP_EOL;
-            $mysqli->query($sql);
-
-
-
-            if ($player->upgrade_version . 'A' == $loginpara['ver']) {
-                //执行成功后，删除当前升级包
-                $mysqli->query("update cat_player set upgrade_version = NULL where sn = '" . $loginpara['sn'] . "'");
-            }
-            $respval = 0;
-            $sql = "INSERT INTO `cat_player_log`(`player_id` ,`event_type` ,`detail`, `add_time`)VALUES (" . $player->id . ", 1, 'Player[" .  $player->name . "] login successfully, mac address[" . $loginpara['mac'] . "], software version[" . $loginpara['ver'] . "]', '" . date('Y-m-d H:i:s') . "');";
-            $mysqli->query($sql);
-        } else {
-            if (strlen($loginpara['sn']) == 10 && $loginpara['sn'] != '0010010013') {
-                $ccode = substr($loginpara['sn'], 0, 3);
-                $sql = "select id from cat_company where code=" . $ccode;
-                $result = $mysqli->query($sql);
-
-
-                if ($result && $result->num_rows) {
-                    $company = $result->fetch_object();
-                    $companyid = $company->id;
-
-                    $sql = "insert into cat_player(sn,company_id) values(" . $loginpara['sn'] . "," . $companyid . ")";
-                } else {
-                    $sql = "insert into cat_player(sn,company_id) values(" . $loginpara['sn'] . ",0)";
-                }
-                $mysqli->query($sql);
-                $respval = 0;
-            } else {
-                $respval = 1;
-                echo "[" . date("Y-m-d H:i:s") . "] [logging] sn:" . $loginpara['sn'] . "  login error!\n";
-            }
-        }
-        //2016-02-25 查找mac是否存在,存在的话，更新返回包中的sn;
-        if ($loginpara['sn'] == '0010010013' && $loginpara['ver'] >= '4.0.3.0310A') {
-
-            $temp_mac1 = str_replace(":", "-", $loginpara['mac'] ?? '');
-            $temp_mac2 = $loginpara['mac'] ?? '';
-            $mac_sql = "SELECT sn FROM cat_player WHERE sn!='0010010013' and batch_registration=1 and (mac='" . $temp_mac1 . "' or mac='" . $temp_mac2 . "') limit 0,1;";
-            $result = $mysqli->query($mac_sql);
             if ($result && $result->num_rows) {
-                $rec = $result->fetch_object();;
 
-                $respval = 2;
-                $loginpara['sn'] = $rec->sn;
+                $player = $result->fetch_object();
+
+                if (isset($loginpara['gmt'])) {
+                    $gmt = preg_replace('/^0+/', '', $loginpara['gmt'] ?? '');
+                } else {
+                    $gmt = 1;
+                }
+                $availableSpace = preg_replace('/^0+/', '', $loginpara['availableSpace'] ?? '');
+                $disckspace = preg_replace('/^0+/', '', $loginpara['disckspace'] ?? '');
+                $space = $availableSpace . ',' . $disckspace;
+                $mpegCore = 1;
+                if (isset($loginpara['mpegcore'])) {
+                    if ($loginpara['mpegcore'] == '5166') {
+                        $mpegCore = 2;
+                    } elseif ($loginpara['mpegcore'] == '5186') {
+                        $mpegCore = 3;
+                    } else if ($loginpara['mpegcore'] == '3568') {
+                        $mpegCore = 4;
+                    }
+                }
+
+                // 1) 关键更新：socket_fd + status + last_connect 拆到独立小 SQL
+                //    避免其它字段（如 disk_free/mac/version）写时失败时连带 socket_fd 丢失
+                $sqlCritical = "UPDATE cat_player SET socket_fd=" . intval($fd)
+                    . ", status=5, last_connect='" . date('Y-m-d H:i:s') . "'"
+                    . " WHERE SN='" . $snEsc . "'";
+                safeQuery($mysqli, $sqlCritical, 'login.critical');
+
+                // 2) 非关键更新：设备属性字段（数组拼接，int 列用 sqlInt，varchar 列用 sqlStr）
+                $updates = [];
+                $updates[] = "reboot_flag=0";
+                $updates[] = "batch_reg_status=0";
+                $updates[] = "mpeg_core=" . intval($mpegCore);
+                $updates[] = "mac='" . sqlStr($mysqli, $loginpara['mac'] ?? '') . "'";
+                $updates[] = "version_length=" . sqlInt($loginpara['verlen'] ?? 0);
+                $updates[] = "version='" . sqlStr($mysqli, $loginpara['ver'] ?? '') . "'";
+                $updates[] = "firmver_length=" . sqlInt($loginpara['firmverlen'] ?? 0);
+                $updates[] = "firmver='" . sqlStr($mysqli, $loginpara['firmver'] ?? '') . "'";
+                $updates[] = "time_zone=" . floatval($gmt);
+                $updates[] = "space='" . sqlStr($mysqli, $space) . "'";
+                $updates[] = "disk_free=" . sqlInt($availableSpace);
+                $updates[] = "disk_total=" . sqlInt($disckspace);
+                $updates[] = "storage=" . sqlInt($loginpara['vol'] ?? 0);
+
+                $simICCID = '';
+                $extraAssigns = [];
+                if ($extraPara) {
+                    $updates[] = "resolution='" . sqlStr($mysqli, $extraPara['resolution'] ?? '') . "'";
+                    $updates[] = "angel=" . sqlInt($extraPara['angel'] ?? 0);
+                    if (isset($extraPara['extra'])) {
+                        if (!empty($extraPara['exLen'])) {
+                            $extraPara['extra'] = substr($extraPara['extra'], 0, $extraPara['exLen']);
+                        }
+                        $exPara = json_decode($extraPara['extra'], true);
+                        if (is_array($exPara)) {
+                            foreach ($exPara as $key => $value) {
+                                if ($key == 'simICCID') {
+                                    $simICCID = preg_replace('/\D/', '', (string) ($value ?? ''));
+                                    continue;
+                                }
+                                // 防御：只允许合法列名，避免 JSON 字段名直接拼接到 SQL 造成注入
+                                if (preg_match('/^[a-zA-Z_][a-zA-Z0-9_]*$/', (string) $key)) {
+                                    $extraAssigns[] = "`$key`='" . sqlStr($mysqli, $value) . "'";
+                                }
+                            }
+                        }
+                    }
+                }
+
+                $sqlInfo = "UPDATE cat_player SET "
+                    . implode(', ', array_merge($updates, $extraAssigns))
+                    . " WHERE SN='" . $snEsc . "'";
+                safeQuery($mysqli, $sqlInfo, 'login.info');
+
+                if ($simICCID !== '') {
+                    safeQuery($mysqli,
+                        "UPDATE cat_player_extra SET simno='" . sqlStr($mysqli, $simICCID) . "' WHERE player_id=" . intval($player->id),
+                        'login.sim');
+                }
+
+                if (($player->upgrade_version . 'A') === (string) ($loginpara['ver'] ?? '')) {
+                    // 升级完成后清空 upgrade_version
+                    safeQuery($mysqli, "UPDATE cat_player SET upgrade_version=NULL WHERE SN='" . $snEsc . "'", 'login.upgrade_clear');
+                }
+                $respval = 0;
+
+                $logDetail = sqlStr($mysqli,
+                    "Player[" . $player->name . "] login successfully, mac address[" . ($loginpara['mac'] ?? '')
+                    . "], software version[" . ($loginpara['ver'] ?? '') . "]");
+                safeQuery($mysqli,
+                    "INSERT INTO `cat_player_log`(`player_id`,`event_type`,`detail`,`add_time`) VALUES ("
+                    . intval($player->id) . ", 1, '" . $logDetail . "', '" . date('Y-m-d H:i:s') . "')",
+                    'login.log_insert');
+            } else {
+                if (strlen($snRaw) == 10 && $snRaw != '0010010013') {
+                    $ccode = sqlInt(substr($snRaw, 0, 3));
+                    $sql = "SELECT id FROM cat_company WHERE code=" . $ccode;
+                    $result = safeQuery($mysqli, $sql, 'login.select_company');
+
+                    $companyid = 0;
+                    if ($result && $result->num_rows) {
+                        $company = $result->fetch_object();
+                        $companyid = intval($company->id);
+                    }
+                    safeQuery($mysqli,
+                        "INSERT INTO cat_player(sn,company_id) VALUES('" . $snEsc . "'," . $companyid . ")",
+                        'login.auto_register');
+                    $respval = 0;
+                } else {
+                    $respval = 1;
+                    echo "[" . date("Y-m-d H:i:s") . "] [logging] sn:" . $snRaw . "  login error!\n";
+                }
+            }
+            //2016-02-25 查找mac是否存在,存在的话，更新返回包中的sn;
+            if ($snRaw === '0010010013' && ($loginpara['ver'] ?? '') >= '4.0.3.0310A') {
+
+                $temp_mac1 = sqlStr($mysqli, str_replace(":", "-", $loginpara['mac'] ?? ''));
+                $temp_mac2 = sqlStr($mysqli, $loginpara['mac'] ?? '');
+                $mac_sql = "SELECT sn FROM cat_player WHERE sn!='0010010013' AND batch_registration=1 AND (mac='" . $temp_mac1 . "' OR mac='" . $temp_mac2 . "') LIMIT 0,1;";
+                $result = safeQuery($mysqli, $mac_sql, 'login.batch_match_mac');
+                if ($result && $result->num_rows) {
+                    $rec = $result->fetch_object();
+
+                    $respval = 2;
+                    $loginpara['sn'] = $rec->sn;
+                }
+            }
+        } catch (\Throwable $e) {
+            echo "[" . date("Y-m-d H:i:s") . "] [Login] unexpected DB error: " . $e->getMessage() . "\n";
+        } finally {
+            if ($mysqli !== null) {
+                try {
+                    $serv->dbPool->put($mysqli);
+                } catch (\Throwable $e) {
+                    // ignore pool put failure
+                }
             }
         }
-
-        //echo 'reg  respval: '.$respval.', sn: '.$loginpara['sn']."\n";
-        $serv->dbPool->put($mysqli);
     }
     $data = pack('Ca4Ca10C', 0x00, $loginpara['netid'], $loginpara['snlen'], $loginpara['sn'], $respval);
     $encdata = blowfish_enc($data); //blowfish 加密DATA数据
@@ -764,4 +815,56 @@ function getBytes($string)
         $bytes[] = ord($string[$i]);
     }
     return $bytes;
+}
+
+/**
+ * 安全执行 SQL：捕获 MySQL/Mysqli 异常，防止 worker 因单条 SQL 失败而崩溃
+ * @param mixed  $mysqli  Swoole\Database\MysqliProxy
+ * @param string $sql     待执行的 SQL
+ * @param string $context 日志上下文标签
+ * @return mysqli_result|bool 成功返回结果或 true；失败返回 false
+ */
+function safeQuery($mysqli, string $sql, string $context = '')
+{
+    try {
+        return $mysqli->query($sql);
+    } catch (\Throwable $e) {
+        echo "[" . date("Y-m-d H:i:s") . "] [DB_ERROR] ctx=$context err=" . $e->getMessage() . "\n";
+        return false;
+    }
+}
+
+/**
+ * 从 packet 原始字节串中安全提取整数：避免向 int/tinyint 列写入含非数字字符时触发
+ * 严格模式下的 "Data truncated for column" 异常（这个异常以前会拖垮整个 UPDATE，
+ * 导致 socket_fd 一并丢失）。
+ */
+function sqlInt($value, int $default = 0): int
+{
+    $str = (string) $value;
+    $num = preg_replace('/[^\d\-]/', '', $str);
+    if ($num === '' || $num === '-' || $num === null) {
+        return $default;
+    }
+    return intval($num);
+}
+
+/**
+ * 清洗 + 转义 SQL 字符串值：先去掉 null 字节等控制字符（会直接导致 MySQL 协议错误），
+ * 再走 mysqli->real_escape_string 防止 SQL 注入。
+ */
+function sqlStr($mysqli, $value): string
+{
+    $str = (string) $value;
+    // 保留可见 ASCII + UTF-8 高位字节；剥离 null / 控制字符
+    $cleaned = preg_replace('/[\x00-\x08\x0B\x0C\x0E-\x1F\x7F]/u', '', $str);
+    if ($cleaned === null) {
+        // preg_replace 对非法 UTF-8 返回 null：fallback 到纯 ASCII 过滤
+        $cleaned = preg_replace('/[^\x20-\x7E]/', '', $str);
+    }
+    try {
+        return @$mysqli->real_escape_string($cleaned);
+    } catch (\Throwable $e) {
+        return addslashes($cleaned);
+    }
 }

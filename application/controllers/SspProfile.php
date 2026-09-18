@@ -91,7 +91,8 @@ class SspProfile extends MY_Controller
         }
 
         $this->load->model('device');
-        $players = $this->device->get_player_list($this->get_cid());
+        // with_detail=true so sn / company_name are available for the assignment player table
+        $players = $this->device->get_player_list($this->get_cid(), false, true);
 
         // existing bindings of every player (across all profiles), used by the
         // client side assignment conflict check

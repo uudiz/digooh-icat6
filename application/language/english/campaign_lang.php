@@ -133,7 +133,7 @@ $lang['campaign.ob.comon.new'] = "< style='text-align:left'>Warning: Overbooking
 $lang['campaign.ob.item'] = "<p style='text-align:left'>%s at [%s] and player[%s]</p>";
 $lang['campaign.ob.solution'] = "<p style='text-align:left'>Solution below: </p>";
 $lang['campaign.ob.opiton1'] = "<p style='text-align:left'>1) Decrease Percentage or Total Views.</p>";
-$lang['campaign.ob.opiton2'] = "<p style='text-align:left'>2) Increase campaign time range and/or increase Criteria’s(players) timer range.</p>";
+$lang['campaign.ob.opiton2'] = "<p style='text-align:left'>2) Increase campaign time range and/or increase Criteria's(players) timer range.</p>";
 $lang['campaign.ob.opiton3'] = "<p style='text-align:left'>3) Add more players to the selected criteria.</p>";
 $lang['campaign.ob.opiton4'] = "<p style='text-align:left'>4) De-select conflicted campaign(%s).</p>";
 $lang['campaign.ob.slot.detail'] = "<p style='text-align:left'>Hour %s-%s: avaliable %d s<br>Booked %d s, free %d s.<br>[%s] needs %d s overbooked by %d6 s.</p>";
