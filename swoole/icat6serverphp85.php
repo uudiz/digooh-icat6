@@ -72,6 +72,10 @@ $server->set([
 
 
 $server->on('start', function ($serv) {
+    // 服务器(重)启动：进程一旦重启，OS 已销毁全部旧 TCP 连接，
+    // DB 里遗留的 socket_fd 全部失效；在开始接收心跳前一次性重置，
+    // 避免控制/刷新命令打到失效或已被系统复用的 fd。
+    resetStaleConnections($serv);
     echo "Swoole server is started at " . date("Y-m-d H:i:s") . PHP_EOL;
 });
 
@@ -210,6 +214,36 @@ $server->on('close', function ($server, $fd) {
 
 
 $server->start();
+
+
+/**
+ * 服务器(重)启动时清理上次进程遗留的失效连接状态：
+ * 进程重启后所有旧 TCP 连接已被 OS 销毁，DB 里的 socket_fd 全部失效。
+ * 在开始接收新连接前一次性把 socket_fd 清零，并把在线终端打回 offline；
+ * 终端重连后的心跳会自动把真实状态改回来。
+ * 该操作幂等，无论上次是优雅退出还是 kill -9 / 宕机都能兜底。
+ */
+function resetStaleConnections($serv)
+{
+    $mysqli = null;
+    try {
+        $mysqli = $serv->dbPool->get();
+        safeQuery($mysqli, "UPDATE cat_player SET socket_fd=0 WHERE socket_fd > 0", 'start.reset_fd');
+       // safeQuery($mysqli, "UPDATE cat_player SET status=1 WHERE status > 1", 'start.reset_status');
+        echo "[" . date("Y-m-d H:i:s") . "] [start] stale socket_fd/status reset done\n";
+    } catch (\Throwable $e) {
+        logDbError('start', null, $e);
+        echo "[" . date("Y-m-d H:i:s") . "] [start] reset stale connections failed: " . $e->getMessage() . "\n";
+    } finally {
+        if ($mysqli !== null) {
+            try {
+                $serv->dbPool->put($mysqli);
+            } catch (\Throwable $e) {
+                // ignore pool put failure
+            }
+        }
+    }
+}
 
 
 function onHeartBeat($serv, $fd, $data, $length)

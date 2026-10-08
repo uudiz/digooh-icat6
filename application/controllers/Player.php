@@ -443,17 +443,14 @@ class Player extends MY_Controller
     {
         $this->load->model('program');
         $result = array();
-        $criteria = $this->input->post('criteria_select');
-        $tags = $this->input->post('tags_select');
-        $screensel = $this->input->post('screensel');
+        // 增量保存语义：未提交的字段（如 Setup User 精简表单里没有渲染的字段）
+        // 保持数据库原值不动；提交为空串才视为清空
+        $criteria = $this->posted('criteria_select');
+        $tags = $this->posted('tags_select');
         $needPulish = false;
         $addingNew = false;
         $id = $this->input->post('id');
         $this->load->model('device');
-
-        if ($screensel === null) {
-            $screensel = 0;
-        }
 
 
         $cid = $this->get_cid();
@@ -461,18 +458,34 @@ class Player extends MY_Controller
             $result = array('code' => 1, 'msg' => $this->lang->line('warn.system.user'));
         } else {
             $this->load->library('form_validation');
-            $this->form_validation->set_rules('name', $this->lang->line('player'), 'trim|required');
-
-            if ($this->config->item('digooh_player_form_validation')) {
-                $this->form_validation->set_rules('setupdate', $this->lang->line('setup_date'), 'trim|required');
-                $this->form_validation->set_rules('customsn1', $this->lang->line('custom_sn1'), 'trim|required');
-                $this->form_validation->set_rules('customsn2', $this->lang->line('custom_sn2'), 'trim|required');
-                $this->form_validation->set_rules('pps', $this->lang->line('pps'), 'trim|required');
+            // 校验规则只在对应字段本次提交了时才施加（精简表单不渲染的字段不参与）
+            $hasRules = false;
+            if ($this->posted('name') !== null) {
+                $this->form_validation->set_rules('name', $this->lang->line('player'), 'trim|required');
+                $hasRules = true;
             }
 
-            if ($this->form_validation->run() == false) {
+            if ($this->config->item('digooh_player_form_validation')) {
+                $requiredExtras = array(
+                    'setupdate' => 'setup_date',
+                    'customsn1' => 'custom_sn1',
+                    'customsn2' => 'custom_sn2',
+                    'pps' => 'pps',
+                );
+                foreach ($requiredExtras as $field => $langKey) {
+                    if ($this->posted($field) !== null) {
+                        $this->form_validation->set_rules($field, $this->lang->line($langKey), 'trim|required');
+                        $hasRules = true;
+                    }
+                }
+            }
+
+            // CI 在“一条规则都没登记”时 run() 固定返回 FALSE（Form_validation.php:425-431），
+            // 精简提交（例如 Setup User 只改地址、不带 name）会被误判成校验失败，
+            // 所以只有本次确实有规则时才采纳 run() 的结果
+            if ($hasRules && $this->form_validation->run() == false) {
                 $result = array('code' => 1, 'msg' => validation_errors());
-            } elseif ($criteria == null) {
+            } elseif ($criteria !== null && $criteria == "") {
                 $result = array('code' => 1, 'msg' => "Minimum one criteria is required!");
             } else {
 
@@ -481,114 +494,146 @@ class Player extends MY_Controller
                     $result = array('code' => 1, 'msg' => sprintf($this->lang->line('player.name.exsit'), $this->input->post('name')));
                 } else {
                     $player_type = 1;
-                    $barcode = $this->input->post('barcode');
-                    $conname = $this->input->post('conname');
-                    $conphone = $this->input->post('conphone');
-                    $conemail = $this->input->post('conemail');
-                    $conaddr = $this->input->post('conaddr');
-                    $conzipcode = $this->input->post('zipcode');
-                    $simno = $this->input->post('simno');
-                    $contown = $this->input->post('contown');
-                    $street_num = $this->input->post('street_num');
-                    $house_num = $this->input->post('house_num');
+                    $barcode = $this->posted('barcode');
+                    $conname = $this->posted('conname');
+                    $conphone = $this->posted('conphone');
+                    $conemail = $this->posted('conemail');
+                    $conaddr = $this->posted('conaddr');
+                    $conzipcode = $this->posted('zipcode');
+                    $simno = $this->posted('simno');
+                    $contown = $this->posted('contown');
+                    $street_num = $this->posted('street_num');
+                    $house_num = $this->posted('house_num');
 
 
-                    $simvolume = $this->input->post('simvolume');
-                    $itemnum = $this->input->post('itemnum');
-                    $screensize = $this->input->post('screensize');
-                    $modelname = $this->input->post('modelname');
-                    $sided = $this->input->post('sided');
-                    $partnerid = $this->input->post('partnerid');
-                    $locationid = $this->input->post('locationid');
-                    $geox = $this->input->post('geox');
-                    $geoy = $this->input->post('geoy');
-                    $setupdate = $this->input->post('setupdate');
-                    $viewdirection = $this->input->post('viewdirection');
-                    $pps = $this->input->post('pps');
-                    $visitors = $this->input->post('visitors');
-                    $displaynum = $this->input->post('displaynum');
-                    $state =  $this->input->post('state');
-                    $country =  $this->input->post('country');
-                    $customsn1 =  $this->input->post('customsn1');
-                    $customsn2 =  $this->input->post('customsn2');
+                    $simvolume = $this->posted('simvolume');
+                    $itemnum = $this->posted('itemnum');
+                    $screensize = $this->posted('screensize');
+                    $modelname = $this->posted('modelname');
+                    $sided = $this->posted('sided');
+                    $partnerid = $this->posted('partnerid');
+                    $locationid = $this->posted('locationid');
+                    $geox = $this->posted('geox');
+                    $geoy = $this->posted('geoy');
+                    $setupdate = $this->posted('setupdate');
+                    $viewdirection = $this->posted('viewdirection');
+                    $pps = $this->posted('pps');
+                    $visitors = $this->posted('visitors');
+                    $displaynum = $this->posted('displaynum');
+                    $state =  $this->posted('state');
+                    $country =  $this->posted('country');
+                    $customsn1 =  $this->posted('customsn1');
+                    $customsn2 =  $this->posted('customsn2');
+
+                    // 只写入本次实际提交的字段，未提交的保持库中原值
+                    $extradata = array();
+                    $extras = array(
+                        'barcode' => $barcode,
+                        'conname' => $conname,
+                        'conphone' => $conphone,
+                        'conemail' => $conemail,
+                        'conaddr' => $conaddr,
+                        'conzipcode' => $conzipcode,
+                        'simno' => $simno,
+                        'contown' => $contown,
+                        'simvolume' => $simvolume,
+                        'itemnum' => $itemnum,
+                        'screensize' => $screensize,
+                        'modelname' => $modelname,
+                        'partnerid' => $partnerid,
+                        'locationid' => $locationid,
+                        'geox' => $geox,
+                        'geoy' => $geoy,
+                        'viewdirection' => $viewdirection,
+                        'pps' => $pps,
+                        'visitors' => $visitors,
+                        'displaynum' => $displaynum,
+                        'state' => $state,
+                        'country' => $country,
+                        'custom_sn1' => $customsn1,
+                        'custom_sn2' => $customsn2,
+                    );
+                    foreach ($extras as $key => $value) {
+                        if ($value !== null) {
+                            $extradata[$key] = $value ? $value : "";
+                        }
+                    }
+                    if ($sided !== null) {
+                        $extradata['sided'] = $sided;
+                    }
+                    if ($setupdate !== null) {
+                        $extradata['setupdate'] = $setupdate;
+                    }
+                    if ($street_num !== null) {
+                        $extradata['street_num'] = $street_num;
+                    }
+                    if ($house_num !== null) {
+                        $extradata['house_num'] = $house_num;
+                    }
+                    $last_maintenance = $this->posted('last_maintenance');
+                    if ($last_maintenance !== null) {
+                        $extradata['last_maintenance'] = $last_maintenance;
+                    }
 
 
-                    $extradata['barcode'] = $barcode ? $barcode : "";
-                    $extradata['conname'] = $conname ? $conname : "";
-                    $extradata['conphone'] = $conphone ? $conphone : "";
-                    $extradata['conemail'] = $conemail ? $conemail : "";
-                    $extradata['conaddr'] = $conaddr ? $conaddr : "";
-                    $extradata['conzipcode'] = $conzipcode ? $conzipcode : "";
-                    $extradata['simno'] = $simno ? $simno : "";
-                    $extradata['contown'] = $contown ? $contown : "";
-
-                    $extradata['simvolume'] = $simvolume ? $simvolume : "";
-                    $extradata['itemnum'] = $itemnum ? $itemnum : "";
-                    $extradata['screensize'] = $screensize ? $screensize : "";
-                    $extradata['modelname'] = $modelname ? $modelname : "";
-                    $extradata['sided'] =     $sided;
-                    $extradata['partnerid'] = $partnerid ? $partnerid : "";
-                    $extradata['locationid'] = $locationid ? $locationid : "";
-                    $extradata['geox'] = $geox ? $geox : "";
-                    $extradata['geoy'] = $geoy ? $geoy : "";
-                    $extradata['setupdate'] = $setupdate;
-                    $extradata['viewdirection'] = $viewdirection ? $viewdirection : "";
-                    $extradata['pps'] = $pps ? $pps : "";
-                    $extradata['visitors'] = $visitors ? $visitors : "";
-                    $extradata['displaynum'] = $displaynum ? $displaynum : "";
-                    $extradata['state'] = $state ? $state : "";
-                    $extradata['country'] = $country ? $country : "";
-                    $extradata['custom_sn1'] = $customsn1 ? $customsn1 : "";
-                    $extradata['custom_sn2'] = $customsn2 ? $customsn2 : "";
-
-                    $extradata['street_num'] = $street_num;
-                    $extradata['last_maintenance'] = $this->input->post('last_maintenance');
-
-
-                    $pos_tags = $this->input->post('pos_tags');
-                    if ($pos_tags) {
+                    // 这几个跟上面的 extra 字段同一套语义：提交才写、提交空串即清空；
+                    // 用 truthy 判断会导致用户在表单里删掉内容后清不掉
+                    $pos_tags = $this->posted('pos_tags');
+                    if ($pos_tags !== null) {
                         $extradata['pos_tags'] = $pos_tags;
                     }
-                    $ssp_exclude = $this->input->post('ssp_exclude');
-                    if ($ssp_exclude) {
+                    $ssp_exclude = $this->posted('ssp_exclude');
+                    if ($ssp_exclude !== null) {
                         $extradata['ssp_exclude'] = $ssp_exclude;
                     }
 
-                    $ssp_additional = $this->input->post('ssp_additional');
-                    if ($ssp_additional) {
+                    $ssp_additional = $this->posted('ssp_additional');
+                    if ($ssp_additional !== null) {
                         $extradata['ssp_additional'] = $ssp_additional;
                     }
 
-                    $ssp_dsp_alias = $this->input->post('ssp_dsp_alias');
-                    if ($ssp_dsp_alias) {
+                    $ssp_dsp_alias = $this->posted('ssp_dsp_alias');
+                    if ($ssp_dsp_alias !== null) {
                         $extradata['ssp_dsp_alias'] = $ssp_dsp_alias;
                     }
 
-                    $ssp_dsp_ref = $this->input->post('ssp_dsp_ref');
-                    if ($ssp_dsp_ref) {
+                    $ssp_dsp_ref = $this->posted('ssp_dsp_ref');
+                    if ($ssp_dsp_ref !== null) {
                         $extradata['ssp_dsp_ref'] = $ssp_dsp_ref;
                     }
-                    $timer_id = $this->input->post('timer_config_id');
+                    $timer_id = $this->posted('timer_config_id');
                     $timer_id = $timer_id > '0' ? $timer_id : null;
 
+                    // 同样只写入本次实际提交的字段
                     $data = array(
-                        'name' => $this->input->post('name'),
-                        'city_code' => $this->input->post('city_code'),
-                        'descr' => $this->input->post('descr'),
-                        'timer_config_id' => $timer_id,
                         'player_type' => $player_type,
-                        'screen_oritation' => $screensel,
-                        'video_playback' => $this->input->post('video_playback'),
-                        //'mac' => $this->input->post('mac')
-
                     );
-
-                    if ($this->config->item('has_sensor')) {
-
-                        $data['threshold_id'] = $this->input->post('threshold_id') ?: null;
+                    if (($vname = $this->posted('name')) !== null) {
+                        $data['name'] = $vname;
+                    }
+                    if (($vcity = $this->posted('city_code')) !== null) {
+                        $data['city_code'] = $vcity;
+                    }
+                    if (($vdescr = $this->posted('descr')) !== null) {
+                        $data['descr'] = $vdescr;
+                    }
+                    if (($vdetails = $this->posted('details')) !== null) {
+                        $data['details'] = $vdetails;
+                    }
+                    if (($vtimer = $this->posted('timer_config_id')) !== null) {
+                        $data['timer_config_id'] = $timer_id;
+                    }
+                    if (($vscreensel = $this->posted('screensel')) !== null) {
+                        $data['screen_oritation'] = $vscreensel;
+                    }
+                    if (($vvideo = $this->posted('video_playback')) !== null) {
+                        $data['video_playback'] = $vvideo ? $vvideo : 0;
                     }
 
-                    $data['details'] = $this->input->post('details');
+                    if ($this->config->item('has_sensor') && ($vthreshold = $this->posted('threshold_id')) !== null) {
+
+                        $data['threshold_id'] = $vthreshold ?: null;
+                    }
 
 
 
@@ -604,28 +649,31 @@ class Player extends MY_Controller
 
                         $curcris = $this->device->get_criteria_by_player($id);
 
-                        if ($curcris && $criteria) {
-                            $get_cirarray = explode(",", $criteria);
+                        // criteria 未提交时不参与比较（增量保存）
+                        $criteria_cmp = $criteria === null ? implode(',', $curcris ? $curcris : array()) : $criteria;
+                        if ($curcris && $criteria_cmp) {
+                            $get_cirarray = explode(",", $criteria_cmp);
                             sort($curcris);
                             sort($get_cirarray);
                             if ($curcris != $get_cirarray) {
                                 $needPulish = true;
                             }
-                        } elseif ((!$curcris && $criteria) || (!$criteria && $curcris)) {
+                        } elseif ((!$curcris && $criteria_cmp) || (!$criteria_cmp && $curcris)) {
                             $needPulish = true;
                         }
 
                         $curTags = $this->device->get_tags_by_player($id);
 
-                        if ($curTags && $tags) {
+                        $tags_cmp = $tags === null ? ($curTags ? implode(',', array_column($curTags, 'id')) : '') : $tags;
+                        if ($curTags && $tags_cmp) {
                             $cur_tagarray = array_column($curTags, 'id');
-                            $get_tagarray = explode(",", $tags);
+                            $get_tagarray = explode(",", $tags_cmp);
                             sort($cur_tagarray);
                             sort($get_tagarray);
                             if ($cur_tagarray != $get_tagarray) {
                                 $needPulish = true;
                             }
-                        } elseif ((!$curTags && $tags) || (!$tags && $curTags)) {
+                        } elseif ((!$curTags && $tags_cmp) || (!$tags_cmp && $curTags)) {
                             $needPulish = true;
                         }
 
@@ -673,12 +721,26 @@ class Player extends MY_Controller
         //FIXME
 
         if ($this->config->item('ssp_feature') && $this->is_sspEnabled() && $id) {
-            $ssp_tags = $this->input->post("ssptags_select");
+            // 主表保存成功才动 SSP 相关的绑定/重算，否则校验失败的提交不应改变已有数据
+            $saveOk = isset($result['code']) && $result['code'] == 0;
 
+            // SSP 区块未渲染时（如 setup user）不提交相关字段，同步跳过
+            $ssp_categories =  $this->posted("ssp_categories");
+            if ($ssp_categories !== null && $saveOk) {
+                $this->device->sync_player_sspcriteria($id, $ssp_categories);
+            }
 
-
-            $ssp_categories =  $this->input->post("ssp_categories");
-            $this->device->sync_player_sspcriteria($id, $ssp_categories);
+            // ssp tags：新表单以逗号串提交，旧 client (static/js/player.js) 提交数组，两种都兼容
+            $ssptags = $this->posted("ssptags_select");
+            if ($ssptags !== null && $saveOk) {
+                if (!is_array($ssptags)) {
+                    $ssptags = explode(',', $ssptags);
+                }
+                $ssptag_ids = array_filter(array_map('intval', $ssptags), function ($v) {
+                    return $v > 0;
+                });
+                $this->device->sync_player_ssptag($id, $ssptag_ids);
+            }
             /*
             $ssp_catogeries = array();
 
@@ -706,39 +768,40 @@ class Player extends MY_Controller
            
 */
 
-            $mon = $this->input->post('mon');
-            $tue = $this->input->post('tue');
-            $wed = $this->input->post('wed');
-            $thu = $this->input->post('thu');
-            $fri = $this->input->post('fri');
-            $sat = $this->input->post('sat');
-            $sun = $this->input->post('sun');
+            if ($this->posted('mon') !== null && $saveOk) {
+                $mon = $this->posted('mon');
+                $tue = $this->posted('tue');
+                $wed = $this->posted('wed');
+                $thu = $this->posted('thu');
+                $fri = $this->posted('fri');
+                $sat = $this->posted('sat');
+                $sun = $this->posted('sun');
 
 
-            $mon = $mon ? $mon : "0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0";
-            $tue = $tue ? $tue : "0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0";
-            $wed = $wed ? $wed : "0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0";
-            $thu = $thu ? $thu : "0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0";
-            $fri = $fri ? $fri : "0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0";
-            $sat = $sat ? $sat : "0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0";
-            $sun = $sun ? $sun : "0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0";
+                $mon = $mon ? $mon : "0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0";
+                $tue = $tue ? $tue : "0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0";
+                $wed = $wed ? $wed : "0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0";
+                $thu = $thu ? $thu : "0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0";
+                $fri = $fri ? $fri : "0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0";
+                $sat = $sat ? $sat : "0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0";
+                $sun = $sun ? $sun : "0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0";
 
 
-            $amc = array(
-                'mon' => $mon,
-                'tue' => $tue,
-                'wed' => $wed,
-                'thu' => $thu,
-                'fri' => $fri,
-                'sat' => $sat,
-                'sun' => $sun,
-            );
-            $this->device->update_player_amc($id, $amc);
+                $amc = array(
+                    'mon' => $mon,
+                    'tue' => $tue,
+                    'wed' => $wed,
+                    'thu' => $thu,
+                    'fri' => $fri,
+                    'sat' => $sat,
+                    'sun' => $sun,
+                );
+                $this->device->update_player_amc($id, $amc);
+            }
 
             // SSP priority profile bindings (only when the form submitted them and the save succeeded)
-            $ssp_profile_bindings = $this->input->post('ssp_profile_bindings');
-            if ($ssp_profile_bindings !== null && $ssp_profile_bindings !== false
-                && isset($result['code']) && $result['code'] == 0) {
+            $ssp_profile_bindings = $this->posted('ssp_profile_bindings');
+            if (is_string($ssp_profile_bindings) && $saveOk) {
                 $bindings = json_decode($ssp_profile_bindings, true);
                 if (is_array($bindings)) {
                     $this->load->model('Ssp_server_model');

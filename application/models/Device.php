@@ -1058,7 +1058,7 @@ class Device extends MY_Model
      * @param object $id
      * @return
      */
-    public function update_player_wCriteria($array, $id, $cristr = '', $tagstr = '')
+    public function update_player_wCriteria($array, $id, $cristr = null, $tagstr = null)
     {
         if (empty($array)) {
             return 0;
@@ -1066,18 +1066,26 @@ class Device extends MY_Model
 
         $this->update_player($array, $id);
 
-        $result = $this->db->query("delete from cat_criteria_player where player_id=" . $id);
-        if (!empty($cristr)) {
-            $criteria = explode(",", $cristr);
-            foreach ($criteria as $criid) {
-                if (!empty($criid)) {
-                    $data = array('criteria_id' => $criid, 'player_id' => $id);
-                    $this->db->insert('cat_criteria_player', $data);
+        // $cristr / $tagstr 为 null 表示本次没有提交该组数据（增量保存），
+        // 不能删重建，否则会把已有的 criteria / tags 关系清掉
+        if ($cristr === null) {
+            $result = true;
+        } else {
+            $result = $this->db->query("delete from cat_criteria_player where player_id=" . $id);
+            if (!empty($cristr)) {
+                $criteria = explode(",", $cristr);
+                foreach ($criteria as $criid) {
+                    if (!empty($criid)) {
+                        $data = array('criteria_id' => $criid, 'player_id' => $id);
+                        $this->db->insert('cat_criteria_player', $data);
+                    }
                 }
             }
         }
 
-        $this->sync_tags($id, $tagstr, "App\Player");
+        if ($tagstr !== null) {
+            $this->sync_tags($id, $tagstr, "App\Player");
+        }
         /*
         $this->detach_tags($id,'App\\\Player');
         //$this->db->query("delete from taggables where taggable_id=".$id);

@@ -146,6 +146,17 @@ class MY_Controller extends CI_Controller
     }
 
     /**
+     * 取 POST 值，按"key 是否提交"区分：
+     * 未提交返回 null（增量更新时跳过该字段），提交为空串返回空串（清空）。
+     * 仅 jQuery 序列化对象会丢弃 undefined 字段，故不会误丢显式清空。
+     * @return string|array|null
+     */
+    public function posted($key)
+    {
+        return isset($_POST[$key]) ? $this->input->post($key) : null;
+    }
+
+    /**
      * 获取当前公司的时区
      * @return string|false
      */
