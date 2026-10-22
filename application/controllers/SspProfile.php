@@ -5,8 +5,8 @@ class SspProfile extends MY_Controller
     public function __construct()
     {
         parent::__construct();
-        // switch in config.mia.php: $config['ssp_profiles'] = FALSE;
-        if (!$this->config->item('ssp_feature') || $this->config->item('ssp_profiles') === FALSE) {
+        // switch in config.mia.php: $config['ssp_profiles'] = TRUE; (off when not set)
+        if (!$this->config->item('ssp_feature') || !$this->config->item('ssp_profiles')) {
             show_404();
         }
         $this->lang->load('ssp');

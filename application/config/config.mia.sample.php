@@ -316,8 +316,8 @@ $config['cost_entry'] = true;
 $config['with_template'] = false;
 $config['with_partners'] = true;
 $config['ssp_feature'] = true;
-// SSP priority profiles (menu, /sspProfile page, player assignment). Requires ssp_feature. FALSE hides and disables them.
-$config['ssp_profiles'] = true;
+// SSP priority profiles (menu, /sspProfile page, player assignment). Requires ssp_feature. Off when the key is missing; set TRUE to enable.
+$config['ssp_profiles'] = false;
 $config['xslot_on'] = true;
 $config['cost_entry'] = FALSE;
 $config['socket_server'] = "127.0.0.1";

@@ -175,7 +175,7 @@
                                         <?php echo lang('ssp.servers'); ?>
                                     </a>
                                 </li>
-                                <?php if ($this->config->item('ssp_profiles') !== FALSE) : ?>
+                                <?php if ($this->config->item('ssp_profiles')) : ?>
                                 <li class="nav-item">
                                     <a class="nav-link" href="/sspProfile">
                                         <?php echo lang('ssp.profiles'); ?>
