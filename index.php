@@ -66,8 +66,10 @@
 switch (ENVIRONMENT)
 {
 	case 'development':
+		// Log everything but don't print into the response: deprecation output
+		// sent before the session starts breaks headers (session_start etc.).
 		error_reporting(-1);
-		ini_set('display_errors', 1);
+		ini_set('display_errors', 0);
 	break;
 
 	case 'testing':
