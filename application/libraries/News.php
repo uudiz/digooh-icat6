@@ -1,5 +1,4 @@
 <?php
-#[AllowDynamicProperties]
 class News{
 	public $url;
 	public $title;

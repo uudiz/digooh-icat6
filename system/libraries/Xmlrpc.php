@@ -54,7 +54,6 @@ if ( ! function_exists('xml_parser_create'))
  * @author		EllisLab Dev Team
  * @link		https://codeigniter.com/userguide3/libraries/xmlrpc.html
  */
-#[AllowDynamicProperties]
 class CI_Xmlrpc {
 
 	/**
@@ -563,7 +562,6 @@ class CI_Xmlrpc {
  * @author		EllisLab Dev Team
  * @link		https://codeigniter.com/userguide3/libraries/xmlrpc.html
  */
-#[AllowDynamicProperties]
 class XML_RPC_Client extends CI_Xmlrpc
 {
 	/**
@@ -785,7 +783,6 @@ class XML_RPC_Client extends CI_Xmlrpc
  * @author		EllisLab Dev Team
  * @link		https://codeigniter.com/userguide3/libraries/xmlrpc.html
  */
-#[AllowDynamicProperties]
 class XML_RPC_Response
 {
 
@@ -1036,7 +1033,6 @@ class XML_RPC_Response
  * @author		EllisLab Dev Team
  * @link		https://codeigniter.com/userguide3/libraries/xmlrpc.html
  */
-#[AllowDynamicProperties]
 class XML_RPC_Message extends CI_Xmlrpc
 {
 
@@ -1656,7 +1652,6 @@ class XML_RPC_Message extends CI_Xmlrpc
  * @author		EllisLab Dev Team
  * @link		https://codeigniter.com/userguide3/libraries/xmlrpc.html
  */
-#[AllowDynamicProperties]
 class XML_RPC_Values extends CI_Xmlrpc
 {
 	/**

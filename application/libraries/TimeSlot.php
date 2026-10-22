@@ -1,6 +1,5 @@
 <?php
 
-#[AllowDynamicProperties]
 class TimeSlot
 {
     public $startH;

@@ -1,6 +1,5 @@
 <?php
 
-#[AllowDynamicProperties]
 class Image{
 	var $CI;
 	var $im = FALSE;

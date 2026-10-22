@@ -2,7 +2,6 @@
 /**
  */
 
-#[AllowDynamicProperties]
 class Tree
 {
     public function getTree($list, $pid = 0)

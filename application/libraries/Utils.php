@@ -1,5 +1,4 @@
 <?php
-#[AllowDynamicProperties]
 class Utils {
 	function crc16($string) {
 		$crc = 0xFFFF;
