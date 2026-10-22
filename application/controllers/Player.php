@@ -409,9 +409,11 @@ class Player extends MY_Controller
             }
 
             // SSP priority profile bindings of this player
-            $this->load->model('Ssp_server_model');
-            $data['ssp_profile_names'] = $this->Ssp_server_model->get_profile_names();
-            $data['ssp_player_bindings'] = $id ? $this->Ssp_server_model->get_bindings_by_player($id) : array();
+            if ($this->config->item('ssp_profiles') !== FALSE) {
+                $this->load->model('Ssp_server_model');
+                $data['ssp_profile_names'] = $this->Ssp_server_model->get_profile_names();
+                $data['ssp_player_bindings'] = $id ? $this->Ssp_server_model->get_bindings_by_player($id) : array();
+            }
         }
         $data['criteria'] = $criteria['data'];
         $data['tags'] = $tags['data'];
@@ -801,7 +803,7 @@ class Player extends MY_Controller
 
             // SSP priority profile bindings (only when the form submitted them and the save succeeded)
             $ssp_profile_bindings = $this->posted('ssp_profile_bindings');
-            if (is_string($ssp_profile_bindings) && $saveOk) {
+            if ($this->config->item('ssp_profiles') !== FALSE && is_string($ssp_profile_bindings) && $saveOk) {
                 $bindings = json_decode($ssp_profile_bindings, true);
                 if (is_array($bindings)) {
                     $this->load->model('Ssp_server_model');

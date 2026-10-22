@@ -405,6 +405,7 @@
 											<input type="text" class="form-control amc" id="sun" name="sun" value="<?php if (isset($amc->sun)) echo $amc->sun; ?>" />
 										</div>
 
+									<?php if ($this->config->item('ssp_profiles') !== FALSE) : ?>
 										<div class="col-12">
 											<label><?php echo lang('ssp.profiles'); ?></label>
 											<style>
@@ -465,6 +466,7 @@
 												<div class="col-12" id="ssp_bind_weekdays"></div>
 											</div>
 										</div>
+									<?php endif; ?>
 
 									</div>
 
@@ -704,7 +706,7 @@
 		});
 	}
 </script>
-<?php if ($ssp_feature == 1 && $this->config->item('ssp_feature')) : ?>
+<?php if ($ssp_feature == 1 && $this->config->item('ssp_feature') && $this->config->item('ssp_profiles') !== FALSE) : ?>
 	<script type="text/javascript">
 		var sspPlayerBindings = <?php echo json_encode(isset($ssp_player_bindings) ? $ssp_player_bindings : array()); ?>;
 		var sspWeekdayLabels = ['<?php echo lang('mon'); ?>', '<?php echo lang('tue'); ?>', '<?php echo lang('wed'); ?>', '<?php echo lang('thu'); ?>', '<?php echo lang('fri'); ?>', '<?php echo lang('sat'); ?>', '<?php echo lang('sun'); ?>'];

@@ -703,5 +703,7 @@ $config['allowed_image_types'] = array('gif', 'png', 'jpg', 'jpeg');
 
 $config['with_partners'] = true;
 $config['ssp_feature'] = true;
+// SSP priority profiles (menu, /sspProfile page, player assignment). Requires ssp_feature. FALSE hides and disables them.
+$config['ssp_profiles'] = true;
 /* End of file config.php */
 /* Location: ./application/config/config.php */

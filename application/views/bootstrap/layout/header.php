@@ -175,11 +175,13 @@
                                         <?php echo lang('ssp.servers'); ?>
                                     </a>
                                 </li>
+                                <?php if ($this->config->item('ssp_profiles') !== FALSE) : ?>
                                 <li class="nav-item">
                                     <a class="nav-link" href="/sspProfile">
                                         <?php echo lang('ssp.profiles'); ?>
                                     </a>
                                 </li>
+                                <?php endif; ?>
                             <?php endif; ?>
                         <?php endif; ?>
                     <?php elseif ($auth <= 5) : ?>
