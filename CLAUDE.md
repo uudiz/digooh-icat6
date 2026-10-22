@@ -8,7 +8,7 @@ The platform supports multi-tenancy (companies/folders), multi-language (English
 
 ## Technology Stack
 
-- **Backend:** PHP 8.5 (currently on branch `php85`, upgrading from earlier PHP versions)
+- **Backend:** PHP 8.5
 - **Framework:** CodeIgniter 3 (modified system core in `system/`)
 - **Database:** MySQL/MariaDB via `mysqli` driver
 - **Socket Server:** Swoole (`swoole/` directory) — TCP/UDP server for real-time player communication (port 4702 by default)
@@ -29,7 +29,7 @@ The platform supports multi-tenancy (companies/folders), multi-language (English
 │   ├── libraries/         # Custom libs (Image, Mailer, RSS, SSO JWT, TimeSlot, etc.)
 │   ├── models/            # CI_Model subclasses (table-prefix naming: cat_*, cr_*, etc.)
 │   ├── views/             # PHP views — bootstrap/ subfolder for admin UI
-│   ├── vendor/            # Application-level Composer dependencies
+│   ├── vendor/            # Composer dependencies (gitignored; composer install)
 │   └── language/          # English & Germany translation files
 ├── swoole/                # Swoole socket server
 │   ├── icat6serverphp85.php  # Current PHP 8.5 server
@@ -42,7 +42,6 @@ The platform supports multi-tenancy (companies/folders), multi-language (English
 ├── upload/                # File uploads (writable by www-data)
 ├── plugins/               # jQuery plugins (sliders, editors, maps, etc.)
 ├── doc/                   # Documentation (SSO token generation, layout templates)
-├── vendor/                # Root-level Composer (currently empty)
 ├── index.php              # Web entry point (CI_ENV sets environment)
 ├── cli.php                # CLI entry point (cron jobs)
 └── .htaccess              # Apache mod_rewrite rules
@@ -84,14 +83,15 @@ The platform supports multi-tenancy (companies/folders), multi-language (English
 - **Swoole:** `swoole/swoole_config.php` (gitignored; `swoole_config.sample.php` is template)
 - **Gitignored paths:** config.mia.php, database.php, swoole_config.php, resources/, upload/, logs/, cached/
 
-## PHP 8.5 Migration (Current Branch)
+## PHP 8.5
 
-The `php85` branch is actively migrating the codebase to PHP 8.5 compatibility. Key changes visible in git status:
-- CI3 system core modifications for PHP 8.5 support
-- Models updated for stricter type handling
-- New Swoole server implementation (`icat6serverphp85.php`)
-- Application vendor directory removed (Composer deps need reinstall)
-- Various controller and library updates for PHP 8.5 compatibility
+The code base targets PHP >= 8.5 (no fallback to 8.0). Things to know:
+- Run `tools/lint.sh` (PHP 8.5 syntax + compile-time deprecations) before committing.
+- Composer deps live in `application/composer.json`; `application/vendor/` is **not** tracked — run `cd application && composer install --no-dev -o` on deploy.
+- CI3 system core is patched: `#[AllowDynamicProperties]` on CI/legacy classes, no `E_STRICT`, no `session.sid_*` ini tuning on 8.4+. Keep those patches when updating `system/`.
+- `index.php` never displays errors (even in development); read `application/logs/` instead, otherwise deprecation output breaks session headers.
+- Excel: `.xls` exports use `application/helpers/xls_helper.php` (`xls_download()`, PhpSpreadsheet); `.xlsx` uses PhpSpreadsheet/FastExcelWriter. Use `setCellValue([$col, $row], ...)` / `getCell([$col, $row])` (the `*ByColumnAndRow` methods no longer exist).
+- Removed: PHPExcel, old PHPMailer copy, SWF/Flowplayer code, old Swoole servers (only `swoole/icat6serverphp85.php` remains).
 
 ## Development Notes
 

@@ -1,3 +1,9 @@
+## Requirements / deployment
+- PHP >= 8.5 (php8.5-fpm), extensions: mysqli, gd, intl, mbstring, curl, zip, xml, redis (if used for sessions), swoole (socket server)
+- Install PHP dependencies on every deploy (they are NOT in git): `cd application && composer install --no-dev -o`
+- Check syntax of the whole project with PHP 8.5: `tools/lint.sh`
+- Socket server: `php swoole/icat6serverphp85.php`
+
 ##
 ## .
 ...
