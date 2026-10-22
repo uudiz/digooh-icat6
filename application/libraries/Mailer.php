@@ -8,6 +8,7 @@ use PHPMailer\PHPMailer\Exception;
 // Load Composer's autoloader
 //require '../vendor/autoload.php';
 
+#[AllowDynamicProperties]
 class Mailer
 {
     public $mail;

@@ -2636,7 +2636,7 @@ class Receive extends CI_Controller
     {
         $key = 'MI;A4@6!';
         $arr = parse_url($url);
-        $paramstr = $arr['query'];
+        $paramstr = $arr['query'] ?? '';
 
 
         if (!strstr($paramstr, "sn=")) {
