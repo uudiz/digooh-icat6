@@ -27,7 +27,7 @@ class Tfa extends MY_Controller
     public function doVertification()
     {
         $code = $this->input->get('code');
-        $tfa = new TwoFactorAuth();
+        $tfa = new TwoFactorAuth(new BaconQrCodeProvider(format: "svg"), "ICAT");
         if ($tfa->verifyCode($this->get_2fw_secret(), $code)) {
             $this->session->set_userdata('tfa_verified', 1);
             $data['code'] = 0;

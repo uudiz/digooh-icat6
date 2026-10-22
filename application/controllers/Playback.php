@@ -253,7 +253,7 @@ class Playback extends MY_Controller
         */
 
 
-        $csv = Writer::createFromFileObject(new SplTempFileObject());
+        $csv = Writer::from(new SplTempFileObject());
 
         $csv->setOutputBOM(Writer::BOM_UTF8);
         if (!$this->config->item('with_template')) {

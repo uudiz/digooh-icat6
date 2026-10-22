@@ -2102,14 +2102,14 @@ class Player extends MY_Controller
         $spreadsheet->getActiveSheet()->getColumnDimension('C')->setWidth(60);
         $spreadsheet->getActiveSheet()->getColumnDimension('D')->setWidth(10);
         $fillary = array(
-            'type' => \PhpOffice\PhpSpreadsheet\Style\Fill::FILL_SOLID,
-            'startcolor' => array(
+            'fillType' => \PhpOffice\PhpSpreadsheet\Style\Fill::FILL_SOLID,
+            'startColor' => array(
                 'rgb' => 'E0EEE0'
             )
         );
         $dedi_fillary = array(
-            'type' => \PhpOffice\PhpSpreadsheet\Style\Fill::FILL_SOLID,
-            'startcolor' => array(
+            'fillType' => \PhpOffice\PhpSpreadsheet\Style\Fill::FILL_SOLID,
+            'startColor' => array(
                 'rgb' => 'FFDAB9'
             )
         );
@@ -2382,48 +2382,48 @@ class Player extends MY_Controller
 
         $col_index = 1;
         if ($this->config->item("with_template")) {
-            $worksheet->setCellValueByColumnAndRow($col_index++, 1, $this->lang->line('store.id'));
-            $worksheet->setCellValueByColumnAndRow($col_index++, 1,  $this->lang->line('store.display_id'));
+            $worksheet->setCellValue([$col_index++, 1], $this->lang->line('store.id'));
+            $worksheet->setCellValue([$col_index++, 1], $this->lang->line('store.display_id'));
         } else {
-            $worksheet->setCellValueByColumnAndRow($col_index++, 1, (isset($company->cust_player_field1) && $company->cust_player_field1) ? $company->cust_player_field1 : $this->lang->line('custom_sn1'));
-            $worksheet->setCellValueByColumnAndRow($col_index++, 1, (isset($company->cust_player_field2) && $company->cust_player_field2) ? $company->cust_player_field2 : $this->lang->line('custom_sn2'));
+            $worksheet->setCellValue([$col_index++, 1], (isset($company->cust_player_field1) && $company->cust_player_field1) ? $company->cust_player_field1 : $this->lang->line('custom_sn1'));
+            $worksheet->setCellValue([$col_index++, 1], (isset($company->cust_player_field2) && $company->cust_player_field2) ? $company->cust_player_field2 : $this->lang->line('custom_sn2'));
         }
-        $worksheet->setCellValueByColumnAndRow($col_index++, 1, $this->lang->line('player.name'));
-        $worksheet->setCellValueByColumnAndRow($col_index++, 1, $this->lang->line('sn'));
+        $worksheet->setCellValue([$col_index++, 1], $this->lang->line('player.name'));
+        $worksheet->setCellValue([$col_index++, 1], $this->lang->line('sn'));
 
 
-        $worksheet->setCellValueByColumnAndRow($col_index++, 1, $this->lang->line('criteria'));
-        $worksheet->setCellValueByColumnAndRow($col_index++, 1, $this->lang->line('timer.settings'));
-        $worksheet->setCellValueByColumnAndRow($col_index++, 1, $this->lang->line('screen.type'));
-        $worksheet->setCellValueByColumnAndRow($col_index++, 1, $this->lang->line('desc'));
-        $worksheet->setCellValueByColumnAndRow($col_index++, 1, $this->lang->line('player_conname'));
-        $worksheet->setCellValueByColumnAndRow($col_index++, 1, $this->lang->line('player_conphone'));
-        $worksheet->setCellValueByColumnAndRow($col_index++, 1, $this->lang->line('player_conemail'));
-        $worksheet->setCellValueByColumnAndRow($col_index++, 1, $this->lang->line('player_conaddr'));
-        $worksheet->setCellValueByColumnAndRow($col_index++, 1, $this->lang->line('street_num'));
-        $worksheet->setCellValueByColumnAndRow($col_index++, 1, $this->lang->line('player_connzipcode'));
-        $worksheet->setCellValueByColumnAndRow($col_index++, 1, $this->lang->line('player_contown'));
-        $worksheet->setCellValueByColumnAndRow($col_index++, 1, $this->lang->line('player_barcode'));
-        $worksheet->setCellValueByColumnAndRow($col_index++, 1, $this->lang->line('displaynum'));
-        $worksheet->setCellValueByColumnAndRow($col_index++, 1, $this->lang->line('player_simno'));
-        $worksheet->setCellValueByColumnAndRow($col_index++, 1, $this->lang->line('sim_volume'));
-        $worksheet->setCellValueByColumnAndRow($col_index++, 1, $this->lang->line('item_num'));
-        $worksheet->setCellValueByColumnAndRow($col_index++, 1, $this->lang->line('model_name'));
-        $worksheet->setCellValueByColumnAndRow($col_index++, 1, $this->lang->line('screen_size'));
-        $worksheet->setCellValueByColumnAndRow($col_index++, 1, $this->lang->line('side'));
-        $worksheet->setCellValueByColumnAndRow($col_index++, 1, $this->lang->line('partner_id'));
-        $worksheet->setCellValueByColumnAndRow($col_index++, 1, $this->lang->line('location_id'));
-        $worksheet->setCellValueByColumnAndRow($col_index++, 1, 'Lat.');
-        $worksheet->setCellValueByColumnAndRow($col_index++, 1, 'Lng.');
-        $worksheet->setCellValueByColumnAndRow($col_index++, 1, $this->lang->line('setup_date'));
-        $worksheet->setCellValueByColumnAndRow($col_index++, 1, $this->lang->line('view_direction'));
-        $worksheet->setCellValueByColumnAndRow($col_index++, 1, $this->lang->line('pps'));
-        $worksheet->setCellValueByColumnAndRow($col_index++, 1, $this->lang->line('visitors'));
-        $worksheet->setCellValueByColumnAndRow($col_index++, 1, $this->lang->line('tag'));
-        $worksheet->setCellValueByColumnAndRow($col_index++, 1, $this->lang->line('ssp.criteria'));
-        $worksheet->setCellValueByColumnAndRow($col_index++, 1, $this->lang->line('ssp.tags'));
-        $worksheet->setCellValueByColumnAndRow($col_index++, 1, "firmware verison");
-        $worksheet->setCellValueByColumnAndRow($col_index++, 1, $this->lang->line('last.maintenance'));
+        $worksheet->setCellValue([$col_index++, 1], $this->lang->line('criteria'));
+        $worksheet->setCellValue([$col_index++, 1], $this->lang->line('timer.settings'));
+        $worksheet->setCellValue([$col_index++, 1], $this->lang->line('screen.type'));
+        $worksheet->setCellValue([$col_index++, 1], $this->lang->line('desc'));
+        $worksheet->setCellValue([$col_index++, 1], $this->lang->line('player_conname'));
+        $worksheet->setCellValue([$col_index++, 1], $this->lang->line('player_conphone'));
+        $worksheet->setCellValue([$col_index++, 1], $this->lang->line('player_conemail'));
+        $worksheet->setCellValue([$col_index++, 1], $this->lang->line('player_conaddr'));
+        $worksheet->setCellValue([$col_index++, 1], $this->lang->line('street_num'));
+        $worksheet->setCellValue([$col_index++, 1], $this->lang->line('player_connzipcode'));
+        $worksheet->setCellValue([$col_index++, 1], $this->lang->line('player_contown'));
+        $worksheet->setCellValue([$col_index++, 1], $this->lang->line('player_barcode'));
+        $worksheet->setCellValue([$col_index++, 1], $this->lang->line('displaynum'));
+        $worksheet->setCellValue([$col_index++, 1], $this->lang->line('player_simno'));
+        $worksheet->setCellValue([$col_index++, 1], $this->lang->line('sim_volume'));
+        $worksheet->setCellValue([$col_index++, 1], $this->lang->line('item_num'));
+        $worksheet->setCellValue([$col_index++, 1], $this->lang->line('model_name'));
+        $worksheet->setCellValue([$col_index++, 1], $this->lang->line('screen_size'));
+        $worksheet->setCellValue([$col_index++, 1], $this->lang->line('side'));
+        $worksheet->setCellValue([$col_index++, 1], $this->lang->line('partner_id'));
+        $worksheet->setCellValue([$col_index++, 1], $this->lang->line('location_id'));
+        $worksheet->setCellValue([$col_index++, 1], 'Lat.');
+        $worksheet->setCellValue([$col_index++, 1], 'Lng.');
+        $worksheet->setCellValue([$col_index++, 1], $this->lang->line('setup_date'));
+        $worksheet->setCellValue([$col_index++, 1], $this->lang->line('view_direction'));
+        $worksheet->setCellValue([$col_index++, 1], $this->lang->line('pps'));
+        $worksheet->setCellValue([$col_index++, 1], $this->lang->line('visitors'));
+        $worksheet->setCellValue([$col_index++, 1], $this->lang->line('tag'));
+        $worksheet->setCellValue([$col_index++, 1], $this->lang->line('ssp.criteria'));
+        $worksheet->setCellValue([$col_index++, 1], $this->lang->line('ssp.tags'));
+        $worksheet->setCellValue([$col_index++, 1], "firmware verison");
+        $worksheet->setCellValue([$col_index++, 1], $this->lang->line('last.maintenance'));
 
         if ($result) {
             $exline = 2;
@@ -2692,14 +2692,14 @@ class Player extends MY_Controller
             for ($row = 2; $row <= $highestRow; $row++) {
                 $player = array();
                 $extra = array();
-                $sdawid = $worksheet->getCellByColumnAndRow(1, $row)->getValue();
-                $qid = $worksheet->getCellByColumnAndRow(2, $row)->getValue();
-                $city = $worksheet->getCellByColumnAndRow(3, $row)->getValue();
-                $address = $worksheet->getCellByColumnAndRow(4, $row)->getValue();
-                $pps = $worksheet->getCellByColumnAndRow(9, $row)->getValue();
-                $timer_name =  $worksheet->getCellByColumnAndRow(20, $row)->getValue();
-                $setupdate = $worksheet->getCellByColumnAndRow(16, $row)->getValue();
-                $criteria = $worksheet->getCellByColumnAndRow(12, $row)->getValue();
+                $sdawid = $worksheet->getCell([1, $row])->getValue();
+                $qid = $worksheet->getCell([2, $row])->getValue();
+                $city = $worksheet->getCell([3, $row])->getValue();
+                $address = $worksheet->getCell([4, $row])->getValue();
+                $pps = $worksheet->getCell([9, $row])->getValue();
+                $timer_name =  $worksheet->getCell([20, $row])->getValue();
+                $setupdate = $worksheet->getCell([16, $row])->getValue();
+                $criteria = $worksheet->getCell([12, $row])->getValue();
                 $criids = false;
 
 
@@ -2749,25 +2749,25 @@ class Player extends MY_Controller
                     'custom_sn2' => $qid,
                     'contown' => $city,
                     'conaddr' => $address,
-                    'conzipcode' => $worksheet->getCellByColumnAndRow(5, $row)->getValue(),
-                    'state' => $worksheet->getCellByColumnAndRow(6, $row)->getValue(),
-                    'geox' => $worksheet->getCellByColumnAndRow(7, $row)->getValue(), //LAT
-                    'geoy' => $worksheet->getCellByColumnAndRow(8, $row)->getValue(), //LNG
-                    'pps' => $worksheet->getCellByColumnAndRow(9, $row)->getValue(),
-                    'barcode' => $worksheet->getCellByColumnAndRow(10, $row)->getValue(),
+                    'conzipcode' => $worksheet->getCell([5, $row])->getValue(),
+                    'state' => $worksheet->getCell([6, $row])->getValue(),
+                    'geox' => $worksheet->getCell([7, $row])->getValue(), //LAT
+                    'geoy' => $worksheet->getCell([8, $row])->getValue(), //LNG
+                    'pps' => $worksheet->getCell([9, $row])->getValue(),
+                    'barcode' => $worksheet->getCell([10, $row])->getValue(),
                     /*
                         11: descripiont
                         12: createria
                         16: Setup Date
                         21: 
                     */
-                    'modelname' => $worksheet->getCellByColumnAndRow(13, $row)->getValue(),
-                    'viewdirection' => $worksheet->getCellByColumnAndRow(14, $row)->getValue(),
-                    'locationid' => $worksheet->getCellByColumnAndRow(15, $row)->getValue(),
-                    //'barcode' => $worksheet->getCellByColumnAndRow(17, $row)->getValue(),
-                    'displaynum' => $worksheet->getCellByColumnAndRow(17, $row)->getValue(),
-                    'visitors' => $worksheet->getCellByColumnAndRow(18, $row)->getValue(),
-                    'street_num' => $worksheet->getCellByColumnAndRow(19, $row)->getValue(),
+                    'modelname' => $worksheet->getCell([13, $row])->getValue(),
+                    'viewdirection' => $worksheet->getCell([14, $row])->getValue(),
+                    'locationid' => $worksheet->getCell([15, $row])->getValue(),
+                    //'barcode' => $worksheet->getCell([17, $row])->getValue(),
+                    'displaynum' => $worksheet->getCell([17, $row])->getValue(),
+                    'visitors' => $worksheet->getCell([18, $row])->getValue(),
+                    'street_num' => $worksheet->getCell([19, $row])->getValue(),
                 );
 
                 if (is_numeric($setupdate)) {
@@ -2790,7 +2790,7 @@ class Player extends MY_Controller
                 }
 
 
-                $player['descr'] = $worksheet->getCellByColumnAndRow(11, $row)->getValue();
+                $player['descr'] = $worksheet->getCell([11, $row])->getValue();
                 $player['company_id'] = $cid;
 
                 $player['sn'] = $this->device->get_player_new_code($cid);

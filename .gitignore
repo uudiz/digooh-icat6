@@ -16,3 +16,6 @@ swoole/swoole_config_test.php
 node_modules
 images_no_use
 assets/logos
+
+# Composer deps are installed on deploy: cd application && composer install
+application/vendor/

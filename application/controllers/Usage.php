@@ -232,9 +232,9 @@ class Usage extends MY_Controller
         $exline = 2;
 
         if ($hasdate) {
-            $worksheet->setCellValueByColumnAndRow(1, 1, $this->lang->line('custom_sn1'));
-            $worksheet->setCellValueByColumnAndRow(2, 1, $this->lang->line('slotcnt'));
-            $worksheet->setCellValueByColumnAndRow(3, 1, $this->lang->line('slotnum'));
+            $worksheet->setCellValue([1, 1], $this->lang->line('custom_sn1'));
+            $worksheet->setCellValue([2, 1], $this->lang->line('slotcnt'));
+            $worksheet->setCellValue([3, 1], $this->lang->line('slotnum'));
 
 
             $worksheet->getDefaultColumnDimension()->setWidth(10);
@@ -261,7 +261,7 @@ class Usage extends MY_Controller
 
 
                     for ($checkday = $startStamp; $checkday <= $endStamp;) {
-                        $worksheet->setCellValueByColumnAndRow($excol, 1, date("d.m.Y", $checkday));
+                        $worksheet->setCellValue([$excol, 1], date("d.m.Y", $checkday));
 
 
                         $timeslots = $this->program->do_get_today_timeslots($player, date("Y-m-d", $checkday), false, true, $cid);
@@ -282,12 +282,12 @@ class Usage extends MY_Controller
                         }
 
                         for ($i = 0; $i < 6; $i++) {
-                            $worksheet->setCellValueByColumnAndRow($excol, $exline + $i, $i < $slotNum ? 1 : 0);
+                            $worksheet->setCellValue([$excol, $exline + $i], $i < $slotNum ? 1 : 0);
                         }
 
 
 
-                        //  $worksheet->setCellValueByColumnAndRow($excol, $exline, $slotNum);
+                        //  $worksheet->setCellValue([$excol, $exline], $slotNum);
 
                         $checkday = strtotime("+1 days", $checkday);
                         $excol++;
@@ -299,20 +299,20 @@ class Usage extends MY_Controller
         } else {
             $capacitys = $this->program->get_players_capcity($players);
 
-            $worksheet->setCellValueByColumnAndRow(1, 1,  $this->lang->line('custom_sn1'));
-            $worksheet->setCellValueByColumnAndRow(2, 1, $this->lang->line('custom_sn2'));
+            $worksheet->setCellValue([1, 1], $this->lang->line('custom_sn1'));
+            $worksheet->setCellValue([2, 1], $this->lang->line('custom_sn2'));
 
 
 
-            $worksheet->setCellValueByColumnAndRow(3, 1, $this->lang->line('player.name'));
-            $worksheet->setCellValueByColumnAndRow(4, 1, $this->lang->line('sn'));
+            $worksheet->setCellValue([3, 1], $this->lang->line('player.name'));
+            $worksheet->setCellValue([4, 1], $this->lang->line('sn'));
 
-            $worksheet->setCellValueByColumnAndRow(5, 1, $this->lang->line('criteria'));
+            $worksheet->setCellValue([5, 1], $this->lang->line('criteria'));
 
-            $worksheet->setCellValueByColumnAndRow(6, 1, $this->lang->line('next.7.day'));
-            $worksheet->setCellValueByColumnAndRow(7, 1, $this->lang->line('next.month'));
-            $worksheet->setCellValueByColumnAndRow(8, 1, $this->lang->line('next.6.month'));
-            $worksheet->setCellValueByColumnAndRow(9, 1, 'Least free seconds');
+            $worksheet->setCellValue([6, 1], $this->lang->line('next.7.day'));
+            $worksheet->setCellValue([7, 1], $this->lang->line('next.month'));
+            $worksheet->setCellValue([8, 1], $this->lang->line('next.6.month'));
+            $worksheet->setCellValue([9, 1], 'Least free seconds');
 
 
             $worksheet->getDefaultColumnDimension()->setWidth(15);

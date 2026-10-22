@@ -248,7 +248,7 @@ class TagSSP extends MY_Controller
 
             $highestColumnIndex = Coordinate::columnIndexFromString($highestColumn); // e.g. 5
 
-            if ($highestColumnIndex != 4 || $worksheet->getCellByColumnAndRow(1, 1)->getValue() != 'Wirtschaftsbereich') {
+            if ($highestColumnIndex != 4 || $worksheet->getCell([1, 1])->getValue() != 'Wirtschaftsbereich') {
                 $result = array('code' => 1, 'msg' => 'Invalid file format!');
                 echo json_encode($result);
                 return;
@@ -260,7 +260,7 @@ class TagSSP extends MY_Controller
             for ($row = 2; $row <= $highestRow; $row++) {
                 $line = '';
                 for ($col = 1; $col <= $highestColumnIndex; ++$col) {
-                    $value = $worksheet->getCellByColumnAndRow($col, $row)->getValue();
+                    $value = $worksheet->getCell([$col, $row])->getValue();
                     if ($line == '') {
                         $line = $value;
                     } else {

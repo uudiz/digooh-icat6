@@ -224,7 +224,7 @@ class Criteria extends MY_Controller
             for ($row = 2; $row <= $highestRow; $row++) {
                 $line = '';
                 for ($col = 1; $col <= $highestColumnIndex; ++$col) {
-                    $value = $worksheet->getCellByColumnAndRow($col, $row)->getValue();
+                    $value = $worksheet->getCell([$col, $row])->getValue();
                     if ($line == '') {
                         $line = $value;
                     } else {

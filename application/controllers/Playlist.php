@@ -2351,11 +2351,11 @@ class Playlist extends MY_Controller
 
         $exline = 2;
 
-        $worksheet->setCellValueByColumnAndRow(1, 1, $this->lang->line('name'));
-        $worksheet->setCellValueByColumnAndRow(2, 1, "SDAW ID");
-        $worksheet->setCellValueByColumnAndRow(3, 1, "QID");
-        $worksheet->setCellValueByColumnAndRow(4, 1, "Day Per Week");
-        $worksheet->setCellValueByColumnAndRow(5, 1, "Days in Campaign");
+        $worksheet->setCellValue([1, 1], $this->lang->line('name'));
+        $worksheet->setCellValue([2, 1], "SDAW ID");
+        $worksheet->setCellValue([3, 1], "QID");
+        $worksheet->setCellValue([4, 1], "Day Per Week");
+        $worksheet->setCellValue([5, 1], "Days in Campaign");
 
 
 
@@ -2396,11 +2396,11 @@ class Playlist extends MY_Controller
 
             $exline = 2;
 
-            $worksheet->setCellValueByColumnAndRow(1, 1, $this->lang->line('name'));
-            $worksheet->setCellValueByColumnAndRow(2, 1, "SDAW ID");
-            $worksheet->setCellValueByColumnAndRow(3, 1, "QID");
-            $worksheet->setCellValueByColumnAndRow(4, 1, "Day Per Week");
-            $worksheet->setCellValueByColumnAndRow(5, 1, "Days in Campaign");
+            $worksheet->setCellValue([1, 1], $this->lang->line('name'));
+            $worksheet->setCellValue([2, 1], "SDAW ID");
+            $worksheet->setCellValue([3, 1], "QID");
+            $worksheet->setCellValue([4, 1], "Day Per Week");
+            $worksheet->setCellValue([5, 1], "Days in Campaign");
 
             $worksheet->getColumnDimension('A')->setWidth(40);
             $worksheet->getColumnDimension('B')->setWidth(40);
