@@ -285,7 +285,7 @@ class RSSParser
         if ($result['encoding'] != '') {
             $this->rsscp = $result['encoding'];
             if ($result['encoding'] == 'ISO-8859-1' || $result['encoding'] == 'iso-8859-1') {
-                $this->rss_content = utf8_encode($this->rss_content);  //转成UTF-8编码
+                $this->rss_content = mb_convert_encoding($this->rss_content, 'UTF-8', 'ISO-8859-1');  //转成UTF-8编码
             }
         } // This is used in my_preg_match()
         // otherwise use the default codepage
