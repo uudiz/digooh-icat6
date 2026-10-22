@@ -230,5 +230,6 @@ $lang['with_replaced_media'] = "mit ersetzten Medien";
 $lang['clear_all_media_confirm'] = "Alle ausgewählten Medien aus der Kampagne löschen?";
 
 $lang['activate_campaign'] =  'Kampagne aktivieren';
+$lang['delete_selected_media'] = 'Ausgewählte Medien löschen';
 $lang['delete_selected_media_confirm'] = 'Alle ausgewählten Medien aus der Kampagne löschen?';
 $lang['remove_media_row_confirm'] = 'Dieses Medium aus der Kampagne entfernen?';

@@ -228,6 +228,7 @@ $lang['item_number'] = "Item no.";
 $lang['replace_main'] = "Replace Media from the Main Campaign";
 $lang['with_replaced_media'] = "With replaced media";
 $lang['clear_all_media_confirm'] = "Delete all marked media files for the campaign?";
+$lang['delete_selected_media'] = 'Delete selected media';
 $lang['delete_selected_media_confirm'] = 'Delete all marked media files for the campaign?';
 $lang['remove_media_row_confirm'] = 'Remove this media file from the campaign?';
 $lang['activate_campaign'] =  'Activate campaign';
