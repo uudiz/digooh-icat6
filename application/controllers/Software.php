@@ -80,8 +80,6 @@ class Software extends MY_Controller
 	{
 
 		$this->addJs('software.js');
-		//$this->addJs("fileupload/swfupload.js");
-		//$this->addJs("fileupload/fileprogress.js");
 		$this->addCss('/static/fileuploader/fineuploader-gallery.css', FALSE);
 		$this->addCss('/static/fileuploader/fineuploader-new.css', FALSE);
 		$this->addCss('/static/fileuploader/fineuploader.css', FALSE);

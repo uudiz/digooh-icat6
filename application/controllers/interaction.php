@@ -19,7 +19,6 @@ class Interaction extends MY_Controller {
 	 * @return 
 	 */
 	public function index($curpage = 1, $order_item = 'add_time', $order = 'desc') {
-		//$this->addJs("fileupload/swfupload.js");
 		$this->addJs('/static/fileuploader/all.fine-uploader.min.js', FALSE);
 		$this->addJs("jquery/jquery-ui-latest.js");
         $this->addCss("jquery/jquery.ui.all.css");

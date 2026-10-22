@@ -157,7 +157,7 @@
 						<?php
                             if ($this->config->item('covert.office.files')==true):
                         ?>
-							allowedExtensions: ["mp4", "mkv", "mpg", "mpeg", "avi", "flv", "wmv", "divx", "mov","ppt","pptx","swf","pdf"],
+							allowedExtensions: ["mp4", "mkv", "mpg", "mpeg", "avi", "flv", "wmv", "divx", "mov","ppt","pptx","pdf"],
 						<?php else:?>				
 							allowedExtensions: ["mp4", "mkv", "mpg", "mpeg", "avi", "flv", "wmv", "divx", "mov"],
 						<?php endif; ?>

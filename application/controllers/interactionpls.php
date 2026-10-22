@@ -341,7 +341,6 @@ class Interactionpls extends MY_Controller
         $this->addCss('My97DatePicker/skin/WdatePicker.css');
         $this->addJs('jquery/jquery-ui-latest.js');
         $this->addCss('jquery/jquery.ui.all.css');
-        $this->addJs('flowplayer/flowplayer.min.js');
         $this->addJs('ztree/jquery.ztree.core-3.5.js');
         $this->addJs('ztree/jquery.ztree.excheck-3.5.js');
         $this->addJs('ztree/jquery.ztree.exedit-3.5.js');
