@@ -121,68 +121,17 @@ class Logger extends MY_Controller
 		$gids = 0;
 
 		$result = $this->mylog->get_all_log($filter_array);
-		/** Include PHPExcel */
-		//require_once 'PHPExcel.php';
-		$this->load->library('PHPExcel');
-
-		// Create new PHPExcel object
-		$objPHPExcel = new PHPExcel();
-
-		//填入表头
-		$objPHPExcel->setActiveSheetIndex(0)
-			->setCellValue('A1', 'Log Time')
-			->setCellValue('B1', 'User Account')
-			->setCellValue('C1', 'Company')
-			->setCellValue('D1', 'IP')
-			->setCellValue('E1', 'Action');
-
-		//设置字体样式
-		$objPHPExcel->getActiveSheet()->getStyle('A1:E1')->getFont()->setBold(true);
-		$objPHPExcel->getActiveSheet()->getStyle('A1:E1')->getFont()->setSize(12);
-		$objPHPExcel->getActiveSheet()->getStyle('A1:E1')->getFont()->setBold(true);
-
-		//设置单元格宽度
-		$objPHPExcel->getActiveSheet()->getColumnDimension('A')->setWidth(25);
-		$objPHPExcel->getActiveSheet()->getColumnDimension('B')->setWidth(20);
-		$objPHPExcel->getActiveSheet()->getColumnDimension('C')->setWidth(15);
-		$objPHPExcel->getActiveSheet()->getColumnDimension('D')->setWidth(25);
-		$objPHPExcel->getActiveSheet()->getColumnDimension('E')->setWidth(15);
-
-		//设置表头行高
-		$objPHPExcel->getActiveSheet()->getRowDimension(1)->setRowHeight(20);
-
-		// Add data
-		$i = 2;
+		$this->load->helper('xls');
+		$rows = array();
 		foreach ($result as $row) {
-			$objPHPExcel->getActiveSheet()->setCellValue('A' . $i, $row->add_time)
-				->setCellValue('B' . $i, $row->user_name)
-				->setCellValue('C' . $i, $row->company_name)
-				->setCellValue('D' . $i, $row->ip)
-				->setCellValue('E' . $i, $row->detail);
-			$i++;
+			$rows[] = array($row->add_time, $row->user_name, $row->company_name, $row->ip, $row->detail);
 		}
-		// Rename worksheet
-		$objPHPExcel->getActiveSheet()->setTitle('log');
-
-
-		// Set active sheet index to the first sheet, so Excel opens this as the first sheet
-		$objPHPExcel->setActiveSheetIndex(0);
-
-		// Redirect output to a client’s web browser (Excel5)
-		header('Content-Type: application/vnd.ms-excel');
-		header("Content-Disposition: attachment;filename=Log.$start_date-$end_date.xls");
-		header('Cache-Control: max-age=0');
-		// If you're serving to IE 9, then the following may be needed
-		header('Cache-Control: max-age=1');
-
-		// If you're serving to IE over SSL, then the following may be needed
-		header('Expires: Mon, 26 Jul 1997 05:00:00 GMT'); // Date in the past
-		header('Last-Modified: ' . gmdate('D, d M Y H:i:s') . ' GMT'); // always modified
-		header('Cache-Control: cache, must-revalidate'); // HTTP/1.1
-		header('Pragma: public'); // HTTP/1.0
-
-		$objWriter = PHPExcel_IOFactory::createWriter($objPHPExcel, 'Excel5');
-		$objWriter->save('php://output');
-		exit;
+		xls_download("Log.$start_date-$end_date.xls", 'log', array(
+			array('title' => 'Log Time', 'width' => 25),
+			array('title' => 'User Account', 'width' => 20),
+			array('title' => 'Company', 'width' => 15),
+			array('title' => 'IP', 'width' => 25),
+			array('title' => 'Action', 'width' => 15),
+		), $rows);
 	}
 }

@@ -72,69 +72,25 @@ class Playbandwidth extends MY_Controller{
 		$end_date  = $this->input->get('end_date');
 		$this->load->model('device');
 		$this->load->helper('serial');		
-		$this->load->library('PHPExcel');
+		$this->load->helper('xls');
 		$gids = 0;
 		if($this->get_auth() < $this->config->item("auth_admin")){
 			$gids = $this->device->get_group_ids($this->get_uid());
 		}
 		$result = $this->device->get_all_player_bandwidth($this->get_cid(), $gids, $player_id, $start_date, $end_date);
-		$objPHPExcel = new PHPExcel();
-		
-		//填入表头
-		$objPHPExcel->setActiveSheetIndex(0)
-					->setCellValue('A1', 'Post Date')
-					->setCellValue('B1', 'Group')
-					->setCellValue('C1', 'Player')
-					->setCellValue('D1', 'ID #')
-					->setCellValue('E1', 'Media')
-					->setCellValue('F1', 'Count')
-					->setCellValue('G1', 'Seconds');
-
-		//设置字体样式
-        $objPHPExcel->getActiveSheet()->getStyle('A1:G1')->getFont()->setBold(true);
-        $objPHPExcel->getActiveSheet()->getStyle('A1:G1')->getFont()->setSize(12);
-        $objPHPExcel->getActiveSheet()->getStyle('A1:G1')->getFont()->setBold(true);
-		
-		//设置单元格宽度
-		$objPHPExcel->getActiveSheet()->getColumnDimension('A')->setWidth(15);
-		$objPHPExcel->getActiveSheet()->getColumnDimension('B')->setWidth(15);
-        $objPHPExcel->getActiveSheet()->getColumnDimension('C')->setWidth(15);
-        $objPHPExcel->getActiveSheet()->getColumnDimension('D')->setWidth(15);
-        $objPHPExcel->getActiveSheet()->getColumnDimension('E')->setWidth(25);
-		$objPHPExcel->getActiveSheet()->getColumnDimension('F')->setWidth(15);
-        $objPHPExcel->getActiveSheet()->getColumnDimension('G')->setWidth(15);
-		
-		//设置表头行高
-        $objPHPExcel->getActiveSheet()->getRowDimension(1)->setRowHeight(20);
-		
-		// Add data
-		$i = 2;
+		$rows = array();
 		foreach ($result as $row) {
-			$objPHPExcel->getActiveSheet()->setCellValue('A' . $i, $row->post_date)
-										  ->setCellValue('B' . $i, $row->group_name)
-										  ->setCellValue('C' . $i, $row->player_name)
-										  ->setCellValue('D' . $i, format_sn($row->sn))
-										  ->setCellValue('E' . $i, $row->media_name)
-										  ->setCellValue('F' . $i, $row->times)
-										  ->setCellValue('G' . $i, $row->duration);
-		$i++;
+			$rows[] = array($row->post_date, $row->group_name, $row->player_name, format_sn($row->sn), $row->media_name, $row->times, $row->duration);
 		}
-
-		$objPHPExcel->getActiveSheet()->setTitle('Playback Report');
-		$objPHPExcel->setActiveSheetIndex(0);
-		
-		header('Content-Type: application/vnd.ms-excel');
-		header("Content-Disposition: attachment;filename=Playback.$start_date-$end_date.xls");
-		header('Cache-Control: max-age=0');
-		header('Cache-Control: max-age=1');
-		header ('Expires: Mon, 26 Jul 1997 05:00:00 GMT'); // Date in the past
-		header ('Last-Modified: '.gmdate('D, d M Y H:i:s').' GMT'); // always modified
-		header ('Cache-Control: cache, must-revalidate'); // HTTP/1.1
-		header ('Pragma: public'); // HTTP/1.0
-
-		$objWriter = PHPExcel_IOFactory::createWriter($objPHPExcel, 'Excel5');
-		$objWriter->save('php://output');
-		exit;
+		xls_download("Playback.$start_date-$end_date.xls", 'Playback Report', array(
+			array('title' => 'Post Date', 'width' => 15),
+			array('title' => 'Group', 'width' => 15),
+			array('title' => 'Player', 'width' => 15),
+			array('title' => 'ID #', 'width' => 15),
+			array('title' => 'Media', 'width' => 25),
+			array('title' => 'Count', 'width' => 15),
+			array('title' => 'Seconds', 'width' => 15),
+		), $rows);
 		
 	}
 }
