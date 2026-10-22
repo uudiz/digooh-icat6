@@ -2,6 +2,7 @@
 
 defined('BASEPATH') or exit('No direct script access allowed');
 
+#[AllowDynamicProperties]
 class Sso_jwt
 {
     /**

@@ -22,6 +22,7 @@
  * @package PHPMailer
  * @author Chris Ryan
  */
+#[AllowDynamicProperties]
 class SMTP {
 	/**
 	 *  SMTP server port

@@ -1,4 +1,5 @@
 <?php
+#[AllowDynamicProperties]
 class Channels{
 	public $last_modified;
 	public $news_list;

@@ -48,6 +48,7 @@ defined('BASEPATH') or exit('No direct script access allowed');
  * @author		Andrey Andreev
  * @link		https://codeigniter.com/userguide3/libraries/sessions.html
  */
+#[AllowDynamicProperties]
 class CI_Session
 {
 
@@ -367,7 +368,9 @@ class CI_Session
 		} else {
 			$bits_per_character = (int) ini_get('session.sid_bits_per_character');
 			$sid_length         = (int) ini_get('session.sid_length');
-			if (($bits = $sid_length * $bits_per_character) < 160) {
+			// PHP 8.4 deprecates the session.sid_* INI settings (removed in 9.0),
+			// so only tune them on older versions.
+			if (PHP_VERSION_ID < 80400 && ($bits = $sid_length * $bits_per_character) < 160) {
 				// Add as many more characters as necessary to reach at least 160 bits
 				$sid_length += (int) ceil((160 % $bits) / $bits_per_character);
 				ini_set('session.sid_length', $sid_length);

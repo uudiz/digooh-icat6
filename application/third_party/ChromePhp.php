@@ -21,6 +21,7 @@
  * @package ChromePhp
  * @author Craig Campbell <iamcraigcampbell@gmail.com>
  */
+#[AllowDynamicProperties]
 class ChromePhp
 {
     /**

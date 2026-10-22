@@ -47,6 +47,7 @@ defined('BASEPATH') OR exit('No direct script access allowed');
  * @author	Andrey Andreev
  * @link	https://codeigniter.com/userguide3/libraries/sessions.html
  */
+#[AllowDynamicProperties]
 class CI_Session_redis_driver extends CI_Session_driver implements CI_Session_driver_interface {
 
 	/**
@@ -177,7 +178,7 @@ class CI_Session_redis_driver extends CI_Session_driver implements CI_Session_dr
 		}
 
 		$redis = new Redis();
-		if ( ! $redis->connect($this->_config['save_path']['host'], $this->_config['save_path']['port'], $this->_config['save_path']['timeout']))
+		if ( ! $redis->connect($this->_config['save_path']['host'], $this->_config['save_path']['port'], (float) $this->_config['save_path']['timeout']))
 		{
 			log_message('error', 'Session: Unable to connect to Redis with the configured settings.');
 		}

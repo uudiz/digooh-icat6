@@ -320,7 +320,7 @@ function getContentType($type)
 			$ret = 'video/x-msvideo';
 			break;
 		case 'JPG':
-		case 'JPEG';
+		case 'JPEG':
 			$ret = 'image/jpeg';
 			break;
 		case 'mp3':
