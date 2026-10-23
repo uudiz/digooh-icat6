@@ -259,3 +259,7 @@ $lang['webpage'] = 'Webpage';
 $lang['price_text'] = 'Price/Text';
 $lang['free_charger_count'] = 'Free Charger Count';
 $lang['register_price'] = 'Register Price';
+$lang['ok'] = 'OK';
+$lang['timer'] = 'Timer';
+$lang['start_date'] = 'Start Date';
+$lang['end_date'] = 'End Date';

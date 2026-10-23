@@ -255,7 +255,7 @@ class Playback extends MY_Controller
 
         $csv = Writer::from(new SplTempFileObject());
 
-        $csv->setOutputBOM(Writer::BOM_UTF8);
+        $csv->setOutputBOM(\League\Csv\Bom::Utf8);
         if (!$this->config->item('with_template')) {
             if ($show_fulfilments) {
                 $head = array(
@@ -301,7 +301,7 @@ class Playback extends MY_Controller
 
 
         if ($this->config->item('with_template')) {
-            $csv->output($filename);
+            $csv->download($filename);
             return;
         }
         $result = $this->feedback->query_not_played_players($cid, $filter_array);
@@ -315,7 +315,7 @@ class Playback extends MY_Controller
                 $csv->insertOne($record);
             }
         }
-        $csv->output($filename);
+        $csv->download($filename);
 
         /*
         header('Content-Type: application/vnd.ms-excel');
@@ -540,7 +540,7 @@ class Playback extends MY_Controller
         $total_ful_planed = 0;
         $ful_booked_cnt = 0;
         $ful_planed_cnt = 0;
-        foreach ($result as $row) {
+        foreach (($result ?: array()) as $row) {
             $sum_record['total_player'] += $row->player_cnt;
             $sum_record['total_cam'] += $row->cam_cnt;
             $sum_record['total_media'] += $row->media_cnt;

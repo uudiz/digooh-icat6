@@ -506,6 +506,7 @@ class Media extends MY_Controller
         //test
         $path1 = $this->config->item('gz_path') . 'resources/' . $company->id;
         $path2 = $this->config->item('gz_path') . 'resources/preview/' . $company->id;
+        $dirSize1 = $dirSize2 = 0;
         if (is_dir($path1)) {
             $dirSize1 = $this->getDirSize($path1);
         }

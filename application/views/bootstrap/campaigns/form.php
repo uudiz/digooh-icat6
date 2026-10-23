@@ -110,7 +110,7 @@
 															<label class="col-form-label required"><?php echo lang('main.campaign'); ?></label>
 															<select class="form-select form-control required select2" name="main_campaign_id" id="main_campaign" placeholder="select">
 																<option value="0" disabled selected></option>
-																<?php foreach ($main_campaigns as $main_campaign) : ?>
+																<?php foreach (($main_campaigns ?: array()) as $main_campaign) : ?>
 																	<option value="<?php echo $main_campaign->id; ?>" <?php if (isset($data) && $data->main_campaign_id == $main_campaign->id) : ?>selected="selected" <?php endif; ?>><?php echo $main_campaign->name; ?></option>
 																<?php endforeach; ?>
 															</select>

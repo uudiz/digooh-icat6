@@ -245,3 +245,7 @@ $lang['webpage'] = 'Webseite';
 $lang['price_text'] = 'Preis/Text';
 $lang['free_charger_count'] = 'Summe freier Ladepunkte';
 $lang['register_price'] = 'Kassensystemartikel';
+$lang['ok'] = 'OK';
+$lang['timer'] = 'Timer';
+$lang['start_date'] = 'Startdatum';
+$lang['end_date'] = 'Enddatum';
