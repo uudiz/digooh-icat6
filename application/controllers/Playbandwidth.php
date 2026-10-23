@@ -4,6 +4,7 @@ class Playbandwidth extends MY_Controller{
 	public function __construct() {
         parent::__construct();
         $this->lang->load('playbandwidth');
+        $this->lang_fill('playback'); // post.date
     }
 	
 	/**

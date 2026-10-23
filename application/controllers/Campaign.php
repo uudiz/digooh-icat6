@@ -1075,6 +1075,7 @@ class Campaign extends MY_Controller
      */
     public function template_list($curpage = 1)
     {
+        $this->lang_fill('template'); // empty.template
         $type = $this->input->get('type');
         if ($type == $this->config->item('template_system')) {
             $type = $this->config->item('template_system');

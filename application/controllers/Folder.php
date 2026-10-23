@@ -13,6 +13,7 @@ class Folder extends MY_Controller
         $this->lang->load('media');
         $this->lang->load('time');
         $this->lang->load('tag');
+        $this->lang_fill('playlist'); // playtime
         $this->load->helper('week');
         $this->load->model('material');
         $this->load->model('device');

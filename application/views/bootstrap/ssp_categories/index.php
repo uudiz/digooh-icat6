@@ -13,10 +13,12 @@
         <div class="col-auto ms-auto">
           <div class="btn-list">
 
+            <?php /* CriteriaSSP import is hidden: the xlsx layout does not carry code/type yet.
             <a href="#" class="btn btn-white" onclick="document.getElementById('import_excel').click();return false;">
               <i class="bi bi-file-earmark-arrow-up"></i>
               <?php echo lang('import'); ?>
             </a>
+            */ ?>
 
             <a href="/criteriaSSP/edit" class=" btn btn-primary">
               <svg xmlns="http://www.w3.org/2000/svg" class="icon icon-tabler icon-tabler-plus" width="24" height="24" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none" stroke-linecap="round" stroke-linejoin="round">
@@ -26,7 +28,7 @@
               </svg>
               <?php echo lang('create'); ?>
             </a>
-            <input type=file id=import_excel style="display:none" accept="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet, application/vnd.ms-excel">
+            <?php /* <input type=file id=import_excel style="display:none" accept="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet, application/vnd.ms-excel"> */ ?>
           </div>
         </div>
       <?php endif ?>

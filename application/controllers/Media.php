@@ -15,6 +15,7 @@ class Media extends MY_Controller
         $this->load->helper('media');
         $this->lang->load('schedule');
         $this->lang->load('time');
+        $this->lang_fill('playlist'); // playtime
         $this->load->helper('week');
 
         $this->load->model('membership');

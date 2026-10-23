@@ -14,6 +14,7 @@ class Tag extends MY_Controller
         $this->lang->load('criteria');
 
         $this->lang->load('tag');
+        $this->lang_fill('player'); // player texts used by the player selector
     }
 
     public function index()

@@ -11,6 +11,7 @@ class SspProfile extends MY_Controller
         }
         $this->lang->load('ssp');
         $this->lang->load('player');
+        $this->lang_fill('criteria'); // criteria.and / or / exclude
         $this->load->model('Ssp_server_model');
     }
 

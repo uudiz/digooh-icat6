@@ -91,6 +91,18 @@ class MY_Controller extends CI_Controller
         $this->load->helper('date');
     }
 
+    /**
+     * Load a language file only for the keys that are still missing,
+     * so it never overrides texts of the files the page already loaded.
+     */
+    protected function lang_fill($file)
+    {
+        $lines = $this->lang->load($file, '', TRUE);
+        if (is_array($lines)) {
+            $this->lang->language += $lines;
+        }
+    }
+
     public function _login_filter()
     {
         $uid = $this->session_get(self::SESSION_UID);

@@ -6,6 +6,8 @@ class Software extends MY_Controller
 	{
 		parent::__construct();
 		$this->lang->load('software');
+		$this->lang_fill('criteria'); // create.criteria
+		$this->lang_fill('media'); // max.file.tip
 	}
 
 	public function index()
