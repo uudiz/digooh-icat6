@@ -1599,6 +1599,123 @@ class Program extends MY_Model
             return false;
         }
     }
+
+    /**
+     * Name for a copied campaign: "<name> (Copy)", or "<name> (Copy) N" with the
+     * first free N >= 1. Same uniqueness scope as get_playlist_by_name().
+     */
+    public function get_copy_name($cid, $name)
+    {
+        $base = $name . ' (Copy)';
+
+        $this->db->select('name');
+        $this->db->from('cat_playlist');
+        $this->db->where('company_id', $cid);
+        $this->db->where('deleted_at is null');
+        $this->db->like('name', $base, 'after');
+        $query = $this->db->get();
+
+        // MySQL compares names case-insensitively, so do the same here.
+        $taken = array();
+        foreach ($query->result() as $row) {
+            $taken[mb_strtolower($row->name)] = true;
+        }
+
+        if (!isset($taken[mb_strtolower($base)])) {
+            return $base;
+        }
+        $n = 1;
+        while (isset($taken[mb_strtolower($base . ' ' . $n)])) {
+            $n++;
+        }
+        return $base . ' ' . $n;
+    }
+
+    /**
+     * Copy a campaign with its media, tags, criteria and player bindings.
+     * The copy is always unpublished; bookings (least_free / planed / programmatic)
+     * and extended campaigns are not copied.
+     *
+     * @return int|false new campaign id
+     */
+    public function copy_campaign($id, $cid, $uid)
+    {
+        $src = $this->db->get_where('cat_playlist', array('id' => $id))->row_array();
+        if (!$src || $src['deleted_at'] !== null) {
+            return false;
+        }
+
+        $now = date('Y-m-d H:i:s');
+        $data = $src;
+        unset($data['id']);
+        $data['name'] = $this->get_copy_name($cid, $src['name']);
+        $data['published'] = 0;
+        $data['deleted_at'] = null;
+        $data['update_time'] = $now;
+        foreach (array('add_time', 'create_time', 'created_at') as $col) {
+            if (array_key_exists($col, $data)) {
+                $data[$col] = $now;
+            }
+        }
+
+        $this->db->trans_start();
+
+        $new_id = $this->add_playlist($data, $cid, $uid);
+
+        if ($new_id) {
+            $campaign_types = array('App\Campaign', 'App\Playlist');
+
+            // media (skip rows marked as deleted)
+            $this->db->where('playlist_id', $id);
+            $this->db->group_start();
+            $this->db->where('flag is null');
+            $this->db->or_where('flag !=', $this->config->item('area_media_flag_delete'));
+            $this->db->group_end();
+            $this->db->order_by('position', 'ASC');
+            $this->copy_rows('cat_playlist_area_media', 'playlist_id', $new_id);
+
+            $this->db->where('taggable_id', $id);
+            $this->db->where_in('taggable_type', $campaign_types);
+            $this->copy_rows('taggables', 'taggable_id', $new_id);
+
+            $this->db->where('criterionable_id', $id);
+            $this->db->where_in('criterionable_type', $campaign_types);
+            $this->copy_rows('criterionables', 'criterionable_id', $new_id);
+
+            // selected (type 0) and excluded/OB (type 1) players
+            $this->db->where('campaign_id', $id);
+            $this->copy_rows('cat_player_campaign', 'campaign_id', $new_id);
+
+            // resolved affected players
+            $this->db->where('campaign_id', $id);
+            $this->copy_rows('campaign_player', 'campaign_id', $new_id);
+        }
+
+        $this->db->trans_complete();
+
+        if (!$new_id || $this->db->trans_status() === false) {
+            return false;
+        }
+        return $new_id;
+    }
+
+    /**
+     * Select rows from $table using the WHERE conditions already set on the
+     * query builder, and re-insert them with $fk_column set to $new_id.
+     */
+    private function copy_rows($table, $fk_column, $new_id)
+    {
+        $rows = $this->db->get($table)->result_array();
+        if (empty($rows)) {
+            return;
+        }
+        foreach ($rows as &$row) {
+            unset($row['id']);
+            $row[$fk_column] = $new_id;
+        }
+        unset($row);
+        $this->db->insert_batch($table, $rows);
+    }
     /**
      * 初始化播放列表背景图片信息
      *

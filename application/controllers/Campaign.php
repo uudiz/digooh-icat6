@@ -430,6 +430,41 @@ class Campaign extends MY_Controller
 
         echo json_encode(array('code' => $code, 'msg' => $msg));
     }
+
+    /**
+     * Copy a campaign as "<name> (Copy)[ N]"; the copy is unpublished.
+     */
+    public function do_copy()
+    {
+        $auth = $this->get_auth();
+        if ($auth <= 1 || $auth == 4) {
+            echo json_encode(array('code' => 1, 'msg' => $this->lang->line('campaign.copy.fail')));
+            return;
+        }
+
+        $id = $this->input->post('id');
+        $this->load->model('program');
+        $campaign = $id ? $this->program->get_campaign($id) : false;
+
+        // only campaigns of the current company (partner campaigns are read-only)
+        if (!$campaign || $campaign->company_id != $this->get_cid()) {
+            echo json_encode(array('code' => 1, 'msg' => $this->lang->line('campaign.copy.fail')));
+            return;
+        }
+
+        $new_id = $this->program->copy_campaign($id, $this->get_cid(), $this->get_uid());
+        if (!$new_id) {
+            echo json_encode(array('code' => 1, 'msg' => $this->lang->line('campaign.copy.fail')));
+            return;
+        }
+
+        $new = $this->program->get_campaign($new_id);
+        echo json_encode(array(
+            'code' => 0,
+            'id' => $new_id,
+            'msg' => sprintf($this->lang->line('campaign.copy.success'), htmlspecialchars($new->name)),
+        ));
+    }
     /**
      * end_user 修改当前播放列表中的详细属性
      *

@@ -232,3 +232,6 @@ $lang['delete_selected_media'] = 'Delete selected media';
 $lang['delete_selected_media_confirm'] = 'Delete all marked media files for the campaign?';
 $lang['remove_media_row_confirm'] = 'Remove this media file from the campaign?';
 $lang['activate_campaign'] =  'Activate campaign';
+$lang['campaign.copy'] = 'Copy';
+$lang['campaign.copy.success'] = 'Campaign copied as "%s" (unpublished).';
+$lang['campaign.copy.fail'] = 'Copy campaign failed!';

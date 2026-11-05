@@ -408,6 +408,11 @@
       html += `<a href="#" onClick="remove_campaign(${row.id})" class="link-danger" title="<?php echo lang('delete') ?>">
         <i class="bi bi-x-square"></i>
 			</a>`
+      if (row.company_id == <?php echo (int) get_instance()->get_cid() ?>) {
+        html += `<a href="#" onClick="copy_campaign(${row.id})" class="link-primary" title="<?php echo lang('campaign.copy') ?>">
+        <i class="bi bi-subtract"></i>
+			</a>`
+      }
     <?php endif ?>
     html += `<a href="#" onClick="show_devices('${row.id}')" class="link-primary" title="<?php echo lang('player') ?>">
         <h3><i class="dig-display"></i></h3>
@@ -436,6 +441,24 @@
 
         }, 'json');
       });
+  }
+
+  function copy_campaign(id) {
+    showSpinner();
+    $.post(`/campaign/do_copy`, {
+      id: id,
+    }, function(data) {
+      hideSpinner();
+      if (data.code == 0) {
+        toastr.success(data.msg);
+        doSearch();
+      } else {
+        toastr.error(data.msg);
+      }
+    }, "json").fail(function() {
+      hideSpinner();
+      toastr.error('<?php echo lang('campaign.copy.fail') ?>');
+    });
   }
 
   function remove_campaign(id) {

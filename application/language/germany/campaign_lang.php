@@ -233,3 +233,6 @@ $lang['activate_campaign'] =  'Kampagne aktivieren';
 $lang['delete_selected_media'] = 'Ausgewählte Medien löschen';
 $lang['delete_selected_media_confirm'] = 'Alle ausgewählten Medien aus der Kampagne löschen?';
 $lang['remove_media_row_confirm'] = 'Dieses Medium aus der Kampagne entfernen?';
+$lang['campaign.copy'] = 'Kopieren';
+$lang['campaign.copy.success'] = 'Kampagne kopiert als „%s“ (nicht veröffentlicht).';
+$lang['campaign.copy.fail'] = 'Kampagne konnte nicht kopiert werden!';
