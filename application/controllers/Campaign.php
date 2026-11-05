@@ -395,7 +395,10 @@ class Campaign extends MY_Controller
                 $txt = '';
                 if ($publish_urls) {
                     foreach ($publish_urls as $publish_url) {
-                        if (strpos($publish_url->publish_url, $this->get_cid())) {
+                        if (empty($publish_url->publish_url)) {
+                            continue;
+                        }
+                        if (strpos($publish_url->publish_url, (string) $this->get_cid())) {
                             if (substr_count($publish_url->publish_url, '.') == 4) {
                                 $txt .= $publish_url->publish_url . chr(10);
                                 //只删除从本地上传的媒体
