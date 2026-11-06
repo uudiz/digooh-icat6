@@ -203,11 +203,49 @@
     </div>
   </div>
 
+  <?php if ($auth == 5) : ?>
+    <div class="modal fade" id="campaign-copyModal" tabindex="-1" role="dialog" aria-hidden="true">
+      <div class="modal-dialog modal-lg modal-dialog-centered" role="document">
+        <form class="modal-content" id="copyForm" autocomplete="off">
+          <input type="hidden" id="copy_id" name="id">
+          <input type="hidden" id="copy_start_date" name="start_date">
+          <input type="hidden" id="copy_end_date" name="end_date">
+          <div class="modal-header align-items-start h-auto py-3">
+            <div>
+              <div class="text-muted mb-3"><?php echo lang('campaign.copy.source') ?></div>
+              <a href="#" id="copy_source" target="_blank" rel="noopener"></a>
+            </div>
+            <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="<?php echo lang('button.close') ?>"></button>
+          </div>
+          <div class="modal-body">
+            <div class="mb-3">
+              <label class="form-label text-muted" for="copy_name"><?php echo lang('campaign.copy.name') ?></label>
+              <input type="text" class="form-control" id="copy_name" name="name">
+            </div>
+            <div class="row align-items-start">
+              <label class="col-sm-6 col-form-label text-muted" for="copy_period"><?php echo lang('campaign.copy.period') ?></label>
+              <div class="col-sm-6 col-md-4">
+                <input type="text" class="form-control" id="copy_period" name="copy_period" readonly>
+              </div>
+            </div>
+          </div>
+          <div class="modal-footer justify-content-between">
+            <button type="submit" id="copy_submit" class="btn btn-link link-success p-0" title="<?php echo lang('campaign.copy') ?>">
+              <i class="bi bi-subtract" style="font-size: 2rem;"></i>
+            </button>
+            <button type="button" class="btn btn-link link-secondary" data-bs-dismiss="modal"><?php echo lang('button.cancel') ?></button>
+          </div>
+        </form>
+      </div>
+    </div>
+  <?php endif ?>
+
   <?php
   $this->load->view("bootstrap/campaigns/refreshModal");
   ?>
 </div>
 
+<script src="/assets/bootstrap/js/litepicker.js"></script>
 <script>
   var $table = $('#table')
 
@@ -408,16 +446,20 @@
       html += `<a href="#" onClick="remove_campaign(${row.id})" class="link-danger" title="<?php echo lang('delete') ?>">
         <i class="bi bi-x-square"></i>
 			</a>`
+
+    <?php endif ?>
+    html += `<a href="#" onClick="show_devices('${row.id}')" class="link-primary" title="<?php echo lang('player') ?>">
+        <h3><i class="dig-display"></i></h3>
+			</a>
+      `;
+    <?php if ($auth == 5) : ?>
       if (row.company_id == <?php echo (int) get_instance()->get_cid() ?>) {
         html += `<a href="#" onClick="copy_campaign(${row.id})" class="link-primary" title="<?php echo lang('campaign.copy') ?>">
         <i class="bi bi-subtract"></i>
 			</a>`
       }
     <?php endif ?>
-    html += `<a href="#" onClick="show_devices('${row.id}')" class="link-primary" title="<?php echo lang('player') ?>">
-        <h3><i class="dig-display"></i></h3>
-			</a>
-		</div>`;
+    html += `</div>`;
     return html;
   };
 
@@ -443,20 +485,124 @@
       });
   }
 
+  // ---- copy campaign dialog ----
+  var copyPicker = null;
+  var copyValidator = null;
+
+  function ymdToDate(ymd) {
+    var p = String(ymd || '').split('-');
+    return p.length == 3 ? new Date(p[0], p[1] - 1, p[2]) : new Date();
+  }
+
+  function ymdToDmy(ymd) {
+    var p = String(ymd || '').split('-');
+    return p.length == 3 ? `${p[2]}-${p[1]}-${p[0]}` : '';
+  }
+
+  function init_copy_dialog() {
+    copyPicker = new Litepicker({
+      element: document.getElementById('copy_period'),
+      singleMode: false,
+      format: 'DD-MM-YYYY',
+      numberOfMonths: 2,
+      numberOfColumns: 2,
+      lang: '<?php echo get_instance()->config->item('language') == 'germany' ? 'de-DE' : 'en-US' ?>',
+      setup: (picker) => {
+        picker.on('selected', (date1, date2) => {
+          $('#copy_start_date').val(date1.format('YYYY-MM-DD'));
+          $('#copy_end_date').val(date2.format('YYYY-MM-DD'));
+          $('#copy_period').valid();
+        });
+      }
+    });
+
+    copyValidator = $('#copyForm').validate({
+      errorClass: 'is-invalid',
+      validClass: '',
+      errorElement: 'div',
+      errorPlacement: function(error, element) {
+        error.addClass('invalid-feedback').insertAfter(element);
+      },
+      rules: {
+        name: {
+          required: true,
+          maxlength: 128,
+          normalizer: function(value) {
+            return $.trim(value);
+          },
+          remote: {
+            url: '/campaign/checkName',
+            data: {
+              name: function() {
+                return $.trim($('#copy_name').val());
+              }
+            }
+          }
+        },
+        copy_period: {
+          required: true
+        }
+      },
+      submitHandler: function() {
+        do_copy_campaign();
+        return false;
+      }
+    });
+  }
+
   function copy_campaign(id) {
     showSpinner();
-    $.post(`/campaign/do_copy`, {
-      id: id,
+    $.getJSON('/campaign/get_copy_info', {
+      id: id
     }, function(data) {
       hideSpinner();
-      if (data.code == 0) {
-        toastr.success(data.msg);
-        doSearch();
-      } else {
+      if (data.code != 0) {
         toastr.error(data.msg);
+        return;
       }
-    }, "json").fail(function() {
+      if (!copyPicker) {
+        init_copy_dialog();
+      }
+      copyValidator.resetForm();
+      $('#copyForm .is-invalid').removeClass('is-invalid');
+
+      $('#copy_id').val(data.id);
+      $('#copy_source').text(data.name).attr('href', `/campaign/edit?id=${data.id}`);
+      $('#copy_name').val(data.copy_name);
+      $('#copy_start_date').val(data.start_date);
+      $('#copy_end_date').val(data.end_date);
+      copyPicker.setDateRange(ymdToDate(data.start_date), ymdToDate(data.end_date));
+      $('#copy_period').val(`${ymdToDmy(data.start_date)} - ${ymdToDmy(data.end_date)}`);
+      // extended campaigns keep the period of their main campaign
+      $('#copy_period').prop('disabled', data.priority == 8);
+      $('#copy_submit').prop('disabled', false);
+
+      bootstrap.Modal.getOrCreateInstance(document.getElementById('campaign-copyModal')).show();
+    }).fail(function() {
       hideSpinner();
+      toastr.error('<?php echo lang('campaign.copy.fail') ?>');
+    });
+  }
+
+  function do_copy_campaign() {
+    $('#copy_submit').prop('disabled', true);
+    showSpinner();
+    $.post('/campaign/do_copy', {
+      id: $('#copy_id').val(),
+      name: $.trim($('#copy_name').val()),
+      start_date: $('#copy_start_date').val(),
+      end_date: $('#copy_end_date').val(),
+    }, function(data) {
+      if (data.code == 0) {
+        window.location.href = `/campaign/edit?id=${data.id}`;
+        return;
+      }
+      hideSpinner();
+      $('#copy_submit').prop('disabled', false);
+      toastr.error(data.msg);
+    }, 'json').fail(function() {
+      hideSpinner();
+      $('#copy_submit').prop('disabled', false);
       toastr.error('<?php echo lang('campaign.copy.fail') ?>');
     });
   }

@@ -1636,9 +1636,10 @@ class Program extends MY_Model
      * The copy is always unpublished; bookings (least_free / planed / programmatic)
      * and extended campaigns are not copied.
      *
+     * @param array $overrides optional 'name', 'start_date', 'end_date' (validated by the caller)
      * @return int|false new campaign id
      */
-    public function copy_campaign($id, $cid, $uid)
+    public function copy_campaign($id, $cid, $uid, $overrides = array())
     {
         $src = $this->db->get_where('cat_playlist', array('id' => $id))->row_array();
         if (!$src || $src['deleted_at'] !== null) {
@@ -1648,7 +1649,12 @@ class Program extends MY_Model
         $now = date('Y-m-d H:i:s');
         $data = $src;
         unset($data['id']);
-        $data['name'] = $this->get_copy_name($cid, $src['name']);
+        $data['name'] = !empty($overrides['name']) ? $overrides['name'] : $this->get_copy_name($cid, $src['name']);
+        foreach (array('start_date', 'end_date') as $col) {
+            if (!empty($overrides[$col])) {
+                $data[$col] = $overrides[$col];
+            }
+        }
         $data['published'] = 0;
         $data['deleted_at'] = null;
         $data['update_time'] = $now;

@@ -435,37 +435,96 @@ class Campaign extends MY_Controller
     }
 
     /**
-     * Copy a campaign as "<name> (Copy)[ N]"; the copy is unpublished.
+     * Source campaign for copying, or false. Only admins (auth 5) may copy, and
+     * only campaigns of the current company (partner campaigns are read-only).
+     */
+    private function get_copy_source($id)
+    {
+        if ($this->get_auth() != 5 || !$id) {
+            return false;
+        }
+        $this->load->model('program');
+        $campaign = $this->program->get_campaign($id);
+        if (!$campaign || $campaign->deleted_at !== null || $campaign->company_id != $this->get_cid()) {
+            return false;
+        }
+        return $campaign;
+    }
+
+    /**
+     * Data for the copy dialog: source name, suggested copy name and period.
+     */
+    public function get_copy_info()
+    {
+        $campaign = $this->get_copy_source($this->input->get('id'));
+        if (!$campaign) {
+            echo json_encode(array('code' => 1, 'msg' => $this->lang->line('campaign.copy.fail')));
+            return;
+        }
+
+        echo json_encode(array(
+            'code' => 0,
+            'id' => $campaign->id,
+            'name' => $campaign->name,
+            'copy_name' => $this->program->get_copy_name($this->get_cid(), $campaign->name),
+            'start_date' => $campaign->start_date,
+            'end_date' => $campaign->end_date,
+            'priority' => $campaign->priority,
+        ));
+    }
+
+    /**
+     * Copy a campaign with the name and period from the copy dialog; the copy is unpublished.
      */
     public function do_copy()
     {
-        $auth = $this->get_auth();
-        if ($auth <= 1 || $auth == 4) {
-            echo json_encode(array('code' => 1, 'msg' => $this->lang->line('campaign.copy.fail')));
-            return;
-        }
-
         $id = $this->input->post('id');
-        $this->load->model('program');
-        $campaign = $id ? $this->program->get_campaign($id) : false;
-
-        // only campaigns of the current company (partner campaigns are read-only)
-        if (!$campaign || $campaign->company_id != $this->get_cid()) {
+        $campaign = $this->get_copy_source($id);
+        if (!$campaign) {
             echo json_encode(array('code' => 1, 'msg' => $this->lang->line('campaign.copy.fail')));
             return;
         }
 
-        $new_id = $this->program->copy_campaign($id, $this->get_cid(), $this->get_uid());
+        $name = trim((string) $this->input->post('name'));
+        if ($name === '') {
+            echo json_encode(array('code' => 1, 'msg' => $this->lang->line('campaign.copy.name_required')));
+            return;
+        }
+        if (mb_strlen($name) > 128) { // cat_playlist.name is VARCHAR(128)
+            echo json_encode(array('code' => 1, 'msg' => $this->lang->line('campaign.copy.name_too_long')));
+            return;
+        }
+        if ($this->program->get_playlist_by_name(0, $this->get_cid(), $name)) {
+            echo json_encode(array('code' => 1, 'msg' => sprintf($this->lang->line('playlist.name.exsit'), htmlspecialchars($name))));
+            return;
+        }
+
+        $overrides = array('name' => $name);
+
+        // extended campaigns (priority 8) keep the period of their main campaign
+        if ($campaign->priority != 8) {
+            $start = (string) $this->input->post('start_date');
+            $end = (string) $this->input->post('end_date');
+            $ds = DateTime::createFromFormat('!Y-m-d', $start);
+            $de = DateTime::createFromFormat('!Y-m-d', $end);
+            if (!$ds || !$de || $ds->format('Y-m-d') !== $start || $de->format('Y-m-d') !== $end || $ds > $de) {
+                echo json_encode(array('code' => 1, 'msg' => $this->lang->line('campaign.copy.date_invalid')));
+                return;
+            }
+            $overrides['start_date'] = $start;
+            $overrides['end_date'] = $end;
+        }
+
+        $new_id = $this->program->copy_campaign($id, $this->get_cid(), $this->get_uid(), $overrides);
         if (!$new_id) {
             echo json_encode(array('code' => 1, 'msg' => $this->lang->line('campaign.copy.fail')));
             return;
         }
 
-        $new = $this->program->get_campaign($new_id);
         echo json_encode(array(
             'code' => 0,
             'id' => $new_id,
-            'msg' => sprintf($this->lang->line('campaign.copy.success'), htmlspecialchars($new->name)),
+            'msg' => sprintf($this->lang->line('campaign.copy.success'), htmlspecialchars($name)),
         ));
     }
     /**
