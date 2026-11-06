@@ -153,9 +153,14 @@ class Campaign extends MY_Controller
 
         $playlist = $this->program->get_playlist_list($cid, $condition, true, $offset, $limit, $order_item, $order);
 
+        // two grouped queries for the whole page instead of two queries per row
+        $ids = array_map(function ($cam) {
+            return $cam->id;
+        }, $playlist['data']);
+        $counts = $this->program->get_campaign_player_counts($ids);
         foreach ($playlist['data'] as $cam) {
-            $cam->players_cnt = $this->program->get_campaign_players_count($cam->id);
-            $cam->ex_players_cnt = $this->program->get_campaign_ex_players_count($cam->id);
+            $cam->players_cnt = isset($counts[$cam->id]) ? $counts[$cam->id]['players'] : 0;
+            $cam->ex_players_cnt = isset($counts[$cam->id]) ? $counts[$cam->id]['excluded'] : 0;
         }
         $data['total'] = $playlist['total'];
         $data['rows']  = $playlist['data'];
@@ -2809,14 +2814,16 @@ class Campaign extends MY_Controller
         $id = $this->input->get('id');
 
         $this->load->model('program');
-        $campaign = $this->program->get_playlist($id);
-        if ($campaign) {
-            $name = $campaign->name;
-
-            $affect_players = $this->program->get_player_by_campaign($id);
-
-            $exclude_players = $this->program->get_excluded_player_by_campaign($id);
+        $campaign = $id ? $this->program->get_playlist($id) : false;
+        if (!$campaign || $campaign->deleted_at !== null) {
+            show_404();
+            return;
         }
+        $name = $campaign->name;
+
+        $affect_players = $this->program->get_player_by_campaign($id);
+        $exclude_players = $this->program->get_excluded_player_by_campaign($id);
+
         $spreadsheet = new Spreadsheet();
         $worksheet = $spreadsheet->getActiveSheet();
         $worksheet->setTitle('Selected Devices');
@@ -2912,11 +2919,14 @@ class Campaign extends MY_Controller
         unset($spreadsheet);
 
 
+        // ASCII fallback for old clients + RFC 5987 UTF-8 name for umlauts/spaces
         $filename = "Devices of " . $name . ".xlsx";
-        header("Content-Disposition: attachment;filename=$filename");
-        //header("Content-Transfer-Encoding:binary");
-        //header("File-Name:$filename");
+        $fallback = preg_replace('/[^\x20-\x7E]|["\\\\;]/u', '_', $filename);
+        header('Content-Type: application/vnd.openxmlformats-officedocument.spreadsheetml.sheet');
+        header('Content-Disposition: attachment; filename="' . $fallback . '"; filename*=UTF-8\'\'' . rawurlencode($filename));
         $writer->save('php://output');
+        // stop here so CodeIgniter does not send its own text/html Content-Type after the file
+        exit;
     }
 
     private function get_ob_players()

@@ -24,7 +24,8 @@ function doSearch() {
   var table = $("#table");
   if (table.length) {
     table.bootstrapTable("uncheckAll");
-    table.bootstrapTable("refresh");
+    // a new search/filter always starts on the first page
+    table.bootstrapTable("refresh", { pageNumber: 1 });
   }
 }
 

@@ -7698,6 +7698,46 @@ class Program extends MY_Model
         $query = $this->db->get();
         return $query->num_rows();
     }
+    /**
+     * Player counts for several campaigns in two grouped queries.
+     * Same counting rules as get_campaign_players_count() (campaign_player rows)
+     * and get_campaign_ex_players_count() (cat_player_campaign type 1).
+     *
+     * @param array $camIds
+     * @return array [campaign_id => ['players' => int, 'excluded' => int]]
+     */
+    public function get_campaign_player_counts(array $camIds)
+    {
+        $camIds = array_values(array_filter(array_map('intval', $camIds)));
+        if (empty($camIds)) {
+            return array();
+        }
+
+        $counts = array();
+        foreach ($camIds as $id) {
+            $counts[$id] = array('players' => 0, 'excluded' => 0);
+        }
+
+        $this->db->select('campaign_id, COUNT(*) AS cnt');
+        $this->db->from('campaign_player');
+        $this->db->where_in('campaign_id', $camIds);
+        $this->db->group_by('campaign_id');
+        foreach ($this->db->get()->result() as $row) {
+            $counts[(int) $row->campaign_id]['players'] = (int) $row->cnt;
+        }
+
+        $this->db->select('campaign_id, COUNT(*) AS cnt');
+        $this->db->from('cat_player_campaign');
+        $this->db->where_in('campaign_id', $camIds);
+        $this->db->where('type', 1);
+        $this->db->group_by('campaign_id');
+        foreach ($this->db->get()->result() as $row) {
+            $counts[(int) $row->campaign_id]['excluded'] = (int) $row->cnt;
+        }
+
+        return $counts;
+    }
+
     public function get_campaign_ex_players_count($camId)
     {
         $this->db->select('player_id');

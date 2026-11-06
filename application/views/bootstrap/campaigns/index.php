@@ -138,7 +138,7 @@
     </form>
 
     <div class='table-responsive'>
-      <table id='table' class="table table-striped table-responsive" id="table" data-toggle="table" data-url="/campaign/getTableData" data-sort-name="update_time" data-sort-order="desc">
+      <table id="table" class="table table-striped table-responsive" data-toggle="table" data-url="/campaign/getTableData" data-sort-name="update_time" data-sort-order="desc">
         <thead>
           <tr>
             <th data-field="name" data-formatter="nameFormatter" data-sortable="true"><?php echo lang('name'); ?></th>
@@ -332,8 +332,6 @@
       color = "text-red";
     }
     return `<span class="${color}">${value}~${row.end_date}</span>`;
-
-    return '';
   };
 
   function priorityFormatter(value, row) {
@@ -379,15 +377,6 @@
     //data-formatter=
     // data-sort-name="id" data-sort-order="desc"
     //+ value ? "text-green" : "text-red" + 
-    var color = value === '1' ? "text-green" : "text-red";
-    /*return '<span class="' + color + '">\
-        <svg xmlns="http://www.w3.org/2000/svg" class="icon icon-filled icon-tabler icon-tabler-circle" width="24" height="24" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none" stroke-linecap="round" stroke-linejoin="round">\
-          <path stroke="none" d="M0 0h24v24H0z" fill="none"></path>\
-          <circle cx="12" cy="12" r="9"></circle>\
-        </svg>\
-    </span>'
-    */
-
     var color = value === '1' ? "status-green status-indicator-animated" : "status-red status-indicator-animated";
     if (row.priority == 5 && value === '1') {
       color = "status-blue status-indicator-animated";
@@ -465,7 +454,6 @@
 
 
   function refresh_all_campaigns() {
-    $.ajaxSettings.async = true;
     $('#refresh_confirm-prompt').html('<?php echo lang('campaign.refresh.msg') ?>');
 
     $('#refresh_confirm').modal("show")
@@ -644,9 +632,4 @@
 
   }
 
-  $(document).keypress(function(e) {
-    if (e.which == 13) {
-      doSearch();
-    }
-  });
 </script>
